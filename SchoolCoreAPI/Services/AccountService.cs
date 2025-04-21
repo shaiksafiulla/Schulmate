@@ -34,9 +34,10 @@ namespace SchoolCoreAPI.Services
 
         public async Task<Expense> GetExpense(int Id, int UserId)
         {
+            var sheet = new List<SelectListItem>(GetExpenseCategory());
             var model = new Expense
             {
-                ExpenseCategorySheet = new List<SelectListItem>(GetExpenseCategory())
+                ExpenseCategorySheet = sheet
             };
 
             if (Id > 0)
@@ -45,6 +46,7 @@ namespace SchoolCoreAPI.Services
                 if (cat != null)
                 {
                     model = cat;
+                    model.ExpenseCategorySheet = sheet;
                     var divcategoryItem = model.ExpenseCategorySheet.Find(p => p.Value == cat.CategoryId.ToString());
                     if (divcategoryItem != null)
                     {
