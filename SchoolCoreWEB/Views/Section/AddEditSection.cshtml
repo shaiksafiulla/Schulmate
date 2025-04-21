@@ -1,0 +1,157 @@
+﻿@model SchoolCoreWEB.Models.Section
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="card">
+    <div class="card-body">
+        <form id="sectionForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id)
+            @Html.HiddenFor(m => m.BranchClassId)
+            
+            <div class="form-group required mb-3">
+                <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlbranch", @required = "required", onChange = "selectedBranchIndexChanged()" })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                @Html.DropDownListFor(model => model.ClassId, Model.ClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlclass", @required = "required", onkeyup = "Validate();", })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "80", onkeyup = "Validate();" })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="shortname" class="form-label">@_localization.Getkey("ShortName")</label>
+                @Html.TextBoxFor(model => model.ShortName, new { @class = "form-control form-control-sm", @id = "shortname", @required = "required", @maxlength = "15", onkeyup = "Validate();" })
+            </div>
+            @* <div class="form-group mb-3">
+                <label for="maxcount" class="form-label">@_localization.Getkey("MaxCount")</label>
+                @Html.TextBoxFor(model => model.MaxCount, new { @class = "form-control form-control-sm", @maxlength = 5, @id = "maxcount", @name = "maxcount", @required = "required", onkeyup = "Validate();", onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+            </div> *@
+            @*<div class="form-group mb-3">
+                <label for="name" class="form-label">Theme</label>
+                @Html.TextBoxFor(model => model.Theme, new { @class = "form-control", @id="theme",  @maxlength="80"})
+            </div>*@
+
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "address", @rows = "2", @maxlength = "250" })
+            </div>
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitSection()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+       function chkFields(){
+        var isvalid=true;    
+         if ($("#ddlbranch").val() == "") {
+            isvalid = false;
+           }
+        if ($("#ddlclass").val() == "") {
+            isvalid = false;
+           }
+        if ($("#name").val() == "") {
+            isvalid = false;
+           }
+       if ($("#shortname").val() == "") {
+            isvalid = false;
+           }
+       return isvalid;
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+     function selectedBranchIndexChanged(){
+          $('#ddlclass')
+            .find('option')
+            .remove()
+            .end()
+              .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+                   $.ajax({
+                        type: "post",
+                         url: '@Url.Action("GetClassesByBranch","Section")',
+                        data: { branchId: $('#ddlbranch').val() },
+                         dataType: 'json',
+                        traditional: true,
+                       success: function (response) {
+                           var lstdata = JSON.parse(response);
+                           var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                           for (var i = 0; i < lstdata.length; i++) {
+                               s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                       }                      
+                       $("#ddlclass").html(s);
+                     
+
+                        }
+                    });
+                    Validate();
+     }
+
+      function submitSection(){
+          $("#loaderDiv1").show("slow", function () {
+          var myformdata = $("#sectionForm").serialize();
+             $.ajax({
+              type: 'POST',
+               url: '@Url.Action("Save","Section")',
+              contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+              data: myformdata,
+              success: function (response) {
+                  if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                      if (serviceresult === true) {
+                          $("#loaderDiv1").hide();
+                          toastr.error(`@_localization.Getkey("SectionExist")`);
+                      }
+                      else {
+                          actionAfterResponse('SectionGrid', serviceresult.recordId, serviceresult.statusId, '5');
+                      }
+
+                      } else {
+                           toastr.error(`@_localization.Getkey("Error")`);
+                      }
+              },
+              error: function (response) {
+                       toastr.error(`@_localization.Getkey("Error")`);
+
+              }
+             })
+          })
+      }
+      Validate();
+</script>

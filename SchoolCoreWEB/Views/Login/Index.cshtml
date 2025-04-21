@@ -1,0 +1,210 @@
+﻿@model SchoolCoreWEB.Models.LoginUser
+@using Localization.Services
+@inject LanguageService _localization
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html lang="en" data-topbar-color="light" data-sidenav-color="light" data-sidenav-size="condensed">
+
+
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>SchoolManagement | The Elite School Management</title>
+     <!-- App favicon -->
+        <link rel="shortcut icon" href="~/assets/images/favicon.ico">
+        
+        <!-- Theme Config Js -->
+        <script src="~/assets/js/hyper-config.js"></script>
+
+        <!-- Icons css -->
+        <link href="~/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+
+        <!-- App css -->
+        <link href="~/assets/css/app-modern.min.css" rel="stylesheet" type="text/css" id="app-style" />
+
+     
+    <link href="~/assets/css/toastr.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/css/spinner.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body class="authentication-bg">
+    <div class="account-pages pt-2 pt-sm-5 pb-4 pb-sm-5">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-xxl-4 col-lg-5">
+                        <div class="card">
+
+                            <!-- Logo -->
+                            <div class="card-header pt-4 pb-4 text-center bg-primary">
+                                <a href="index.html">
+                                    <span><img src="~/assets/images/logo.png" alt="logo" height="22"></span>
+                                </a>
+                            </div>
+
+                            <div class="card-body p-4">
+
+                                <div class="text-center w-75 m-auto">
+                                <h4 class="text-dark-50 text-center pb-0 fw-bold">@_localization.Getkey("SignIn")</h4>
+                                   @*  <p class="text-muted mb-4">Enter your user name and password to access.</p> *@
+                                </div>
+
+                                <form id="myForm" class="forms-sample was-validated">
+
+                                    <div class="mb-3">
+                                    <label for="username" class="form-label">@_localization.Getkey("UserName")</label>
+                                        @Html.TextBoxFor(model => model.UserName, new { @class = "form-control", @id = "userName", @required = "required", @maxlength = "50", onkeyup = "Validate();", onkeypress = "return AvoidSpace()" })
+
+                                    </div>
+                                    <div class="mb-3">
+
+                                    <label for="password" class="form-label">@_localization.Getkey("Password")</label>
+                                        <div class="input-group input-group-merge">
+                                            @Html.PasswordFor(model => model.Password, new { @class = "form-control", @id = "pwd", @required = "required", @maxlength = "50", onkeyup = "Validate();", onkeypress = "return AvoidSpace()" })
+                                            <div class="input-group-text" data-password="false">
+                                                <span class="password-eye"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3 mb-0 text-center">
+                                        <button type="button" class="btn btn-primary" id="btnLogin" onclick="submitLogin()" disabled="disabled">Log In</button>
+                                        
+                                    </div>
+
+                                </form>
+                            </div> <!-- end card-body -->
+                        </div>
+                        <!-- end card -->
+
+
+
+                    </div> <!-- end col -->
+                    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+                        <div class="loader">
+                            <div class="loader-inner line-scale">
+                                <div></div>
+                                <div></div>
+                                <div></div>
+                                <div></div>
+                                <div></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </div>
+    
+         <footer class="footer footer-alt">
+             <script>document.write(new Date().getFullYear())</script> © schulmate
+        </footer>
+         <!-- Vendor js -->
+        <script src="~/assets/js/vendor.min.js"></script>
+        
+        <!-- App js -->
+        <script src="~/assets/js/app.min.js"></script>
+        <script src="~/assets/js/toastr.js"></script>
+    <!-- endinject -->
+
+        <script type="text/javascript">
+
+            if (window.history && window.history.pushState) {
+                window.history.pushState(null, null, window.location.href);
+                window.onpopstate = function () {
+                    window.history.pushState(null, null, window.location.href);
+                };
+            }
+
+        var input = document.getElementById("pwd");
+input.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    document.getElementById("btnLogin").click();
+  }
+});
+
+   function chkFields(){
+      var isvalid=true;
+      var usrname = document.getElementById("userName");
+      if(usrname.value === ""){
+           isvalid =false;
+      }
+      var password = document.getElementById("pwd");
+      if(password.value === ""){
+           isvalid =false;
+      }
+     return isvalid;
+  }
+  function Validate(){
+      if (chkFields()){
+          $('#btnLogin').prop('disabled', false);
+      }
+      else{
+           $('#btnLogin').prop('disabled', true);
+      }
+
+
+  }
+   function AvoidSpace() {
+              if (event.keyCode == 32) {
+                      event.returnValue = false;
+                      return false;
+              }
+            }
+
+    function submitLogin()
+    {
+        $("#loaderDiv").show("slow", function () {
+             var myformdata = $("#myForm").serialize();
+               $.ajax({
+                type: 'POST',
+                url : '@Url.Action("CheckUserLogin", "Login")',
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                data: myformdata,
+                      success: function (response) {
+                          if (response != null) {                              
+                              var user = JSON.parse(response);
+                              if (user.loginStatus == "1") {
+                                  if (user.licenseStatus == "1") {                                    
+                                      $.ajax({
+                                          url: '@Url.Action("SetUser", "Login")?userId=' + user.userId + '&token=' + user.token + '',
+                                        type: 'POST',
+                                          success: function (data) {
+                                              if (data != null) {
+                                                  toastr.success("Logged In successfully");
+                                                  window.location.href = '@Url.Action("Index", "Home")';
+                                              }                                           
+                                        },
+                                        error: function (error) {
+                                            toastr.error("Unable to Process the request");
+                                        }
+                                    });
+                                  }
+                                  else {
+                                      toastr.error("License is Expired.. Please contact Administrator");
+                                  }
+                              }
+                              else {
+                                  toastr.error("Invalid User Name or Password");
+                              }
+
+                              } else {
+                                    toastr.error('sucess but no response' + response);
+                              }
+                              $("#loaderDiv").hide();
+                      },
+                error: function (response) {
+                         toastr.error('return null response' + response);
+                }
+            })
+        })
+    }
+        </script>
+  </body>
+</html>

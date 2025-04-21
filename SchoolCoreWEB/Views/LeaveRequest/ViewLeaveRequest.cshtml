@@ -1,0 +1,82 @@
+﻿@model SchoolCoreWEB.Models.VLeaveRequest
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">           
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("FromDate") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.StrFromDate)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("ToDate") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.StrToDate)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Reason") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.Reason)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("NoOfDays") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.DayCount)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("RequestDate") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.StrCreatedDate)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Status") : </label>
+                </div>
+                <div class="col-7">
+                    @{
+                        if (Model.StatusId == "1")
+                        {
+                            <span class="badge bg-warning">@_localization.Getkey("UnderProcess")</span>
+                        }
+                        if (Model.StatusId == "2")
+                        {
+                            <span class="badge bg-danger">@_localization.Getkey("Rejected")</span>
+                        }
+                        if (Model.StatusId == "3")
+                        {
+                            <span class="badge bg-success">@_localization.Getkey("Approved")</span>
+                        }
+                    }
+                </div>
+            </div>
+            @if (Model.StatusId != "1")
+            {
+                <div class="row">
+                    <div class="col-5">
+                        <label>@_localization.Getkey("Comment") : </label>
+                    </div>
+                    <div class="col-7">
+                        @Html.DisplayFor(model => model.Comment)
+                    </div>
+                </div>
+            }
+        </div>
+    </div>   
+</div>

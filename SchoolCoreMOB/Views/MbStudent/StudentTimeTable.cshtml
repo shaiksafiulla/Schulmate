@@ -1,0 +1,144 @@
+﻿@model VPersonnelAttendenceBenchmark
+@using Localization.Services
+@using Newtonsoft.Json
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    VUserInfo userStudentTime = new VUserInfo();
+    var userInfokey = @Context.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        userStudentTime = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+    }
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Time Table</h2>
+</div>
+<div class="content mb-2">
+    <div id="weekday-container" style="display: flex; justify-content: space-between; align-items: stretch;">
+    </div>
+</div>
+
+
+<div id="period-container" style="margin-top:10px">
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+    let periodArr=[];
+       let timeTableArr=[];
+                  $(document).ready(function () {
+                     // setActiveNav("@Url.Action("Index", "Home")");
+                     getSectionTransTimeTableById(@userStudentTime.SectionId);
+                  });
+
+
+       function getSectionTransTimeTableById(id) {
+                      showLoading();
+                      getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Section/TransTimeTable/`+id+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                               .then(response => {
+
+                                    getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Section/MbTimeTable/`+id+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                                       .then(childresponse => {
+                                           if(childresponse !== null && childresponse.length > 0){
+                                                timeTableArr = childresponse;
+                                                periodArr = response.castTransTimetable.periods;
+                                                setWeekdayBinding(response.castTransTimetable.weekdays);
+                                           }
+                                            hideLoading();
+                                       })
+                                       .catch(error => {
+                                            showToast('2', `@_localization.Getkey("Error")`);
+                                       });
+
+                               })
+                               .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                               });
+        }
+       function setWeekdayBinding(data){
+                 $('#weekday-container').empty();
+                const container = document.getElementById('weekday-container');
+                 data.forEach(card => {
+                     const div = document.createElement('div');
+                     div.className = 'weekdaycard';
+                   //  div.setAttribute('data-value', card.id);
+                     div.textContent = card.name;
+                    // Add click event listener
+                     div.addEventListener('click', () => {
+                             const selectedCard = container.querySelector('.weekdaycard.selected');
+                             if (selectedCard) {
+                                 selectedCard.classList.remove('selected');
+                             }
+                             div.classList.add('selected');
+                             setPeriodBinding(card.name);
+                     });
+                     container.appendChild(div);
+                 });
+
+                  // Automatically select the card based on today's weekday
+                   const todayWeekdayName = getTodayWeekdayName();  // Get today's weekday
+                   const weekdayCards = container.querySelectorAll('.weekdaycard');
+                   weekdayCards.forEach(card => {
+                       if (card.textContent === todayWeekdayName) {
+                           card.classList.add('selected');  // Manually add selected class
+                           setPeriodBinding(card.textContent);  // Call setTeacherPeriodBinding directly after selecting the card
+                       }
+                   });
+
+       }
+       function setPeriodBinding(weekname){
+           $('#period-container').empty();
+           var dayInt = getDayOfWeekInt(weekname);
+           let selected = timeTableArr.filter(item => item.dayOfWeek === dayInt);
+            var anchors = "";
+               if (selected.length === 0) {
+                   anchors = `
+                       <div>
+                           <p>No data available</p>
+                       </div>`;
+               }
+               else{
+                   for (var i = 0; i < periodArr.length; i++){
+                      var breakOrPeriod = periodArr[i].isBreak
+                     ? periodArr[i].description
+                     : selected.filter(item => item.fromTime === periodArr[i].startTime && item.toTime === periodArr[i].endTime)[0]?.subjectActivityName ?? '';
+
+                       var personName = periodArr[i].isBreak
+                         ? ''
+                         : selected.filter(item => item.fromTime === periodArr[i].startTime && item.toTime === periodArr[i].endTime)[0]?.personnelName ?? '';
+
+                                anchors+=`<a href="#" class="card card-style mb-2 custom-card rounded-2">
+                                           <div class="d-flex pt-2 pb-2">
+                                               <!-- Badges Container: Align badges to the left -->
+                                               <div class="d-flex flex-column justify-content-center ps-3">
+                                                   <span class="badge bg-highlight color-white font-xl py-2 px-3 mb-1">` + periodArr[i].startTime.substring(0, 5) +`</span>
+                                                   <span class="badge bg-info color-white font-xl py-2 px-3">` + periodArr[i].endTime.substring(0, 5) +`</span>
+                                               </div>
+
+                                               <!-- Content Section: Center align the content in the remaining space -->
+                                                <div class="d-flex flex-column justify-content-center ms-3">
+                                                       <h5 class="color-theme font-600 text-start">` + breakOrPeriod + `</h5>
+                                                       <p class="mt-n1 font-10 color-highlight mb-1 text-start">` + personName + `</p>
+                                                   </div>
+                                           </div>
+                                       </a>`;
+                   }
+
+               }
+          $('#period-container').append(anchors);
+       }
+
+
+
+
+
+
+
+
+
+</script>

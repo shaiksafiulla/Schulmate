@@ -1,0 +1,128 @@
+﻿@model SchoolCoreWEB.Models.LeaveReport
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i>@_localization.Getkey("LeaveReportInfo")</div>
+
+		<div class="ribbon-content">
+			<div class="form-group mb-3" style="display:none">
+				<label for="branch" class="form-label">@_localization.Getkey("SessionYear")</label>
+				@Html.DropDownListFor(model => model.SessionYearId, Model.SessionYearList, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlsessionyear", onChange = "selectedsessionyearIndexChanged()" })
+			</div>
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="leaveReportGrid">
+				@* <thead>
+                        <tr>
+                            <th style="display:none;">SessionYearId</th>
+                            <th>@_localization.Getkey("Month")</th>
+                            <th>@_localization.Getkey("Allocated")</th>
+                            <th>@_localization.Getkey("CasualLeave")</th>
+                            <th>@_localization.Getkey("LeaveWithOutPay")</th>
+                            <th>@_localization.Getkey("TotalDays")</th>
+                            <th>@_localization.Getkey("RemainingDays")</th>                            
+                        </tr>
+                    </thead> *@
+			</table>
+		</div>
+	</div>
+</div>
+<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+	<div class="loader">
+		<div class="loader-inner line-scale">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+
+	</div>
+</div>
+
+
+@section Scripts {
+	<script>
+		 $(document).ready(function () {
+
+			 var jsmodel = @Html.Raw(Json.Serialize(Model));
+			 if(jsmodel !=null){
+				 $("#ddlsessionyear").val(jsmodel.sessionYearId);
+				 getSPLeaveReport();
+			 }
+		 });
+		 function selectedsessionyearIndexChanged(){
+			 getSPLeaveReport();
+		 }
+		function getSPLeaveReport(){
+			   var objperson =JSON.parse('@Html.Raw(@userParamkey)');
+				  let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/LeaveRequest/LeaveReport/`+ objperson.PersonId +``;
+			  getOperation(url,`@strtoken`,`@Html.Raw(@userParamkey)`)
+							  .then(response => {
+									  fillReport(JSON.parse(response.result));
+							  })
+							  .catch(error => {
+								   toastr.error(`@_localization.Getkey("Error")`);
+							  });
+		}
+
+		function fillReport(data){
+				  var columns=[];
+
+
+							   Object.keys(data[0]).forEach( function (key, index){
+
+								   columns.push({data: key,
+												   title: key,
+												  render: function (data, type, row) {
+													   if(row[key] == null){
+														  return '';
+													  }
+													  else{
+														  return ' <label class="form-label">'+row[key]+'</label> ';
+
+													  }
+												   }
+											   });
+
+						   })
+						   // console.log(columns);
+
+							  $("#leaveReportGrid").DataTable({
+								  "bDestroy": true,
+									data : data,
+								  columns: columns,
+									columnDefs: [{
+			"defaultContent": "-",
+			"targets": "_all"
+		  }],
+								  order: [[0, "asc"]],
+								   dom: 'lBfrtip',
+								  buttons: [
+									  {
+										  extend: 'csvHtml5',
+										  text: '<i class="ri-file-excel-line"></i>',
+										  titleAttr: 'csv',
+										  filename: `@_localization.Getkey("LeaveReport")`,
+										  className: 'btn btn-outline-light btn-sm',
+										  exportOptions: {
+											  columns: [0,1, 2, 3, 4, 5, 6,7,8,9,10,11] // Adjust if you want to export all columns or just specific ones
+										  }
+									  }
+								  ]
+							  });
+
+							  $("#loaderDiv").hide();
+		  }
+
+
+	</script>
+}
+
+

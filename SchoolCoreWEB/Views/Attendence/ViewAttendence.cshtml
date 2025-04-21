@@ -1,0 +1,529 @@
+﻿@model SchoolCoreWEB.Models.Attendence
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+
+
+
+<form id="myForm">
+    @Html.HiddenFor(m => m.Id, new { @id = "hfviewattendenceid" })
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfviewbranchid" })
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfviewsessionyearid" })
+    <input type="hidden" id="hfworkingdate" />
+
+    <div class="row">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Attendence")</div>
+                <div class="float-end mt-0">
+                    <h4>Date : @Model.WorkingDate.ToString("dd-MM-yyyy")</h4>
+                </div>
+                <div class="ribbon-content">
+                    <div class="row">
+                        <div class="list-group list-group-horizontal">
+                            <a href="#" class="list-group-item list-group-item-action" onclick="getSectionAttendence()"><i class="ri-shape-line"></i><span>@_localization.Getkey("Sections")</span> </a>
+                            <a href="#" class="list-group-item list-group-item-action" onclick="getPersonnelAttendence('2')"><i class="ri-user-star-line"></i> @_localization.Getkey("Admin")</a>
+                            <a href="#" class="list-group-item list-group-item-action" onclick="getPersonnelAttendence('3')"><i class="ri-group-line"></i> @_localization.Getkey("Teachers")</a>
+                            <a href="#" class="list-group-item list-group-item-action" onclick="getPersonnelAttendence('5')"><i class="ri-team-line"></i> @_localization.Getkey("Staff")</a>
+                            @* <a href="#" class="list-group-item list-group-item-action" onclick="getPersonnelAttendence('6')"><i class="ri-pencil-line"></i> @_localization.Getkey("Drivers")</a>*@
+                        </div>
+
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="row" id="divbranchcls" style="display:none;">
+                            <div class="row">
+                                <div class="list-group list-group-horizontal" id="ulbranchcls">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div id="divstudent" style="display:none">
+                                    <table class="table table-sm table-bordered table-centered mb-0" id="tblstudent">
+                                        <thead>
+                                            <tr>
+                                                <th>@_localization.Getkey("RollNo")</th>
+                                                <th>@_localization.Getkey("Name")</th>
+                                                @*  <th>@_localization.Getkey("Class")</th>
+                                                    <th>@_localization.Getkey("Section")</th> *@
+                                                <th>
+                                                    @_localization.Getkey("Result")
+                                                </th>
+                                                <th>@_localization.Getkey("Remarks")</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="studentbody">
+                                        </tbody>
+                                    </table>
+                                    
+
+                                </div>
+                            </div>
+                            @*<div class="col-2">
+                                <div class="list-group" id="ulbranchcls">
+                                </div>
+
+                            </div>
+                            <div class="col-10">
+                            </div>*@
+                        </div>
+                        <div class="row" id="divadmin" style="display:none;">
+                            <table class="table table-sm table-bordered table-centered mb-0" id="tbladmin">
+                                <thead>
+                                    <tr>
+                                        <th>@_localization.Getkey("EmployeeNo")</th>
+                                        <th>@_localization.Getkey("Name")</th>
+                                        <th>@_localization.Getkey("Result")</th>
+                                        <th>@_localization.Getkey("Remarks")</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminbody">
+                                </tbody>
+                            </table>
+                           
+                        </div>
+                        <div class="row" id="divteacher" style="display:none;">
+                            <table class="table table-sm table-bordered table-centered mb-0" id="tblteacher">
+                                <thead>
+                                    <tr>
+                                        <th>@_localization.Getkey("EmployeeNo")</th>
+                                        <th>@_localization.Getkey("Name")</th>
+                                        <th>@_localization.Getkey("Result")</th>
+                                        <th>@_localization.Getkey("Remarks")</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacherbody">
+                                </tbody>
+                            </table>
+                            
+                        </div>
+                        <div class="row" id="divstaff" style="display:none;">
+                            <table class="table table-sm table-bordered table-centered mb-0" id="tblstaff">
+                                <thead>
+                                    <tr>
+                                        <th>@_localization.Getkey("EmployeeNo")</th>
+                                        <th>@_localization.Getkey("Name")</th>
+                                        <th>@_localization.Getkey("Result")</th>
+                                        <th>@_localization.Getkey("Remarks")</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffbody">
+                                </tbody>
+                            </table>
+                           
+                        </div>
+                        <div class="row" id="divdriver" style="display:none;">
+                            <table class="table table-sm table-bordered table-centered mb-0" id="tbldriver">
+                                <thead>
+                                    <tr>
+                                        <th>@_localization.Getkey("EmployeeNo")</th>
+                                        <th>@_localization.Getkey("Name")</th>
+                                        <th>@_localization.Getkey("Result")</th>
+                                        <th>@_localization.Getkey("Remarks")</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="driverbody">
+                                </tbody>
+                            </table>
+                           
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+
+
+
+<script type="text/javascript">
+    // $('#chkstudent').change(function () {
+    //         $('#tblstudent tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+    //     });
+    $(document).ready(function () {
+        // Validate();
+        $('.list-group-item').click(function () {
+
+            $('.list-group-item').removeClass('active');
+            $(this).addClass('active');
+        });
+        $('#ulbranchcls .list-group-item').click(function () {
+
+            $('.list-group-item').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        var jsonmodel = @Html.Raw(Json.Serialize(Model));
+        if (jsonmodel != null) {
+            $("#hfworkingdate").val(jsonmodel.workingDate);
+        }
+
+        // if (@Html.Raw(Json.Serialize(Model))) != null) {
+        // var objrc = @Html.Raw(Json.Serialize(Model));
+        // if(objrc.Id==null){
+        //             objrc.id=0;
+        //         }
+        //     if (objrc.BranchId > 0) {
+        //             getBranchClassAttendenceByBranch();
+        //         }
+
+        // }
+    });
+
+    // function chkFields() {
+    //     var isvalid = true;
+    //     if ($("#hfbranchid").val() == "") {
+    //         isvalid = false;
+    //     }
+    //     if ($("#hfsessionyearid").val() == "") {
+    //         isvalid = false;
+    //     }
+    //     if ($("#hfworkingdate").val() == "") {
+    //         isvalid = false;
+    //     }
+    //     return isvalid;
+    // }
+    // function Validate() {
+    //     if (chkFields()) {
+    //         $('#btnsubmit').prop('disabled', false);
+    //     }
+    //     else {
+    //         $('#btnsubmit').prop('disabled', true);
+    //     }
+    // }
+    // function selectedBranchIndexChanged() {
+    //     if ($("#ddlbranch").val() != "") {
+    //         getBranchClassAttendenceByBranch();
+    //     }
+    //     else {
+    //         $("#ulbranchcls").empty();
+    //         $("#divbranchcls").hide();
+    //     }
+    // }
+    function getSectionAttendence() {
+        $("#loaderDiv1").show("slow", function () {
+            $.ajax({
+
+                type: "post",
+                async: false,
+                url: '@Url.Action("GetSectionAttendence", "Attendence")',
+                data: { Id: $("hfviewattendenceid").val(), branchId: $("#hfviewbranchid").val(), sessionyearId: $("#hfviewsessionyearid").val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+
+                    if (response != null) {
+                        var result = response;
+
+                        $("#studentbody").empty();
+                        $("#teacherbody").empty();
+                        $("#staffbody").empty();
+                        $("#driverbody").empty();
+                        $("#divteacher").hide();
+                        $("#divstaff").hide();
+                        $("#divdriver").hide();
+                        $("#divadmin").hide();
+
+                        $("#divbranchcls").show();
+                        $("#ulbranchcls").empty();
+                        var liexam = [];
+                        for (var i = 0; i < result.length; i++) {
+                            var item = setLiSectionAttendence(result[i]);
+                            liexam.push(item);
+                        }
+                        $("#ulbranchcls").html(liexam);
+                        $("#loaderDiv1").hide();
+
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            });
+        })
+
+    }
+    function setLiSectionAttendence(data) {
+
+        // var li = document.createElement('li');
+        // li.className = "list-group-item";
+        // li.style.backgroundColor = data.attStatusColor;
+        // li.onclick = (function (id, li) { return function () { SelectedSectionAttendenceChanged(id, li); } })(data.id, li);
+
+        // var hidden = document.createElement('input');
+        // hidden.type = "hidden";
+        // hidden.value = data.id;
+
+        var anchor = document.createElement('a');
+        anchor.href = "#";
+        anchor.className = "list-group-item list-group-item-action";
+        anchor.innerText = data.name;
+        anchor.onclick = (function (id, anchor) { return function () { SelectedSectionAttendenceChanged(id, anchor); } })(data.id, anchor);
+
+        // li.appendChild(hidden);
+        // li.appendChild(anchor);
+        // return li;
+        return anchor;
+    }
+    function SelectedSectionAttendenceChanged(id, li) {
+        getStudentAttendence(id);
+    }
+    function getStudentAttendence(id) {
+        $("#loaderDiv1").show("slow", function () {
+            $.ajax({
+                type: "post",
+                async: false,
+                url: '@Url.Action("GetStudentAttendence", "Attendence")',
+                data: { Id: $("#hfviewattendenceid").val(), SectionId: id, SessionYearId: $("#hfviewsessionyearid").val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+
+                        var result = response;
+                        $("#studentbody").empty();
+
+                        for (var j = 0; j < result.length; j++) {
+                            insertintotbl(result[j]);
+                        }
+                        $("#divstudent").show();
+                        $("#loaderDiv1").hide();
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            });
+        })
+
+    }
+    function getPersonnelAttendence(type) {
+        $("#loaderDiv1").show("slow", function () {
+            $.ajax({
+                type: "post",
+                async: false,
+                url: '@Url.Action("GetPersonnelAttendence", "Attendence")',
+                data: { Id: $("#hfviewattendenceid").val(), branchId: $("#hfviewbranchid").val(), SessionYearId: $("#hfviewsessionyearid").val(), personnelType: type },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var result = response;
+
+                        $("#divbranchcls").hide();
+                        $("#divstudent").hide();
+
+                        $("#ulbranchcls").empty();
+                        $("#studentbody").empty();
+
+
+                        $("#adminbody").empty();
+                        $("#teacherbody").empty();
+                        $("#staffbody").empty();
+                        $("#driverbody").empty();
+
+                        switch (type) {
+                            case '2':
+                                $("#divteacher").hide();
+                                $("#divstaff").hide();
+                                $("#divdriver").hide();
+                                $("#divadmin").show();
+                                break;
+                            case '3':
+                                $("#divteacher").show();
+                                $("#divstaff").hide();
+                                $("#divdriver").hide();
+                                $("#divadmin").hide();
+                                break;
+                            case '5':
+                                $("#divteacher").hide();
+                                $("#divstaff").show();
+                                $("#divdriver").hide();
+                                $("#divadmin").hide();
+                                break;
+                            case '6':
+                                $("#divteacher").hide();
+                                $("#divstaff").hide();
+                                $("#divdriver").show();
+                                $("#divadmin").hide();
+                                break;
+                        }
+
+                        for (var j = 0; j < result.length; j++) {
+                            insertintopersonneltbl(result[j], type);
+                        }
+                        $("#loaderDiv1").hide();
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            });
+        })
+    }
+    function insertintotbl(data) {
+        var tblbdy = document.getElementById("studentbody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.studentId;
+        cell1.style.display = "none";
+
+        cell2 = newRow.insertCell(1);
+        cell2.innerHTML = data.branchClassId;
+        cell2.style.display = "none";
+
+        cell3 = newRow.insertCell(2);
+        cell3.innerHTML = data.classId;
+        cell3.style.display = "none";
+
+        cell4 = newRow.insertCell(3);
+        cell4.innerHTML = data.sectionId;
+        cell4.style.display = "none";
+
+        cell5 = newRow.insertCell(4);
+        cell5.innerHTML = data.leaveType;
+        cell5.style.display = "none";
+
+        var spcls = document.createElement("span");
+        spcls.innerHTML = data.rollNo;
+        cell6 = newRow.insertCell(5);
+        cell6.appendChild(spcls);
+
+        var spcls2 = document.createElement("span");
+        spcls2.innerHTML = data.studentName;
+        cell7 = newRow.insertCell(6);
+        cell7.appendChild(spcls2);
+
+        var divswitch = document.createElement('div');
+        divswitch.className = "form-check form-switch";
+        var chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "form-check-input";
+        chk.checked = data.isSelected;
+        if (data.leaveType != "") {
+            chk.readOnly = "readOnly";
+        }
+        divswitch.appendChild(chk);
+        cell8 = newRow.insertCell(7);
+        cell8.appendChild(divswitch);
+
+        if (data.leaveType != "") {
+            var input = document.createElement("input");
+            input.className = "form-control form-control-sm"
+            input.readOnly = "readOnly";
+            if (data.leaveType == "2") {
+                input.value = `@_localization.Getkey("FirstHalf")`;
+            }
+            if (data.leaveType == "3") {
+                input.value = `@_localization.Getkey("SecondHalf")`;
+            }
+            cell9 = newRow.insertCell(8);
+            cell9.appendChild(input);
+        }
+        else {
+            var input1 = document.createElement("input");
+            input1.className = "form-control form-control-sm"
+            input1.value = data.remarks;
+            cell9 = newRow.insertCell(8);
+            cell9.appendChild(input1);
+        }
+
+
+    }
+    function insertintopersonneltbl(data, type) {
+        var tblbdy = "";
+        switch (type) {
+            case '2':
+                tblbdy = document.getElementById("adminbody");
+                break;
+            case '3':
+                tblbdy = document.getElementById("teacherbody");
+                break;
+            case '5':
+                tblbdy = document.getElementById("staffbody");
+                break;
+            case '6':
+                tblbdy = document.getElementById("driverbody");
+                break;
+        }
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.personnelId;
+        cell1.style.display = "none";
+
+        cell2 = newRow.insertCell(1);
+        cell2.innerHTML = data.leaveType;
+        cell2.style.display = "none";
+
+
+        var spcls = document.createElement("span");
+        spcls.innerHTML = data.employeeNo;
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(spcls);
+
+        var spcls2 = document.createElement("span");
+        spcls2.innerHTML = data.employeeName;
+        cell4 = newRow.insertCell(3);
+        cell4.appendChild(spcls2);
+
+        var divswitch = document.createElement('div');
+        divswitch.className = "form-check form-switch";
+        var chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "form-check-input";
+        chk.checked = data.isSelected;
+        if (data.leaveType != "") {
+            chk.readOnly = "readOnly";
+        }
+        divswitch.appendChild(chk);
+        cell5 = newRow.insertCell(4);
+        cell5.appendChild(divswitch);
+
+        if (data.leaveType != "") {
+            var input = document.createElement("input");
+            input.className = "form-control form-control-sm"
+            input.readOnly = "readOnly";
+            if (data.leaveType == "2") {
+                input.value = `@_localization.Getkey("FirstHalf")`;
+            }
+            if (data.leaveType == "3") {
+                input.value = `@_localization.Getkey("SecondHalf")`;
+            }
+            cell6 = newRow.insertCell(5);
+            cell6.appendChild(input);
+        }
+        else {
+            var input1 = document.createElement("input");
+            input1.className = "form-control form-control-sm"
+            input1.value = data.remarks;
+            cell6 = newRow.insertCell(5);
+            cell6.appendChild(input1);
+        }
+
+
+    }
+   
+    
+
+
+</script>

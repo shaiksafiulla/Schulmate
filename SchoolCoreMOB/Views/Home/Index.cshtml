@@ -1,0 +1,527 @@
+﻿@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Localization
+@using Newtonsoft.Json
+@using SchoolCoreMOB.Controllers
+@using SchoolCoreMOB.Models
+@using Localization.Services
+@using static SchoolCoreMOB.Helpers.Shared
+@inject IConfiguration Configuration
+@{
+    VUserInfo userHome = new VUserInfo();
+    var userInfokey = @Context.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        userHome = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+    }
+    string userParamkey = @Context.Session.GetString("UserParam");
+    string strtoken = @Context.Session.GetString("strtoken");
+}
+<style>
+    .card-center {
+        display: flex;
+        align-items: flex-start; /* Align items to the top */
+        justify-content: center; /* Center horizontally */
+        height: 100%; /* Ensure the card takes full height */
+    }
+</style>
+
+<div class="page-title page-title-small">
+    <h6 data-username="@(userHome.FullName)" class="greeting-text"></h6>
+    <a href="#" data-menu="menu-main1" class="bg-fade-highlight-light shadow-xl preload-img" data-src="@Html.Raw(userHome.FilePath.Replace("\\", "/"))"></a>
+</div>
+<div class="splide single-slider slider-no-arrows slider-no-dots" id="single-homeslider-1">
+    <div class="splide__track">
+        <div class="splide__list" id="calendarslides">
+        </div>
+    </div>
+</div>
+
+<div class="content mb-0">
+    <div class="row mb-0">
+        <h5 class="float-start font-16 font-600">✌🏻 Personal</h5>
+        <div class="clearfix"></div>
+
+       @* <div class="col-6">
+                <a href="#" data-card-height="100" class="card card-style mb-4 mx-0" onclick="setHomeChildNavigation(`/ChatBot`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-days font-30 pt-3 color-blue-dark"></i>
+                        <h6 class="pt-2">CHATBOT</h6>
+                    </div>
+                </a>
+            </div>*@
+
+        @if (userHome.UserType == ((int)UserType.Admin).ToString())
+        {
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Attendence`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-days font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Presence</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Profile`)">
+                    <div class="text-center">
+                        <i class="fa fa-circle-user font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Persona</h8>
+                    </div>
+                </a>
+            </div>
+            
+        }
+        @if (userHome.UserType == ((int)UserType.Teacher).ToString())
+        {
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Attendence`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-days font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Presence</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Teacher`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-check font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Roster</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Profile`)">
+                    <div class="text-center">
+                        <i class="fa fa-circle-user font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Persona</h8>
+                    </div>
+                </a>
+            </div>
+        }
+        @if (userHome.UserType == ((int)UserType.Student).ToString())
+        {
+
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Attendence`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-days font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Presence</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" id="anchormbTimeTable">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-check font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Roster</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Profile`)">
+                    <div class="text-center">
+                        <i class="fa fa-circle-user font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Persona</h8>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+<div class="content mb-2 mt-2">
+    <div class="row mb-0">
+        <h5 class="float-start font-16 font-600">⚡️ Actions</h5>
+        <div class="clearfix"></div>
+        @if (userHome.UserType == ((int)UserType.Admin).ToString())
+        {
+
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/LeaveRequest`)">
+                    <div class="text-center">
+                        <i class="fa fa-compass font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Leaves</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/AdminNotification`)">
+                    <div class="text-center">
+                        <i class="fa fa-paper-plane font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">My Posts</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0  custom-card rounded-2" onclick="setHomeChildNavigation(`/StudentDue`)">
+                    <div class="text-center">
+                        <i class="fa fa-money-check-alt font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">F.Dues</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0  custom-card rounded-2" onclick="setHomeChildNavigation(`/TeacherPerformance`)">
+                    <div class="text-center">
+                        <i class="fa fa-tachometer-alt font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Caliber</h8>
+                    </div>
+                </a>
+            </div>
+        }
+        @if (userHome.UserType == ((int)UserType.Teacher).ToString())
+        {
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/LeaveRequest`)">
+                    <div class="text-center">
+                        <i class="fa fa-compass font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Leaves</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Announcement`)">
+                    <div class="text-center">
+                        <i class="fa fa-chalkboard-teacher font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Works</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/StudentAttendence`)">
+                    <div class="text-center">
+                        <i class="fa fa-check-circle font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Roll.Call</h8>
+                    </div>
+                </a>
+            </div>
+        }
+        @if (userHome.UserType == ((int)UserType.Student).ToString())
+        {
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/LeaveRequest`)">
+                    <div class="text-center">
+                        <i class="fa fa-compass font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Leaves</h8>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+<div class="content mb-2 mt-2">
+    <div class="row mb-0">
+        <h5 class="float-start font-16 font-600">🎓 MIS</h5>
+        <div class="clearfix"></div>
+        @if (userHome.UserType != ((int)UserType.Student).ToString())
+        {
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Calender`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Calender</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Section`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar-week font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">C.Time</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Student`)">
+                    <div class="text-center">
+                        <i class="fa fa-user-clock font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark"> Students </h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Schedule`)">
+                    <div class="text-center">
+                        <i class="fa fa-book font-30 pt-3 color-blue-dark"></i>                        
+                        <h8 class="pt-2 color-blue-dark">Examine</h8>
+                    </div>
+                </a>
+            </div>
+        }
+        @if (userHome.UserType == ((int)UserType.Student).ToString())
+        {
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" id="anchormbHomework">
+                    <div class="text-center">
+                        <i class="fa fa-chalkboard-teacher font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Works</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" id="anchormbPayment">
+                    <div class="text-center">
+                        <i class="fa fa-credit-card font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Payments</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" onclick="setHomeChildNavigation(`/Calender`)">
+                    <div class="text-center">
+                        <i class="fa fa-calendar font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Calender</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" id="anchormbScheudle">
+                    <div class="text-center">
+                        <i class="fa fa-book font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Examine</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" id="anchormbReportCard">
+                    <div class="text-center">
+                        <i class="fa fa-file font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Reports</h8>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="#" data-card-height="80" class="card card-style mb-4 mx-0 custom-card rounded-2" id="anchormbPerformance">
+                    <div class="text-center">
+                        <i class="fa fa-area-chart font-30 pt-3 color-blue-dark"></i>
+                        <h8 class="pt-2 color-blue-dark">Progress</h8>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="~/scripts/action.js"></script>
+<script type="text/javascript" src="~/scripts/utility.js"></script>
+<script>
+     let homesplide = null;
+    $(document).ready(function (){
+       //  console.log(homesplide); // Check if Splide is available
+         initializeSplide();
+        getCalendarEventsByMonth();
+        $("#anchormbPayment").on("click", function(event) {
+                 event.preventDefault();
+                 setNewChildNavigation(`/MbStudent/Payments?Id=`+@userHome.PersonId+``);
+        });
+        $("#anchormbPerformance").on("click", function(event) {
+                 event.preventDefault();
+                 setNewChildNavigation(`/MbStudent/Performance?Id=`+@userHome.PersonId+``);
+        });
+        $("#anchormbReportCard").on("click", function(event) {
+                event.preventDefault();
+                setNewChildNavigation(`/MbStudent/ReportCard?Id=`+@userHome.PersonId+``);
+        });
+        $("#anchormbScheudle").on("click", function(event) {
+                event.preventDefault();
+                setNewChildNavigation(`/MbStudent/Schedule?Id=`+@userHome.PersonId+``);
+        });
+         $("#anchormbHomework").on("click", function(event) {
+                event.preventDefault();
+                setNewChildNavigation(`/MbStudent/Homework?Id=`+@userHome.PersonId+``);
+        });
+         $("#anchormbTimeTable").on("click", function(event) {
+                event.preventDefault();
+                setNewChildNavigation(`/MbStudent/TimeTable?Id=`+@userHome.PersonId+``);
+        });
+    });
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(function(registration) {
+            Notification.requestPermission().then(function (permission) {
+                    if (permission === "granted") {
+                        subscribeUserToPush(registration);
+                    }
+                    else if (permission === "denied"){
+                        unSubscribeUserToPush();
+                    }
+                });
+        }).catch(function(error) {
+            console.log('Service Worker failed to be ready:', error);
+        });
+        navigator.serviceWorker.addEventListener('message', function(event) {
+                    const message = event.data;
+
+                    if (message.type === 'SHOW_DIV') {
+                        const lblNoticount = document.getElementById('lblNoticount');
+                        if (lblNoticount) {
+                            var currentCount = parseInt(lblNoticount.innerText) || 0;
+                            currentCount += 1;
+                            lblNoticount.innerHTML = currentCount;
+                        } else {
+                            console.error('Element with id "lblNoticount" not found');
+                        }
+                    }
+                    //if (message.type === 'SHOW_DIV') {
+                    //    var currentCount = parseInt(document.getElementById('lblNoticount').innerText) || 0;
+                    //    currentCount += 1; // Increment the notification count by 1 (you can modify this logic as per your needs)
+                    //    document.getElementById('lblNoticount').innerHTML = currentCount;
+                    //}
+            });
+        function subscribeUserToPush(registration) {
+                registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlB64ToUint8Array(`@userHome.Vapidkey`) // Public Key from the server
+                }).then(function (subscription) {
+                    // console.log('User is subscribed:', subscription);
+                    var p256dh = subscription.getKey('p256dh');
+                    var auth = subscription.getKey('auth');
+
+                    var p256dhBase64 = arrayBufferToBase64(p256dh);
+                    var authBase64 = arrayBufferToBase64(auth);
+
+                    var subObj ={};
+                    subObj.Id=0;
+                    subObj.EndPoint=subscription.endpoint;
+                    subObj.P256dh= p256dhBase64;
+                    subObj.Auth= authBase64;
+                    subObj.CreatedByUserId=@userHome.Id;
+                    var jdata = JSON.stringify(subObj);
+                    // Send subscription to the server
+                    fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/PushSubscription/Subscribe', {
+                        method: 'POST',
+                        headers: {
+                                'Authorization': 'Bearer ' + `@strtoken`,
+                                'Content-Type': 'application/json'
+                        },
+                        body:jdata,
+                            success: function (response){
+                               // console.log(response);
+                                showToast('1', `User is subscribed Successfully`);
+                            },
+                            error: function (response){
+                               // console.log(response);
+                            showToast('2', `@_localization.Getkey("Error")`);
+                            }
+                    });
+                }).catch(function (error) {
+                       // console.log(error);
+                    console.error('Failed to subscribe the user:', error);
+                });
+        }
+        function unSubscribeUserToPush() {
+            fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/PushSubscription/UnSubscribe', {
+                        method: 'POST',
+                        headers: {
+                                'Authorization': 'Bearer ' + `@strtoken`,
+                                'Content-Type': 'application/json',
+                                'UserParam' : `@Html.Raw(@userParamkey)`
+                        },
+                        success: function (response){
+                            showToast('1', `User is Unsubscribed Successfully`);
+                        },
+                        error: function (response){
+                            showToast('2', `@_localization.Getkey("Error")`);
+                        }
+                    });
+        }
+    }
+    function urlB64ToUint8Array(base64String) {
+                    var padding = '='.repeat((4 - base64String.length % 4) % 4); // Add padding
+                    var base64 = (base64String + padding).replace(/\-/g, '+').replace(/\_/g, '/'); // Convert to regular base64
+                    var rawData = atob(base64); // Decode base64 string
+                    var outputArray = new Uint8Array(rawData.length); // Create an array
+                    for (var i = 0; i < rawData.length; ++i) {
+                        outputArray[i] = rawData.charCodeAt(i); // Convert each char code
+                    }
+                    return outputArray;
+    }
+    function arrayBufferToBase64(buffer) {
+        var binary = '';
+        var bytes = new Uint8Array(buffer);
+        var length = bytes.byteLength;
+        for (var i = 0; i < length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+    }
+    function getCalendarEventsByMonth(){
+        showLoading();
+        var monthId = new Date().getMonth() + 1;
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/CalendarEvent/Month/`+monthId+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                            // console.log(response);
+                                setBindingValues(response);
+                            //  setfooterActiveAfterNavigation();
+                                hideLoading();
+                               // initializeSplide();
+                        })
+                        .catch(error => {
+                                showToast('2', `@_localization.Getkey("Error")`);
+
+                        });
+    }
+
+
+    function setBindingValues(data) {
+       // console.log("Homesplide before destroy:", homesplide);
+
+        // Destroy homesplide if it's already initialized
+        if (homesplide) {
+            homesplide.destroy();
+           // console.log("Homesplide after destroy:", homesplide);
+            homesplide = null; // Set it to null after destroying
+        }
+
+        $('#calendarslides').empty();
+        var anchors = "";
+        for (var i = 0; i < data.length; i++) {
+            anchors += `
+            <div class="splide__slide" >
+                    <div class="card card-style" style="border-radius: 5px; background-color:`+data[i].backgroundColor+`;" data-card-height="100">
+                        <div class="card-top ps-3 pt-3">
+                            <h1 class="color-white font-19">`+data[i].title+`</h1>
+                        </div>
+                        <div class="card-bottom ps-3 pb-2">
+                            <h5 class="color-white">`+data[i].description+`</h5>
+                        </div>
+                        <div class="card-bottom pe-3 pb-2">
+                            <h5 class="color-white float-end">`+data[i].start+`</h5>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+        $('#calendarslides').append(anchors);
+         initializeSplide();
+    }
+     function initializeSplide() {
+         // console.log("Before Initializing Splide...", homesplide);
+          setTimeout(function () {
+                if (typeof Splide !== undefined) {
+                    const homesplide = new Splide('#single-homeslider-1', {
+                        arrows: false,
+                        pagination: false,
+                        autoplay: true,
+                        interval: 3000,
+                        pauseOnHover: false,
+                        pauseOnFocus: false,
+                        rewind: true,
+                    });
+                    homesplide.mount();
+                    homesplide.refresh();  // Refresh after mounting
+                } else {
+                    console.error('Splide is not loaded correctly');
+                }
+            }, 500);  // Delay by 500ms to ensure all elements are in place
+
+    }
+
+
+</script>
+

@@ -1,0 +1,552 @@
+﻿@using SchoolCoreWEB.Models
+@using SchoolCoreWEB.Helpers
+@model IEnumerable<VTeacher>
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("TeachersInfo")</div>
+		<button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('10','0')"><i class="ri-add-line"></i></button>
+		<div class="ribbon-content">
+
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="TeacherGrid">
+				<thead>
+					<tr>
+						<th style="display:none;">Id</th>
+						<th>@_localization.Getkey("Name")</th>
+						<th>@_localization.Getkey("EmployeeNo")</th>
+						<th>@_localization.Getkey("Age")</th>
+						<th>@_localization.Getkey("Gender")</th>
+						<th>@_localization.Getkey("MobileNumber")</th>
+						<th>@_localization.Getkey("Qualification")</th>
+						<th>@_localization.Getkey("Branch")</th>
+						<th>@_localization.Getkey("ClassTeacher")</th>
+						@*<th>@_localization.Getkey("SubjectTeacher")</th>*@
+						<th>@_localization.Getkey("Attendence")</th>
+						<th>@_localization.Getkey("Status")</th>
+						<th>@_localization.Getkey("Actions")</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+</div>
+<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+	<div class="loader">
+		<div class="loader-inner line-scale">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+
+	</div>
+</div>
+<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header modal-colored-header bg-info">
+				<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="myModalBodyDiv1">
+			</div>
+		</div>
+	</div>
+</div>
+<div id="primary-header-modal2" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-full-width modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header modal-colored-header bg-info">
+				<h4 class="modal-title" id="primary-header-modalLabel2">Modal Heading</h4>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="myModalBodyDiv2">
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+@section Scripts {
+	<script>
+		$(document).ready(function () {
+			$("#loaderDiv").show("slow", function () {
+				getTeachers();
+				var resObj = setResourceObj();
+				getResourceObj(JSON.stringify(resObj));
+			})
+		});
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.classes = `@_localization.Getkey("Classes")`;
+			msgobj.viewteacher = `@_localization.Getkey("ViewTeacher")`;
+			msgobj.editteacher = `@_localization.Getkey("EditTeacher")`;
+			msgobj.addteacher = `@_localization.Getkey("AddTeacher")`;
+			msgobj.profile = `@_localization.Getkey("Profile")`;
+			msgobj.classsubjects = `@_localization.Getkey("ClassSubjects")`;
+			msgobj.attachments = `@_localization.Getkey("Attachments")`;
+			msgobj.active = `@_localization.Getkey("Active")`;
+			msgobj.inactive = `@_localization.Getkey("InActive")`;
+
+			return msgobj;
+		}
+		function getTeachers() {
+			$.ajax({
+				type: 'POST',
+				async: false,
+				url: '@Url.Action("GetAll", "Teacher")',
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+				success: function (response) {
+					if (response != null) {
+
+						var teacherData = [];
+						$.each(JSON.parse(response), function (key, value) {
+
+							var className = "";
+							var spans = "";
+							if (value.ClassTeacherCount > 0 && value.TeacherClassName != null) {
+								if (value.ClassTeacherCount == 1) {
+									spans = `<span class="badge bg-info">` + value.TeacherClassName + `</span>`
+								}
+								if (value.ClassTeacherCount > 1) {
+									var clsArray = value.TeacherClassName.split(",");
+									for (var i = 0; i < clsArray.length; i++) {
+										spans += `<span class="badge bg-info">` + clsArray[i] + `</span><br/>`
+									}
+								}
+								className = '<div>' + spans + '</div>'
+							}
+
+							//var subjName = "";
+							//var subspans = "";
+							//if (value.ClassSubjectTeacherCount > 0) {
+							//    if (value.ClassSubjectTeacherCount == 1) {
+							//        subspans = `<span class="badge bg-info">` + value.TeacherSubjectName + `</span>`
+							//    }
+							//    if (value.ClassSubjectTeacherCount > 1) {
+							//        var clssubArray = value.TeacherSubjectName.split(",");
+							//        for (var i = 0; i < clssubArray.length; i++) {
+							//            subspans += `<span class="badge bg-info">` + clssubArray[i] + `</span><br/>`
+							//        }
+							//    }
+							//    subjName = '<div>' + subspans + '</div>'
+							//}
+
+							var spanactive = "";
+							if (value.ActiveStatus == '1') {
+								spanactive = `<span class="badge bg-success"> @_localization.Getkey("Active") </span>`
+							}
+							else {
+								spanactive = `<span class="badge bg-danger"> @_localization.Getkey("InActive") </span>`
+							}
+							var attpercentage = "";
+							if (value.AttPercent > 0) {
+								attpercentage = value.AttPercent + " %";
+							}
+							var pic = "";
+							pic = '<div class="table-user"><img src="' + value.FilePath + '"  class="me-2 rounded-circle" /><span>' + value.FullName + '</span></div>'
+
+							var btndelete = "";
+							if (value.IsDelete == "1") {
+								btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`10`, `TeacherGrid`, ' + value.id + ')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+							}
+							var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,TeacherGrid);"> ' +
+								'<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+								'<div class="dropdown-menu dropdown-menu-end">' +
+								 '<a class="dropdown-item" href="#" onclick="viewProfile('+value.Id+')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("Profile")</a>'+
+								' <a class="dropdown-item" href="#" onclick="onLoadAttachments(`3`,' + value.Id + ')"><i class="ri-list-ordered"></i>&nbsp; @_localization.Getkey("Attachments")</a>' +
+							'<a class="dropdown-item" href="#" onclick="addEditAction(`10`, ' + value.Id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' + btndelete +
+								//' <a class="dropdown-item" href = "#" onclick = "AddEditTeacherTimeTable(' + value.Id + ')" > <i class="ri-list-ordered" > </i>&nbsp; @_localization.Getkey("TimeTable")</a > ' +
+								// ' <a class="dropdown-item" href="#" onclick="AddEditClassSubjects(' + value.Id + ')"><i class="ri-list-ordered"></i>&nbsp; @_localization.Getkey("ClassSubjects")</a>' +
+								'</div>' +
+								'</div>'
+
+							teacherData.push([value.Id, pic, value.EmployeeNo, value.Age, value.GenderName, value.DefaultMobileNo, value.Qualification, value.BranchName, className, attpercentage,spanactive, btnaction])
+						})
+						$("#TeacherGrid").DataTable({
+							"bDestroy": true,
+							data: teacherData,
+							order: [[0, "desc"]],
+							"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+							dom: 'lBfrtip',
+							buttons: [
+								{
+									extend: 'csvHtml5',
+									text: '<i class="ri-file-excel-line"></i>',
+									titleAttr: 'csv',
+									filename: `@_localization.Getkey("Teachers")`,
+									className: 'btn btn-outline-light btn-sm',
+									exportOptions: {
+										columns: [1, 2, 3, 4, 5, 6, 7, 8,9]
+									}
+								}
+							]
+						})
+						$("#loaderDiv").hide();
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+		}
+
+		var AddEditClassSubjects = function (teacherId) {
+			if (teacherId > 0) {
+				document.getElementById('primary-header-modalLabel').innerHTML = `@_localization.Getkey("EditClassSubject")`;
+			}
+			var url = '@Url.Action("AddEditTeacherClassSubject", "Teacher")?Id=' + teacherId;
+			$("#myModalBodyDiv1").load(url, function () {
+				$("#primary-header-modal").modal("show");
+			})
+		}
+
+		var AddEditTeacherTimeTable = function (teacherId) {
+			if (teacherId > 0) {
+				document.getElementById('primary-header-modalLabel2').innerHTML = `@_localization.Getkey("TimeTable")`;
+			}
+			var url = '@Url.Action("AddEditTeacherTimeTable", "Teacher")?Id=' + teacherId;
+			$("#myModalBodyDiv2").load(url, function () {
+				$("#primary-header-modal2").modal("show");
+			})
+			//$('#primary-header-modal2').on('shown.bs.modal', function () {
+			//    setCalendar();
+			//});
+			//$('#primary-header-modal2').on('hidden.bs.modal', function (e) {
+			//    destroyCalendar(); // Call the function to destroy the calendar
+			//});
+		}
+
+		function backtoList() {
+			$("#loaderDiv").show();
+			$("#divprofile").hide("slow", function () {
+				$("#divlist").show();
+				$("#loaderDiv").hide();
+			});
+		}
+		function viewProfile(id) {
+			//if (id > 0) {
+			//    $("#hfteacherid").val(id);
+			//    $("#divlist").hide("slow", function () {
+			//        getTeacherInfo(id);
+			//        getTeacherSubjects(id);
+			//        getTeacherSchedules(id);
+			//    });
+			//}
+			if(id > 0){
+				document.getElementById('primary-header-modalLabel2').innerHTML=`@_localization.Getkey("ViewTeacher")`;
+				var url = '@Url.Action("GetTeacherDetail", "Teacher")?Id=' + id;
+				$("#myModalBodyDiv2").load(url,function(){
+					$("#primary-header-modal2").modal("show");
+				})
+			}
+		}
+		function getTeacherInfo(id) {
+			$("#loaderDiv").show();
+			$.ajax({
+				type: 'GET',
+				async: false,
+				url: '@Url.Action("GetTeacher", "Teacher")?Id=' + id,
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+
+				success: function (response) {
+					if (response != null) {
+						var obj = response;
+						$("#divprofile").show();
+						$("#divexamduty").hide();
+
+						$("#lblempno").html(obj.employeeNo);
+						$("#lblname").html(obj.fullName);
+						$("#lblage").html(obj.age);
+						$("#lblgender").html(obj.genderName);
+						$("#lblmobileno").html(obj.mobileNo);
+						$("#lbldesignation").html(obj.designation);
+						$("#imgPhoto").attr("src", obj.photoPath);
+
+						$("#loaderDiv").hide();
+
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+
+		}
+		function getTeacherSubjects(id) {
+			$("#loaderDiv").show();
+			$.ajax({
+				type: 'post',
+				async: false,
+				url: '@Url.Action("GetTeacherSubjects", "Teacher")?Id=' + id,
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+				// data: myformdata,
+				success: function (response) {
+					// console.log(JSON.parse(response));
+					if (response != null) {
+						$("#divteacherinfo").hide("slow", function () {
+
+							$("#divteacherschedule").hide();
+							$("#divteachersubject").show();
+						});
+						var resArray = [];
+						var jsonData = JSON.parse(response);
+						if (jsonData.length > 0) {
+							resArray.push(jsonData);
+							onLoadData(resArray);
+						}
+						else {
+							$("#loaderDiv").hide();
+						}
+					}
+					else {
+						$("#loaderDiv").hide();
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+
+		}
+		function onLoadData(data) {
+			var columns = [];
+			//1.Get first row data to build columns from predata.
+			var rowData = data[0];
+			if (rowData.length > 0) {
+				Object.keys(rowData[0]).forEach(function (key, index) {
+					if (key == 'Name' || key == 'ClassName') {
+						columns.push({
+							data: key,
+							title: key
+						});
+					}
+					else {
+
+						columns.push({
+							data: key,
+							title: key,
+							render: function (data, type, row) {
+								if (row[key] != null && row[key] != "") {
+									return '<i class="ri-check-line"></i>';
+								}
+								return '';
+								// return '<i class="ri-check-line"></i>';
+								// return '<input type="text"  class="form-control" required = "required" value="'+row[key]+'">';
+
+							}
+						});
+
+
+					}
+
+				})
+
+
+				$("#tblclasssubject").DataTable({
+					"bDestroy": true,
+					data: data[0],
+					"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+					columns: columns,
+					"searching": false,
+					"bLengthChange": false,
+					paging: false,
+					"info": false,
+					"ordering": false
+
+					//dom: 'Bfrtip'
+				})
+				$("#loaderDiv").hide();
+			}
+		}
+		function getTeacherSchedules(id) {
+			$("#loaderDiv").show();
+			$.ajax({
+				type: 'post',
+				async: false,
+				url: '@Url.Action("GetTeacherSchedules", "Teacher")?Id=' + id,
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+				// data: myformdata,
+				success: function (response) {
+					if (response != null) {
+						$("#divteacherinfo").hide("slow", function () {
+							$("#divteachersubject").hide();
+							$("#divteacherschedule").show();
+						});
+
+
+						var scheduleData = [];
+
+						$.each(response, function (key, value) {
+
+							var pr = Math.floor((value.StatusId / 6) * 100);
+							var per = pr.toString();
+							var compl = "";
+							if (value.StatusId == 1) {
+								compl = 'progress-lg bg-info';
+							}
+							if (value.StatusId == 6) {
+								compl = 'progress-lg bg-success';
+							}
+							else if (value.StatusId > 1 && value.StatusId < 6) {
+								compl = 'progress-lg bg-warning';
+							}
+							var prog = '<div class="progress progress-sm"> ' +
+								'<div class="progress-bar ' + compl + '" role="progressbar" id="divprogress" style="width:' + per + '%" aria-valuenow=' + per + ' aria-valuemin="0" aria-valuemax="100"></div>' +
+								//<div class="progress-bar progress-lg bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+								'</div>'
+
+							var btndetail = "";
+							btndetail = '<a class="dropdown-item" href="#" onclick="GetPivotScheduleByTeacher(' + value.Id + ',' + $("#hfteacherid").val() + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("Details")</a>'
+
+							scheduleData.push([value.Title, value.ExamTypeName, value.StrStartDate, value.StrEndDate, prog, value.StatusName, btndetail])
+						})
+
+						$("#tblschedulegrid").DataTable({
+							"bDestroy": true,
+							data: scheduleData,
+							"searching": false,
+							"bLengthChange": false,
+							paging: false,
+							"info": false,
+							"ordering": false
+
+						})
+						$("#loaderDiv").hide();
+						$("#divexamduty").hide();
+
+
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+
+		}
+
+		function GetPivotScheduleByTeacher(schid, teaid) {
+			$("#loaderDiv").show();
+
+			$.ajax({
+				type: 'post',
+				async: false,
+				url: '@Url.Action("GetPivotScheduleByTeacher", "Teacher")',
+				data: { scheduleId: schid, teacherId: teaid },
+				dataType: 'json',
+				traditional: true,
+				// data: myformdata,
+				success: function (response) {
+					if (response != null) {
+						$("#divexamduty").show();
+						var resArray = [];
+						var jsonData = JSON.parse(response.strResult);
+						if (jsonData.length > 0) {
+							resArray.push(jsonData);
+							//for (i = 0; i < jsonData.length; i++) {
+							//    resArray.push(jsonData[i]);
+							//}
+							onLoadPivotData(resArray);
+						}
+
+						else {
+							$("#loaderDiv").hide();
+						}
+
+
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+
+
+		}
+		function onLoadPivotData(data) {
+			var excolumns = [];
+			var rowData = data[0];
+			if (rowData.length > 0) {
+				Object.keys(rowData[0]).forEach(function (key, index) {
+					if (key == 'ScheduleId') {
+						excolumns.push({
+							data: key,
+							title: key
+						});
+					}
+					else if (key == 'Name' || key == 'StrExamDate') {
+						excolumns.push({
+							data: key,
+							title: key
+						});
+					}
+					else {
+						excolumns.push({
+							data: key,
+							title: key,
+							render: function (data, type, row) {
+								if (row[key] != null && row[key] != "") {
+									return '<i class="ri-check-line"></i>';
+								}
+								return '';
+
+							}
+						});
+
+
+					}
+
+				})
+				$("#tblexamduty").DataTable({
+					"bDestroy": true,
+					data: data[0],
+					// "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+					columns: excolumns,
+					"searching": false,
+					"bLengthChange": false,
+					paging: false,
+					"info": false,
+					"ordering": false
+
+					//dom: 'Bfrtip'
+				})
+				$("#loaderDiv").hide();
+			}
+		}
+	</script>
+}
+
+
+
+

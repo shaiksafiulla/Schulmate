@@ -1,0 +1,146 @@
+﻿@model SchoolCoreWEB.Models.PageVM
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <form id="myForm" class="forms-sample">
+                @Html.HiddenFor(m => m.RoleId)
+              @*   <table class="table table-sm table-bordered table-centered mb-0" id="PageGrid">
+                    <thead>
+                        <tr>
+                            <th>@_localization.Getkey("Select")</th>
+                            <th>@_localization.Getkey("Page")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < @Model.LstPage.Count(); i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.CheckBoxFor(m => @Model.LstPage[i].IsSelected, new{ @class="form-check-input"})
+                                    @Html.HiddenFor(m => @Model.LstPage[i].Id)
+                                </td>
+                                <td>
+                                    @Model.LstPage[i].Name
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table> *@
+                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblpagefunction">
+                    <thead>
+                    </thead>
+                </table>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary mr-2" onclick="submitRolePage()">@_localization.Getkey("Update")</button>
+                </div>
+            </form>
+            <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    getPageFunctions();
+    function getPageFunctions() {
+        $("#loaderDiv1").show();
+        $.ajax({
+            type: "POST",
+            async: false,
+            url: '@Url.Action("GetPageFunctions", "Roles")',            
+            dataType: 'json',
+            traditional: true,
+            success: function (response) {
+                if (response != null) {                  
+                    var parseResult = JSON.parse(response.strResult);  
+                    fillPageFunctions(parseResult);
+                }
+                else {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+                toastr.error(`@_localization.Getkey("Error")`);
+            }
+        });
+    }
+
+    function fillPageFunctions(data) {
+        
+        var columns = [];
+
+        var rowData = data[0];
+        Object.keys(rowData).forEach(function (key, index) {
+            if (key == 'PageId' || key == 'PageName') {
+                columns.push({
+                    data: key,
+                    title: key
+                });
+            } else {
+                columns.push({
+                   // data: rowData[0][key],
+                    data: key,
+                    title: key,
+                   
+                     render: function (title, type, row) {
+                        return '<input type="checkbox"  class="form-check-input">';
+                    }
+                });
+            }
+            
+        })
+        $("#tblpagefunction").DataTable({
+            "bDestroy": true,
+            "searching": false,
+            "bLengthChange": false,
+            paging: false,
+            "info": false,
+            "ordering": false,
+            data: data,
+            "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+            columns: columns
+            //dom: 'Bfrtip'
+        })
+        $("#loaderDiv1").hide();
+
+    }
+    function submitRolePage(){
+        $("#loaderDiv1").show("slow", function () {
+        var myformdata = $("#myForm").serialize();
+           $.ajax({
+            type: 'POST',          
+            url: '@Url.Action("UpdateRolePage","Roles")',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            data: myformdata,
+            success: function (response) {
+                if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                    actionAfterResponse('RoleGrid', serviceresult.recordId, serviceresult.statusId, '18');
+
+                        } else {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                        }
+            },
+            error: function (response) {
+                     toastr.error(`@_localization.Getkey("Error")`);
+
+            }
+           })
+        })
+    }
+</script>

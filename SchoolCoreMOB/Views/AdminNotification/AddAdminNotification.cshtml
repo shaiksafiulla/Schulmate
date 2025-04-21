@@ -1,0 +1,481 @@
+﻿@model SchoolCoreMOB.Models.AdminNotification
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<style>
+    /* Styling for the file upload input and button */
+    .file-upload-container {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between the button and file name display */
+        flex-wrap: wrap;
+    }
+
+    .file-upload-input {
+        display: none; /* Hide the default file input */
+    }
+
+    .file-upload-container label {
+        cursor: pointer;
+        padding: 8px 15px;
+        border: 1px solid #007bff;
+        border-radius: 4px;
+        background-color: #fff;
+        color: #007bff;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .file-upload-container .file-name {
+        font-size: 14px;
+        color: #333;
+    }
+
+
+    /* Responsive behavior */
+    @@media (max-width: 768px) {
+        .file-upload-container {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+            .file-upload-container label,
+            .file-upload-container .file-name {
+                font-size: 12px; /* Smaller font on mobile */
+            }
+    }
+
+    @@media (max-width: 576px) {
+        .file-upload-container {
+            flex-direction: column;
+            gap: 8px; /* Adjust gap between button and file name on small screens */
+        }
+
+            .file-upload-container label {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .file-upload-container .file-name {
+                font-size: 12px;
+            }
+    }
+</style>
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Post</h2>
+</div>
+<form id="adminNotificationForm" class="forms-sample">
+    @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+    @Html.HiddenFor(m => m.LstCastStudPersonNotification, new { @id = "hfcaststudpersonnotification" })
+
+
+    <div class="card card-style mb-2 custom-card rounded-2">
+        <div class="content mb-2">
+            <div style="display: flex;justify-content: center;align-items: center;gap: 20px;">
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.IsTag, "1", new { @id="rdoTag", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoTag">Tags</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.IsTag, "0", new { @id="rdoUser", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoUser">Recipients</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+            </div>
+            <br />
+            <div class="input-style has-borders no-icon mb-4" id="tagTypeDiv" style="display:none;">
+                @*<label for="ddltagtype" class="color-highlight">@_localization.Getkey("TagType")</label>*@
+                @Html.DropDownListFor(model => model.TagTypeId, Model.TagTypeSheet, @_localization.Getkey("PleaseSelect"), new {  @id = "ddltagtype", @required = "required", onChange = "selectedTagTypeIndexChanged()" })
+                <span><i class="fa fa-chevron-down"></i></span>
+                <i class="fa fa-check disabled valid color-green-dark"></i>
+                <i class="fa fa-check disabled invalid color-red-dark"></i>
+                <em></em>
+            </div>
+
+            <div id="userTypeDiv" style="display:none;">
+                <div class="input-style has-borders no-icon mb-4">
+                    @*<label for="ddlusertype" class="color-highlight">@_localization.Getkey("UserTypes")</label>*@
+                    @Html.DropDownListFor(model => model.UserTypeId, Model.UserTypeSheet, @_localization.Getkey("PleaseSelect"), new {  @id = "ddlusertype", @required = "required", onChange = "selectedUserTypeIndexChanged()" })
+                    <span><i class="fa fa-chevron-down"></i></span>
+                    <i class="fa fa-check disabled valid color-green-dark"></i>
+                    <i class="fa fa-check disabled invalid color-red-dark"></i>
+                    <em></em>
+                </div>
+                <label id="lblPersonSelectedCount"></label>
+                <div class="input-style has-borders no-icon validate-field mb-4">
+                    @Html.TextBoxFor(model => model.Title, new { @class = "form-control validate-name", @id = "title", @placeholder="Title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                    <label for="title" class="color-highlight">@_localization.Getkey("Title")</label>
+                    <i class="fa fa-times disabled invalid color-red-dark"></i>
+                    <i class="fa fa-check disabled valid color-green-dark"></i>
+                    <em>(required)</em>
+                </div>
+                <div class="input-style has-borders no-icon mb-4">
+                    @Html.TextAreaFor(model => model.Message, new {  @id = "message", @placeholder="Message",  @maxlength = "200",onkeyup = "Validate();" })
+                    <label for="description" class="color-highlight">@_localization.Getkey("Message")</label>
+                    <em class="mt-n3">(required)</em>
+                </div>
+
+            </div>
+            <div style="display: flex;justify-content: center;align-items: center;gap: 20px;">
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.FileType, "1", new { @id="rdoImg", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoImg">Image</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.FileType, "2", new { @id="rdoPdf", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoPdf">Pdf</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="file-upload-container">
+                    <label for="fileupload" class="btn btn-outline-primary">Choose File</label>
+                    <input type="file" id="fileupload" name="postedFile1" class="file-upload-input" accept="image/*,.pdf" onchange="uploadFile(6, this)" style="display: none;" />
+
+                    <span id="lblSelectedFileName" class="file-name"></span>
+                </div>
+            </div>
+            <img id="imgphoto" src="@(Model.FilePath)" class="img-fluid" style="width:100%; display:block; height:300px">
+            @*<div style="position: relative; width: 100%;  text-align: center;">
+                <label for="file-upload" class="btn btn-secondary btn-sm w-100" style="display: inline-block;
+                cursor: pointer;
+                padding: 10px 20px;
+                font-size: 16px;
+                text-align: center;
+                border-radius: 50px;
+                background-color: #6C63FF;
+                color: white;
+                transition: background-color 0.3s;">
+                <i class="fas fa-upload"></i> Upload File
+                </label>
+                <input type="file" id="file-upload" name="postedFile1" accept="image/*,.pdf" onchange="uploadFile(6, this)" class="d-none">
+                </div>
+                <span id="lblSelectedFileName"></span>*@
+            @* <div class="file-data pb-5">
+                <input type="file" id="file-upload" class="upload-file bg-highlight shadow-s rounded-s" name="postedFile1" accept="image/*,.pdf" onchange="uploadFile(6,this)">
+                <p class="upload-file-text color-white">Upload File</p>
+                </div>*@
+            <a href="#" data-menu="menu-adminstudperson" id="ancmenustudpersontrigger" style="display:none">Admin Posts</a>
+            @* <div class="row" id="divstudperson" style="display:none">
+                <input type="text" id="searchBox" class="form-control" placeholder="Search ..." onkeyup="performSearch('searchBox','tblstudperson')">
+                <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblstudperson">
+                <thead>
+                <tr>
+                <th style="display:none;">StudPersonId</th>
+                <th style="display:none;">PersonnelType</th>
+                <th style="max-width:2px">
+                <div class="form-check form-check-inline">
+
+                <input type="checkbox" class="form-check-input" id="chkstudperson">
+                </div>
+                </th>
+                <th id="throllempNo"></th>
+                <th>@_localization.Getkey("Name")</th>
+                <th id="thclass">@_localization.Getkey("Class")</th>
+                </tr>
+                </thead>
+                <tbody id="studpersonbody">
+                </tbody>
+                </table>
+                </div>*@
+
+
+
+        </div>
+        <button type="button" class="btn btn-primary" style="border-radius:10px; background-color:#6C63FF" onclick="submitAdminNotification()" id="btnsubmit" disabled="disabled">Post</button>
+    </div>
+</form>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+
+    //$('#chkstudperson').change(function () {
+    //    console.log('trigger check')
+    //    $('#tblstudperson tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+    //});
+
+    $(document).ready(function () {
+        Validate();
+
+        $('input[type="radio"]').change(function() {
+            toggleDropdown();
+        });
+
+        $('#ancAdminPostPersonCount').on('click', function(event) {
+                event.preventDefault();
+                 var lstStudperson = getStudPersonArray();
+                  var checkcount = lstStudperson.filter(el => el.IsSelected == true).length;
+                  $("#lblPersonSelectedCount").html('Selected Recipients : ' + checkcount);
+                   Validate();
+        });
+         toggleDropdown();
+    });
+    function toggleDropdown() {
+        if ($('#rdoTag').prop('checked')) {
+            $('#tagTypeDiv').show();  // Show the TagType dropdown
+            $('#userTypeDiv').hide(); // Hide the UserType dropdown
+            $("#studpersonbody").empty();
+            $("#lblPersonSelectedCount").html('');
+        } else if ($('#rdoUser').prop('checked')) {
+            $('#userTypeDiv').show(); // Show the UserType dropdown
+            $('#tagTypeDiv').hide();  // Hide the TagType dropdown
+        }
+         Validate();
+    }
+
+    function chkFields() {
+        var isvalid = true;
+
+        if ($('#rdoTag').prop('checked')){
+            if($("#ddltagtype").val() == "" || $("#ddltagtype").val() == "-1"){
+                isvalid = false;
+            }
+        }
+        else if ($('#rdoUser').prop('checked')){
+             if ($("#title").val() == "") {
+                isvalid = false;
+            }
+            if ($("#message").val() == "") {
+                isvalid = false;
+            }
+            if ($("#ddlusertype").val() == "" || $("#ddlusertype").val() == "-1") {
+                isvalid = false;
+            }
+            else {
+                if ($("#ddlusertype").val() != "7") {
+                    var lstStudperson = getStudPersonArray();
+                    var found2 = lstStudperson.some(el => el.IsSelected == true);
+                    if (!found2) {
+                        isvalid = false;
+                    }
+                }
+            }
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+
+    function uploadFile(type, file) {
+        var filetype = $('[name="FileType"]:checked').val();
+        if (validateuploadFile(type, filetype, file) == "") {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+                 $('#lblSelectedFileName').html('');
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+                $('#imgphoto').removeAttr('src');
+                $('#lblSelectedFileName').html('Selected File : '+ file.files[0].name);
+            }
+        }
+        else{
+            showToast('2', validateuploadFile(type, filetype, file));
+            $('#imgphoto').removeAttr('src');
+            $("#imgphoto").hide();
+            $('#lblSelectedFileName').html('');
+        }
+    }
+    function selectedTagTypeIndexChanged(){
+        var selectedText = $('#ddltagtype option:selected').text();
+        $('#title').val(selectedText);
+        $('#message').val(selectedText);
+       // console.log('title:' + $('#title').val(),'message: ' + $('#message').val())
+        Validate();
+    }
+    function selectedUserTypeIndexChanged() {
+          $('#title').val('');
+        $('#message').val('');
+        getStudPersonnel();
+       //  Validate();
+    }
+
+    function getStudPersonnel() {
+
+        if ($('#ddlusertype').val() == 7 || $('#ddlusertype').val() == "") {
+            $("#divstudperson").hide();
+            $("#studpersonbody").empty();
+        }
+        else if ($('#ddlusertype').val() != 7 && $('#ddlusertype').val() != "") {
+
+           showLoading();
+                $.ajax({
+                    type: "post",
+                    url: '@Url.Action("GetStudPersonNotification", "AdminNotification")',
+                    data: { PersonnelType: $('#ddlusertype').val() },
+                    dataType: 'json',
+                    traditional: true,
+                    success: function (response) {
+                        if (response != null) {
+                            var lstdata = response;
+                            if ($('#ddlusertype').val() == 4) {
+                                $("#throllempNo").html(`@_localization.Getkey("RollNo")`);
+                                $("#thclass").show();
+                               // $("#thsection").show();
+                            }
+                            else {
+                                $("#throllempNo").html(`@_localization.Getkey("EmployeeNo")`);
+                                $("#thclass").hide();
+                               // $("#thsection").hide();
+                            }
+
+                            $("#divstudperson").show();
+                            $("#studpersonbody").empty();
+
+                            for (var j = 0; j < lstdata.length; j++) {
+                                insertintotbl(lstdata[j]);
+                            }
+
+                           hideLoading();
+                           $("#ancmenustudpersontrigger")[0].click();
+                        }
+                        else {
+                            showToast('2', `@_localization.Getkey("Error")`);
+                        }
+                    },
+                    error: function (response) {
+                        showToast('2', `@_localization.Getkey("Error")`);
+
+                    }
+                });
+
+        }
+        Validate();
+    }
+
+    function insertintotbl(data) {
+
+        var tblbdy = document.getElementById("studpersonbody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.studPersonId;
+        cell1.style.display = "none";
+
+        cell2 = newRow.insertCell(1);
+        cell2.innerHTML = data.personnelType;
+        cell2.style.display = "none";
+
+        var chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "form-check-input";
+        chk.checked = data.isSelected;
+        chk.onclick = (function () { return function () { Validate(); } })();
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(chk);
+
+        var sp = document.createElement("span");
+        sp.innerHTML = data.rollEmployeeNo;
+
+        cell4 = newRow.insertCell(3);
+        cell4.appendChild(sp);
+
+        var sp2 = document.createElement("span");
+        sp2.innerHTML = data.fullName;
+
+        cell5 = newRow.insertCell(4);
+        cell5.appendChild(sp2);
+
+        if (data.personnelType == 4) {
+            var sp3 = document.createElement("span");
+            sp3.innerHTML = data.className;
+
+            cell6 = newRow.insertCell(5);
+            cell6.appendChild(sp3);
+
+            //var sp4 = document.createElement("span");
+            //sp4.innerHTML = data.sectionName;
+
+            //cell7 = newRow.insertCell(6);
+            //cell7.appendChild(sp4);
+        }
+
+    }
+    function getStudPersonArray() {
+        var chkClsArray = [];
+
+        $("#tblstudperson tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+            var FirstCol = tr.find("td").eq(0).html();
+            var perTypeCol = tr.find("td").eq(1).html();
+            var SecondCol = tr.find("input").eq(0).is(':checked');
+
+            paramcls.StudPersonId = parseInt(FirstCol);
+            paramcls.PersonnelType = parseInt(perTypeCol);
+            paramcls.IsSelected = SecondCol;
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    }
+    function submitAdminNotification() {
+        showLoading();
+        //if ($('#rdoTag').prop('checked')){
+        //    var selectedText = $('#ddltagtype option:selected').text();
+        //    $('#title').html(selectedText);
+        //    $('#message').html(selectedText);
+
+        //}
+
+            var postData = new FormData($('#adminNotificationForm')[0]);
+            postData.append("NotificationFile", $("input[name=postedFile1]")[0].files[0]); // file
+
+                var lstStudperson = getStudPersonArray();
+               var serializedArray = JSON.stringify(lstStudperson);
+            postData.append("StrCastStudPerson", serializedArray);
+            $.ajax({
+                type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/AdminNotification/save',
+                headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                   },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response != null) {
+                         hideLoading();
+                        showToast('1', `@_localization.Getkey("Success")`);
+                          window.location.href="@Url.Action("Index", "AdminNotification")";
+                        //var serviceresult = response;
+                        //actionAfterResponse('AdminNotificationGrid', serviceresult.recordId, serviceresult.statusId, '48');
+                    } else {
+                        showToast('2', `@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (error) {
+                    alert(error);
+                    showToast('2', `@_localization.Getkey("Error")`+ error);
+
+                }
+            });
+
+    }
+
+</script>

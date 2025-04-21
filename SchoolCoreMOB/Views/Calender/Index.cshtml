@@ -1,0 +1,47 @@
+﻿@using Localization.Services
+@inject LanguageService _localization
+@*@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{    
+    string strtoken= @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");    
+}*@
+
+<link rel="stylesheet" type="text/css" href="~/styles/calender.css">
+<div class="page-title page-title-small">  
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+
+<div class="calendar bg-theme shadow-xl rounded-m">
+    <div class="content mb-0">
+        <div class="calendar-header">
+            <button class="prev-month">&#60;</button>
+            @* <span class="current-month-year" id="monthYear">August 2024</span>*@
+            <span id="monthYear" class="cal-title text-center text-uppercase font-700 font-15 bg-theme color-theme">August 2024</span>
+            <button class="next-month">&#62;</button>
+        </div>
+        <div class="calendar-days">
+            <div class="day">Sun</div>
+            <div class="day">Mon</div>
+            <div class="day">Tue</div>
+            <div class="day">Wed</div>
+            <div class="day">Thu</div>
+            <div class="day">Fri</div>
+            <div class="day">Sat</div>
+        </div>
+        <div class="calendar-dates" id="dates"></div>
+        <hr />
+        <div id="eventList">
+            @*<h3 class="text-center bottom-0">Details</h3>*@
+            <div id="events" class="event-cards"></div>
+        </div>
+    </div>
+
+</div>
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script src="~/scripts/calender.js"></script>
+
+
+

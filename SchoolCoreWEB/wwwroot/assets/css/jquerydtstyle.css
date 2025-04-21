@@ -1,0 +1,13 @@
+﻿.pull-left {
+    float: left !important;
+}
+
+.pull-right {
+    float: right !important;
+}
+.highlight {
+    background-color: #ddd;
+}
+.table tbody tr.highlight td {
+    background-color: #ddd;
+}

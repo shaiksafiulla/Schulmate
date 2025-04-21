@@ -1,0 +1,231 @@
+﻿@model SchoolCoreWEB.Models.BranchTimeTableRPTVM
+@using Localization.Services
+@inject LanguageService _localization
+@{
+    string cultur = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string locale = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "ar" : "en";
+}
+<link href="~/assets/css/reportprintstyle.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+    .rotatetext {
+        transform: rotate(180deg);
+        transform-origin: center;
+        writing-mode: vertical-lr;
+        text-align: center;
+        justify-content: center; /* Centers horizontally */
+        align-items: center; /* Centers vertically */
+    }
+
+    .right td.drop {
+        background: #fafafa;
+        width: 100px;
+    }
+
+    .right td.over {
+        background: #FBEC88;
+    }
+
+    .item {
+        text-align: center;
+        border: 1px solid #499B33;
+    }
+
+    .assigned {
+        border: 1px solid #BC2A4D;
+    }
+
+    .trash {
+        background-color: red;
+    }
+</style>
+
+
+<div class="container-fluid" style="padding:0">
+    <div class="row" id="reportbody">
+        <div class="row" id="a4headdiv" style="display:none">
+            @if (Model.ReportSettings.AFourHeaderType == "1")
+            {
+                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+            }
+            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+            {
+                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                <div style="height:@percent"></div>
+            }
+        </div>
+        <div class="row" id="a5headdiv" style="display:none">
+            @if (Model.ReportSettings.AFiveHeaderType == "1")
+            {
+                <img src="@(Model.ReportSettings.AFiveHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+            }
+            else if (@Model.ReportSettings.AFiveHeaderSpace > 0)
+            {
+                var percent = @Model.ReportSettings.AFiveHeaderSpace + "px";
+                <div style="height:@percent"></div>
+            }
+        </div>
+        <br />
+        <div class="row" style="padding:3%">
+            @for (int q = 0; q < @Model.LstBranchSectionTimeTableRPT.Count(); q++)
+            {
+
+                <table class="table table-sm table-bordered dt-responsive nowrap w-100">
+                    <thead>
+                        <tr>
+                            @{
+                                int sp = @Model.LstBranchSectionTimeTableRPT[q].timetable.Periods.Count() + 1;
+                            }
+                            <td colspan=@sp)>
+
+                                <div class="text-center">
+                                    <strong>@Model.LstBranchSectionTimeTableRPT[q].ClassSectionName</strong>
+
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Weekday</th>
+                            @foreach (var period in @Model.LstBranchSectionTimeTableRPT[q].timetable.Periods)
+                            {
+                                <th>
+                                    @period.StartTime.ToString(@"hh\:mm") - @period.EndTime.ToString(@"hh\:mm")
+                                    @if (period.IsBreak)
+                                    {
+                                        @*<br />
+                                            <small>@period.Description</small>*@
+                                    }
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < @Model.LstBranchSectionTimeTableRPT[q].timetable.Weekdays.Count; i++)
+                        {
+                            var day = @Model.LstBranchSectionTimeTableRPT[q].timetable.Weekdays[i];
+
+                            <tr>
+                                <td>@day.Name</td>
+                                @for (int j = 0; j < day.PeriodSlots.Count; j++)
+                                {
+                                    var slot = day.PeriodSlots[j];
+                                    if (slot.Period.IsBreak)
+                                    {
+                                        // Only render the cell for the first weekday to apply rowspan
+                                        if (i == 0)
+                                        {
+                                            <td class="lunch rotatetext" rowspan="@Model.LstBranchSectionTimeTableRPT[q].timetable.Weekdays.Count">@slot.Period.Description</td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td class="drop" data-sectionid=@Model.LstBranchSectionTimeTableRPT[q].SectionId data-day=@Model.LstBranchSectionTimeTableRPT[q].timetable.Weekdays[i].Name
+                            data-starttime=@day.PeriodSlots[j].Period.StartTime.ToString()
+                            data-endtime=@day.PeriodSlots[j].Period.EndTime.ToString()>
+                                            @slot.Subject
+                                        </td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+        <div class="row" id="a4footdiv" style="display:none">
+            @if (Model.ReportSettings.AFourFooterType == "1")
+            {
+                <img src="@(Model.ReportSettings.AFourFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+            }
+            else if (@Model.ReportSettings.AFourFooterSpace > 0)
+            {
+                var percent = @Model.ReportSettings.AFourFooterSpace + "px";
+                <div style="height:@percent"></div>
+            }
+        </div>
+        <div class="row" id="a5footdiv" style="display:none">
+            @if (Model.ReportSettings.AFiveFooterType == "1")
+            {
+                <img src="@(Model.ReportSettings.AFiveFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+            }
+            else if (@Model.ReportSettings.AFiveFooterSpace > 0)
+            {
+                var percent = @Model.ReportSettings.AFiveFooterSpace + "px";
+                <div style="height:@percent"></div>
+            }
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnsubmit" onclick="printDiv('reportbody')">@_localization.Getkey("Print")</button>
+        <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+         $('#a5headdiv').hide();
+            $('#a5footdiv').hide();
+
+            $('#a4headdiv').show();
+            $('#a4footdiv').show();
+        var jsmodel = @Html.Raw(Json.Serialize(Model));
+        if (jsmodel != null){
+
+            $("#loaderDiv1").show("slow", function () {
+                for(var p=0; p < jsmodel.lstBranchSectionTimeTableRPT.length; p++){
+                     getTimeTableFromDB(jsmodel.lstBranchSectionTimeTableRPT[p].branchId,jsmodel.lstBranchSectionTimeTableRPT[p].sessionYearId);
+                }
+                 $("#loaderDiv1").hide();
+            })
+        }
+    });
+
+
+     function getTimeTableFromDB(branchId,sessionYearId) {
+
+            $.ajax({
+                type: 'GET',
+                async: false,
+                url: '@Url.Action("GetTimeTableFromDB", "Branch")?branchId=' + branchId+'&sessionyearId='+sessionYearId,
+                Accept: 'application/json, text/javascript',
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                success: function (response) {
+                    if (response != null) {
+                                $.each(JSON.parse(response), function (key, value) {
+
+                                    var strday = getDayOfWeekString(value.dayOfWeek);
+
+                                    var displayText =value.subjectActivityName + ' - ' +value.personnelName;
+                                   // Find the corresponding table cell based on day and timeslot
+                                   let cell = $('td[data-day="' + strday + '"][data-sectionid="' + value.sectionId + '"][data-starttime="' + value.fromTime + '"][data-endtime="' + value.toTime + '"]');
+                                    // Fill the cell with the subject if it exists
+                                    if (cell.length) {
+                                        cell.html('<div class="item assigned" style="background-color: '+value.subjectActivityColor+';" data-id="'+value.id+'" data-sectionid="' + value.sectionId + '"  data-color="'+value.subjectActivityColor+'" data-classsubjectid="' + value.classSubjectId + '" data-subjectactivityid="' + value.subjectActivityId + '" data-timetabletype="' + value.timeTableType + '" data-personnelid="' + value.personnelId + '">'+displayText+'</div>');
+                                    }
+                                });
+
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            })
+
+        }
+</script>

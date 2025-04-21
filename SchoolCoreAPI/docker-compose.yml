@@ -1,0 +1,101 @@
+﻿services :    
+    postgre:
+        image: postgres:17
+        container_name: schoolcoreapi-postgres
+        restart: unless-stopped
+        ports:
+        - 5432:5432
+        environment:
+         POSTGRES_USER: postgres
+         POSTGRES_PASSWORD: qwerty        
+        volumes:
+        - ./postgres_data:/var/lib/postgresql/data
+        - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+        - schoolnet
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: schoolcoreapi-pgadmin
+        ports:
+        - 5050:80
+        environment:
+         PGADMIN_DEFAULT_EMAIL: pgadmin@domain.com
+         PGADMIN_DEFAULT_PASSWORD: qwerty
+        networks:
+        - schoolnet
+    redis:
+        image: redis:latest
+        container_name: schoolcoreapi-redis
+        restart: unless-stopped
+        ports:
+        - 6379:6379
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+        - schoolnet
+    minio:
+        image: minio/minio
+        container_name: schoolcoreapi-minio
+        ports:
+        - 9000:9000   # S3 API
+        - 9001:9001    # MinIO Console
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        environment:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        command: server /data --console-address ":9001"
+        volumes:
+        - minio_data:/data
+        networks:
+        - schoolnet
+    schoolcoreapi:
+        image: schoolcoreapi
+        container_name: schoolcoreapi-api
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+        - 8080:8080
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        depends_on:
+         postgre:
+            condition: service_healthy
+         redis:
+            condition: service_healthy
+         minio:
+            condition: service_healthy
+        environment:
+           ASPNETCORE_ENVIRONMENT: Development
+           ConnectionStrings__DefaultConnection: "Host=postgre; Database=schooldb; Username=postgres;Password=qwerty"
+           ConnectionStrings__HangfireConnection: "Host=postgre; Database=hangfiredb; Username=postgres;Password=qwerty"
+           Redis__Connection: "redis:6379"
+        volumes:
+        - ./wwwroot/Backups:/app/wwwroot/Backups
+        - ./wwwroot/logs:/app/wwwroot/logs 
+        networks:
+        - schoolnet
+networks:
+  schoolnet:
+    driver: bridge
+volumes:
+  minio_data:
+
+            
+        
+        

@@ -1,0 +1,98 @@
+﻿@using SchoolCoreWEB.Models
+@model ReceivableSummaryId
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<div class="container-fluid">
+	@Html.HiddenFor(m => m.Id, new { @id = "hfreceivablesummaryid" })
+	<div class="row">
+		<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="StudentReceivableInfoGrid">
+			<thead>
+				<tr>
+					<th style="display:none;">Id</th>
+					<th>@_localization.Getkey("ReceiptNo")</th>
+					<th>@_localization.Getkey("PayMode")</th>
+					<th>@_localization.Getkey("ReferenceNo")</th>
+					<th>@_localization.Getkey("Remarks")</th>
+					<th>@_localization.Getkey("Amount")</th>
+					<th>@_localization.Getkey("PaidDate")</th>
+					<th>@_localization.Getkey("Actions")</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script>
+	 $(document).ready(function () {
+		// console.log('test');
+	   getSummaryById();
+	});
+	function getSummaryById(){
+
+		  let summaryid = $("#hfreceivablesummaryid").val();
+		  let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Expense/GetAllReceivableByDate/`+ summaryid +``;
+
+		getOperation(url,`@strtoken`,`@Html.Raw(@userParamkey)`)
+						.then(response => {
+							console.log(response);
+								setBinding(response);
+
+						})
+						.catch(error => {
+							 toastr.error(`@_localization.Getkey("Error")`);
+						});
+	}
+	function setBinding(data){
+		 var payData = [];
+					$.each(data, function (key, value) {
+						var printbtn = '<button type="button" class="btn btn-sm btn-info" onclick="onReceiptClick('+value.id+')"><i class="ri-printer-line"></i></button>'
+						payData.push([value.id,value.receiptNo, value.payModeName, value.referenceNo,value.remarks, value.amount, value.createdDate, printbtn])
+					})
+
+					$("#StudentReceivableInfoGrid").DataTable({
+						"bDestroy": true,
+						data: payData,
+						order: [[0, "desc"]],
+							 "searching": false,
+				  "bLengthChange": false,
+				  paging: false,
+				  "info": false,
+						"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+						dom: 'lBfrtip',
+						buttons: [
+							{
+								extend: 'csvHtml5',
+								text: '<i class="ri-file-excel-line"></i>',
+								titleAttr: 'csv',
+								filename: `@_localization.Getkey("Receivables")`,
+								className: 'btn btn-outline-light btn-sm',
+								exportOptions: {
+									columns: [1, 2, 3,4,5,6,7]
+								}
+							}
+						]
+					})
+
+	}
+</script>

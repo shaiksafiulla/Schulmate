@@ -1,0 +1,155 @@
+﻿@model IEnumerable<VLeaveRequest>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Caliber</h2>
+</div>
+<input type="hidden" id="hfteacherperformscheduleid"/>
+<div class="content mb-0">
+    <div class="input-style has-borders input-style-always-active no-icon mb-4">
+        <select id="examination-dropdown">
+            <option value="default" disabled>Select Examination</option>
+        </select>
+        <span><i class="fa fa-chevron-down"></i></span>
+        <i class="fa fa-check disabled valid color-green-dark"></i>
+        <i class="fa fa-check disabled invalid color-red-dark"></i>
+        <em></em>
+    </div>
+</div>
+<div id="performance-container">
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {       
+        showLoading();
+            getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/PersonnelSchedule`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                .then(response => {      
+                   
+                    setExaminationBinding(response);
+                    hideLoading();
+                })
+                .catch(error => {
+                        showToast('2', `@_localization.Getkey("Error")`);
+                });            
+    });
+
+    function setExaminationBinding(data) {
+        const dropdown = $('#examination-dropdown');
+        dropdown.empty();
+        dropdown.append('<option value="">Select Examination</option>');
+        data.forEach(card => {
+            const option = $('<option></option>')
+                .val(card.id)
+                .text(card.title);
+            dropdown.append(option);
+        });
+         var defaultValue = data[0].id;
+         $("#hfteacherperformscheduleid").val(defaultValue);
+        dropdown.val(defaultValue);
+        //viewScheduleInfo(data[0]);
+        getTeacherPeformance(data[0].id);
+        //getSectionTransTimeTableById(defaultValue);
+
+        dropdown.on('change', function() {
+            const selectedId = $(this).val();
+            if (selectedId) {
+                var objsched = data.find(item=> item.id == selectedId);
+                if(objsched !== null && objsched !==undefined){
+                    $("#hfteacherperformscheduleid").val(objsched.id);                   
+                    getTeacherPeformance(objsched.id);
+                }
+            }
+            else{
+
+            }
+        });
+    }
+    function getTeacherPeformance(id){
+        showLoading();
+            getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/teacher/Performance/`+id+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                                    .then(childresponse => {                                         
+                                         setGradeBindingValues(JSON.parse(childresponse.strResult));
+                                         hideLoading();
+                                    })
+                                    .catch(error => {
+                                         showToast('2', `@_localization.Getkey("Error")`);
+                                    });
+    }
+ function setGradeBindingValues(data) {
+    $('#performance-container').empty();             
+
+    data.forEach(item => {  
+
+        const card = document.createElement('div');
+        card.className = "card card-style mb-2 custom-card rounded-2 d-flex flex-column";
+
+        const subcard = document.createElement('div');
+        subcard.className = "content mt-2 mb-2 flex-grow-1"; 
+
+        const teacherDiv = document.createElement('span');
+        teacherDiv.innerHTML = item.TeacherName;
+        teacherDiv.className = "me-3";
+        teacherDiv.style.maxWidth = "100px"; 
+        teacherDiv.style.overflow = "hidden";  
+        teacherDiv.style.textOverflow = "ellipsis"; 
+        teacherDiv.style.whiteSpace = "nowrap"; 
+        teacherDiv.style.fontSize = "14px"; 
+        subcard.appendChild(teacherDiv);
+
+        const subsubcard = document.createElement('div');
+        subsubcard.className = "d-flex flex-wrap justify-content-start align-items-start"; // Ensure horizontal wrap
+
+        for (let key in item) {
+            if (item.hasOwnProperty(key) && key !== 'TeacherId' && key !== 'ScheduleId' && key !== 'TeacherName') {
+
+                var mixcolvalue = `${key}`;
+                let parts = mixcolvalue.split('&');  
+
+                // Create the label (header) element
+                const dynamicLabel = document.createElement('span');
+                dynamicLabel.innerHTML = parts[0]; 
+                dynamicLabel.className = "font-weight-bold d-block text-center";  // Added d-block to force label above value
+                dynamicLabel.style.fontSize = "12px"; 
+                dynamicLabel.style.minWidth = "40px"; 
+               // dynamicLabel.style.maxWidth = "70px"; 
+                dynamicLabel.style.whiteSpace = "nowrap"; 
+
+                // Create the value element
+                const dynamicSpan = document.createElement('span');
+                dynamicSpan.innerHTML = item[key];
+                dynamicSpan.className = "badge font-xl py-2 px-3 d-block text-center"; // d-block to force value below label
+                dynamicSpan.style.marginTop = "4px"; // Added margin-top for spacing between label and value
+                dynamicSpan.style.maxWidth = "50px";  
+                dynamicSpan.style.textAlign = "center"; 
+                dynamicSpan.style.padding = "4px 8px";  
+                dynamicSpan.style.fontSize = "12px";  
+                dynamicSpan.style.backgroundColor = parts[1] || "gray"; 
+
+                // Wrap each label and value pair
+                const labelAndValueWrapper = document.createElement('div');
+                labelAndValueWrapper.className = "d-flex flex-column align-items-center me-2 mb-2"; // Flex column for each pair, aligned center
+                labelAndValueWrapper.appendChild(dynamicLabel);
+                labelAndValueWrapper.appendChild(dynamicSpan);
+
+                subsubcard.appendChild(labelAndValueWrapper);
+            }
+        }       
+        subcard.appendChild(subsubcard);
+        card.appendChild(subcard);       
+        $('#performance-container').append(card);
+    });
+}
+
+
+
+
+
+
+</script>

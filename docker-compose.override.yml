@@ -1,0 +1,45 @@
+services:
+    schoolcoreapi:
+        environment:
+        - DOTNET_USE_POLLING_FILE_WATCHER=1
+        volumes:
+        - ./SchoolCoreAPI:/app
+        # - ~/.aspnet/https:/root/.aspnet/https:ro
+        - ./https:/root/.aspnet/https:ro
+        ports:
+        - "8080:8080"
+    schoolcoreweb:
+        environment:
+        - DOTNET_USE_POLLING_FILE_WATCHER=1
+        #- ASPNETCORE_ENVIRONMENT=Development
+        #- ASPNETCORE_HTTP_PORTS=8080
+        #- ASPNETCORE_HTTPS_PORTS=8081       
+        volumes:       
+        - ./SchoolCoreWEB:/app
+        # - ~/.aspnet/https:/root/.aspnet/https:ro
+        - ./https:/root/.aspnet/https:ro
+        ports:
+        - "5000:5000"
+        # - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+        # - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+        # - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+        # - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    schoolcoremob:
+        environment:
+        - DOTNET_USE_POLLING_FILE_WATCHER=1
+        #- ASPNETCORE_ENVIRONMENT=Development
+        #- ASPNETCORE_HTTP_PORTS=8080
+        #- ASPNETCORE_HTTPS_PORTS=8081       
+        volumes:       
+        - ./SchoolCoreMOB:/app
+        # - ~/.aspnet/https:/root/.aspnet/https:ro
+        - ./https:/root/.aspnet/https:ro
+        ports:
+        - "7000:6000"
+        # - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+        # - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+        # - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+        # - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+        
+        
+        

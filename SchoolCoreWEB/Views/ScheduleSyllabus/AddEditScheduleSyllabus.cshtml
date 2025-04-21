@@ -1,0 +1,1402 @@
+﻿@model SchoolCoreWEB.Models.VSchedule
+@using Localization.Services
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@inject LanguageService _localization
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string struserid = string.Empty;
+    string strtoken;
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+    var userInfokey = @HttpContextAccessor.HttpContext.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        var userInfo = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+        struserid = userInfo.Id.ToString();
+    }
+    strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+}
+<div class="row">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="header-title">@_localization.Getkey("ExaminationInfo")</h4>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("Title") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.Title)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("ExamType") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.ExamTypeName)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("StartDate") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.StrStartDate)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("EndDate") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.StrEndDate)
+                        </div>
+                    </div>
+                </div>               
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hfbranchclassid" />
+<input type="hidden" id="hfexamid" />
+<input type="hidden" id="hfexampaperid" />
+@*<input type="hidden" id="hfschedulesyllabusid" />*@
+@Html.HiddenFor(m=>m.Id, new { @id ="hfschedulesyllabusid"})
+<div class="row">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="header-title">@_localization.Getkey("Classes")</h4>
+            </div>
+            <ul class="list-group list-group-horizontal" id="ulist">
+                @foreach (var item in Model.LstScheduleBranchClass)
+                {                   
+                    <li class="list-group-item" onclick="onSelectedClass(@item.BranchClassId)" style="background-color:@item.QPaperStatusColor; margin:2px">
+                        <a href="#" class="nav-link">@item.ClassName</a>
+                        <input style="display:none" value="@item.BranchClassId" />
+                    </li>
+
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="header-title">@_localization.Getkey("Subjects")</h4>
+                </div>
+                <ul class="list-group list-group-vertical" id="ulexamsubject">
+                </ul>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-10">
+        <div class="row" id="divtopic" style="display:none">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="header-title">@_localization.Getkey("Topics")</h4>
+                    </div>
+                    <table class="table table-sm table-bordered table-centered mb-0" id="tbltopic">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="form-check form-check-inline">
+                                        <input type="checkbox" class="form-check-input" id="chktopic">
+                                        <label class="form-check-label" for="chkdate">@_localization.Getkey("SelectAll")</label>
+                                    </div>
+                                </th>
+                                <th>@_localization.Getkey("Topic")</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topicbody">
+                        </tbody>
+                    </table>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="submitTopic()" id="btnsubmittopic">@_localization.Getkey("Post")</button>
+                        <button type="button" class="btn btn-info" onclick="onShowoptions()" id="btnshowoption">@_localization.Getkey("Next")</button>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="row" id="divoptions" style="display:none">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="header-title">@_localization.Getkey("QuestionPaper")</h4>
+                    </div>
+                    <div class="text-center">
+                        <input type="radio" id="rdbupload" name="type" class="form-check-input" onclick="onuploadclick(this)">
+                        <label for="rdbupload">@_localization.Getkey("UploadPDFOnly")</label>
+                       @* <input type="radio" id="rdbmanual" name="type" class="form-check-input" onclick="onprepareclick(this)">
+                        <label for="rdbmanual">@_localization.Getkey("Prepare")</label>*@
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row" id="divupload" style="display:none">
+            <div class="row">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <input type="file" class="form-control" id="file_upload" accept="application/pdf" />
+                                </div>
+                                <div class="col-sm-3">
+                                    <button type="button" class="btn btn-primary" onclick="onuploadExamPaper()">@_localization.Getkey("Upload")</button>
+                                </div>
+                            </div>                           
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="row">
+                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblexamresult"></table>
+                <div class="modal-footer" id="divmfupload" style="display:none">
+                    <button type="button" class="btn btn-primary" onclick="submituploadResult()" id="btnsubmit">@_localization.Getkey("Post")</button>
+                </div>
+
+            </div>
+        </div>
+        <div class="row" id="divprepare" style="display:none">
+
+            <div class="row" id="divpaper">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="float-right">
+                            <div class="form-check form-switch float-end">
+                                <input type="checkbox" class="form-check-input" id="chkChoose" onclick="switchChoose(this)" />
+                                <label class="form-check-label" for="chkChoose">@_localization.Getkey("Choose")</label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <button type="button" class="btn btn-sm btn-info" id="mathjax">@_localization.Getkey("AddMath")</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div id="editor-container" style="height:300px"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary mr-2" onclick="submitExamPaper()">@_localization.Getkey("Save")</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="row" id="divmanual" style="display:none">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="header-title">@_localization.Getkey("ChooseQuestions")</h4>
+                            <div class="float-right">
+                                <div class="form-check form-switch float-end">
+                                    <input type="checkbox" class="form-check-input" id="chkSwitch" onclick="switchAlgo(this)" />
+                                    <label class="form-check-label" for="chkSwitch">@_localization.Getkey("Configure")</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="card">
+                                    <div class="card-body table-responsive">
+                                        <div class="d-flex justify-content-between">
+                                            <div class="app-search">
+                                                <div class="mb-2 position-relative">
+                                                    <input type="text" id="searchBoxparam" class="form-control" placeholder="@_localization.Getkey("Search ...")" onkeyup="performSearch('searchBoxparam','QuestionGrid')">
+                                                    <span class="mdi mdi-magnify search-icon"></span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive" style="height:600px">
+                                            <table class="table table-sm table-bordered table-centered mb-0" id="QuestionGrid">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="display:none;">Id</th>
+                                                        <th onclick="sortTable(1,'QuestionGrid')">@_localization.Getkey("Question") <span class="uil-sort"></span></th>
+                                                        <th onclick="sortTable(2,'QuestionGrid')">@_localization.Getkey("Marks") <span class="uil-sort"></span></th>
+                                                        <th onclick="sortTable(3,'QuestionGrid')">@_localization.Getkey("Type") <span class="uil-sort"></span></th>
+                                                        <th onclick="sortTable(4,'QuestionGrid')">@_localization.Getkey("DifficultyLevel") <span class="uil-sort"></span></th>
+                                                        <th onclick="sortTable(5,'QuestionGrid')">@_localization.Getkey("Category") <span class="uil-sort"></span></th>
+                                                        <th>@_localization.Getkey("Actions")</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="questbody">
+                                                    @*@if (Model != null)
+                                                        {
+                                                        @foreach (var item in Model.LstQuestionBank)
+                                                        {
+                                                        <tr style="background-color:@item.QuestionColor">
+                                                        <td style="display:none;">
+                                                        @item.Id
+                                                        </td>
+                                                        <td>
+                                                        @Html.DisplayFor(modelItem => item.Question)
+                                                        </td>
+                                                        <td>
+                                                        @Html.DisplayFor(modelItem => item.Marks)
+                                                        </td>
+                                                        <td>
+                                                        @Html.DisplayFor(modelItem => item.QuestionTypeName)
+                                                        </td>
+                                                        <td>
+                                                        @Html.DisplayFor(modelItem => item.QuestionDifficultyName)
+                                                        </td>
+                                                        <td>
+                                                        @Html.DisplayFor(modelItem => item.QuestionCategoryName)
+                                                        </td>
+                                                        <td>
+                                                        <button type="button" class="btn btn-primary" onclick="onAdd(@item.Id,this)">
+                                                        <i class="uil-arrow-right"></i>
+                                                        </button>
+                                                        </td>
+                                                        </tr>
+                                                        }
+                                                        }*@
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-5">
+                                <div class="card">
+                                    <div class="card-body table-responsive">
+                                        <div class="d-flex justify-content-between">
+                                            <div class="app-search">
+                                                <div class="mb-2 position-relative">
+                                                    <input type="text" id="searchBoxfilterparam" class="form-control" placeholder="@_localization.Getkey("Search ...")" onkeyup="performSearch('searchBoxfilterparam','FilterQuestionGrid')">
+                                                    <span class="mdi mdi-magnify search-icon"></span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                            </div>
+                                        </div>
+
+                                        <div class="table-responsive" style="height:600px">
+                                            <table class="table table-sm table-bordered table-centered mb-0" id="FilterQuestionGrid">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="display:none;">Id</th>
+                                                        <th onclick="sortTable(1,'FilterQuestionGrid')">@_localization.Getkey("Question") <span class="uil-sort"></span></th>
+                                                        <th onclick="sortTable(2,'FilterQuestionGrid')">@_localization.Getkey("Marks") <span class="uil-sort"></span></th>
+                                                        @*  <th onclick="sortTable(3,'FilterQuestionGrid')">Type <span class="uil-sort"></span></th>
+                                                            <th onclick="sortTable(4,'FilterQuestionGrid')">Difficulty <span class="uil-sort"></span></th>
+                                                            <th onclick="sortTable(5,'FilterQuestionGrid')">Category <span class="uil-sort"></span></th>*@
+                                                    <th>@_localization.Getkey("Actions")</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="filterquestbody">
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary mr-2" onclick="submitExamQuestion()">@_localization.Getkey("Update")</button>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="row" id="divalgo" style="display:none">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="header-title">@_localization.Getkey("Configure")</h4>
+                        </div>
+                        <table class="table table-sm table-bordered table-centered mb-0" id="AlgoGrid">
+                            <thead>
+                                <tr>
+                                    <th style="display:none">Id</th>
+                                    <th>@_localization.Getkey("Select")</th>
+                                    <th>@_localization.Getkey("Type")</th>
+                                    <th>@_localization.Getkey("DifficultyLevel")</th>
+                                    <th>@_localization.Getkey("Category")</th>
+                                    <th>@_localization.Getkey("Marks")</th>
+                                    <th>@_localization.Getkey("Count")</th>
+                                </tr>
+                            </thead>
+                            <tbody id="algobody">
+                            </tbody>
+                        </table>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary mr-2" onclick="processQuestAlgo()">@_localization.Getkey("Process")</button>
+
+                        </div>
+                        <div class="row" id="divalgoresult" style="display:none">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4 class="header-title">@_localization.Getkey("Results")</h4>
+                            </div>
+                            <table class="table table-sm table-bordered table-centered mb-0" id="AlgoResultGrid">
+                                <thead>
+                                    <tr>
+                                        <th style="display:none;">Id</th>
+                                        <th>@_localization.Getkey("Question")</th>
+                                        <th>@_localization.Getkey("Marks")</th>
+                                        <th>@_localization.Getkey("Type")</th>
+                                        <th>@_localization.Getkey("DifficultyLevel")</th>
+                                        <th>@_localization.Getkey("Category")</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody id="algoresultbody">
+                                </tbody>
+                            </table>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary mr-2" onclick="submitQuestAlgo()">@_localization.Getkey("Post")</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script type="text/javascript">
+    var columns = [];
+    var precolumns = [];
+    var jsonArray=[];
+
+    
+
+
+
+
+    $(document).ready(function () {
+        if (@Html.Raw(Json.Serialize(Model)) != null) {
+            var objSchedule = @Html.Raw(Json.Serialize(Model));
+            
+             if(objSchedule.Id > 0 && objSchedule.StatusId >= 1){
+                 $("#hfschedulesyllabusid").val(objSchedule.id);
+             }
+        }
+    });
+
+     $("#ulist li").click(function(){
+        // If this isn't already active
+        if (!$(this).hasClass("active")) {
+            // Remove the class from anything that is active
+            $("#ulist li").removeClass("active");
+
+            // And make this active
+            $(this).addClass("active");
+        }
+    });
+
+
+    function switchAlgo(chk){
+        if(chk.checked){
+            $("#divmanual").hide("slow", function() {
+                 $("#divalgo").show();
+            })
+        }
+        else{
+
+            $("#divalgo").hide("slow", function() {
+                 $("#divmanual").show();
+            })
+        }
+    }
+    function switchChoose(chk){
+         if(chk.checked){
+            $("#divpaper").hide("slow", function() {
+                 $("#divmanual").show();
+            })
+        }
+        else{
+
+            $("#divmanual").hide("slow", function() {
+                 $("#divpaper").show();
+            })
+        }
+    }
+
+    $('#chktopic').change(function () {
+            $('#tbltopic tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+        });
+
+    function onSelectedClass(branchclassid){
+
+        $("#hfbranchclassid").val(branchclassid);
+
+         $("#loaderDiv1").show("slow", function() {
+                    $("#divoptions").hide();
+                     $("#divupload").hide();
+                     $("#divprepare").hide();
+                     $("#divtopic").hide();
+                   getExamSubjectByBranchClass();
+            })
+
+        //$("#divoptions").show();
+        //$("#rdbupload").prop('checked', true);
+        //$("#divupload").show();
+        // $("#diventer").hide();
+
+    }
+
+    function getExamSubjectByBranchClass(){
+                $.ajax({
+                        type: "post",
+                        async : false,
+                        url: '@Url.Action("GetExamSubjectByBranchClass","ScheduleSyllabus")',
+                        data: { scheduleId : $("#hfschedulesyllabusid").val(), branchclassId: $("#hfbranchclassid").val()  },
+                            dataType: 'json',
+                        traditional: true,
+                        success: function (response) {                          
+                            if(response != null){
+                                var result = response;
+                                $("#ulexamsubject").empty();
+                                var liexam=[];
+                                for (var i = 0; i < result.length; i++){
+                                    var item = setLiExamSubject(result[i]);
+                                     liexam.push(item);
+                                  }
+                                $("#ulexamsubject").html(liexam);
+                                $("#loaderDiv1").hide();
+                            }
+                        },
+                        error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    });
+
+    }
+    function setLiExamSubject(data){
+         var li=document.createElement('li');
+         li.className ="list-group-item";
+         li.style.backgroundColor =data.qPaperStatusColor;
+         li.onclick =  (function(examId,li) { return function(){ SelectedExamChanged(examId,li); }})(data.examId,li);
+
+         var hidden = document.createElement('input');
+         hidden.type="hidden";
+         hidden.value = data.examId;
+
+         var anchor = document.createElement('a');
+         anchor.href="#";
+         anchor.className="nav-link";
+         anchor.innerText =data.subjectName;
+         //anchor.onclick =  (function(examId) { return function(){ SelectedExamChanged(examId); }})(data.examId);
+
+         li.appendChild(hidden);
+         li.appendChild(anchor);
+         return li;
+    }
+    function SelectedExamChanged(examId,li){
+        $("#hfexamid").val(examId);
+
+        $("#loaderDiv1").show("slow", function() {
+                   $("#divoptions").hide();
+                     $("#divupload").hide();
+                     $("#divprepare").hide();
+                    getTopiclist();
+            })
+
+            if (!$(li).hasClass("active")) {
+                // Remove the class from anything that is active
+                $("#ulexamsubject li").removeClass("active");
+                // And make this active
+                $(li).addClass("active");
+        }
+
+    }
+     function getTopiclist(){
+                 $.ajax({
+                             type: "post",
+                             async : false,
+                             url: '@Url.Action("GetExamTopic","ScheduleSyllabus")',
+                             data: { examId: $("#hfexamid").val() },
+                                 dataType: 'json',
+                             traditional: true,
+                             success: function (response) {                                 
+                                 if(response != null){
+                                     var result = response;
+                                     $("#topicbody").empty();
+
+                                     if(result.lstLesson !=null){
+                                         for (var j = 0; j < result.lstLesson.length; j++){
+                                                     insertintotbl(result.lstLesson[j]);
+                                         }
+
+                                          var lsttpcount = getTopicArray();
+                                          var found = lsttpcount.some(el => el.isSelected == true);
+                                            if(!found){
+                                                    $("#btnshowoption").hide();
+                                            }
+                                            else{
+                                                 $("#btnshowoption").show();
+                                            }
+                                     }
+                                     
+
+                                     $("#divtopic").show();
+                                     $("#loaderDiv1").hide();
+
+                                 }
+                                 else{
+                                      $("#loaderDiv1").hide();
+                                      $("#topicbody").empty();
+                                 }
+                             },
+                        error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                         });
+
+      }
+       function insertintotbl(data){
+         var tblbdy = document.getElementById("topicbody");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+          cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data.id;
+            cell1.style.display="none";
+
+         var chk = document.createElement("input");
+         chk.type="checkbox";
+         chk.className="form-check-input";
+         chk.checked = data.isSelected;
+          cell2 = newRow.insertCell(1);
+         cell2.appendChild(chk);
+
+         var spcls = document.createElement("span");
+         spcls.innerHTML =data.name;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(spcls);
+
+     }
+     function getTopicArray(){
+         var chkTopicArray=[];
+         $("#tbltopic tbody tr").each(function () {
+
+                     var tr = $(this);
+             var paramcls = {};
+             var FirstCol = tr.find("td").eq(0).html();
+             var SecondCol = tr.find("input").eq(0).is(':checked');
+
+             paramcls.Id = parseInt(FirstCol);
+             paramcls.IsSelected = SecondCol;
+             chkTopicArray.push(paramcls);
+         });
+
+         return chkTopicArray;
+     }
+
+     function submitTopic(){
+
+         var lsttpcount = getTopicArray();
+         var found = lsttpcount.some(el => el.IsSelected == true);
+         if(found){
+                 $("#loaderDiv1").show();
+            var obj={};
+            obj.ExamId = $("#hfexamid").val();
+            obj.LstLesson= getTopicArray();
+            var jdata = JSON.stringify(obj);
+                    $.ajax({
+                    type: 'POST',
+                        url: '@Url.Action("UpdateExamTopic","ScheduleSyllabus")',
+                        dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+                        if (response != null) {
+                                toastr.success('Saved Succesfully');
+                                onShowoptions();
+                                $("#loaderDiv1").hide();
+
+                            } else {
+                                    toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                    },
+                    error: function (response) {
+                                toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+            }
+
+
+     }
+     function onShowoptions(){
+         $("#divtopic").hide("slow", function() {
+           $("#divoptions").show();
+            $("#rdbupload").prop('checked', true);
+            $("#divupload").show();
+             $("#divprepare").hide();
+    });
+
+
+
+     }
+    function onuploadclick(rbdchk){
+        if(rbdchk.checked){
+             $("#divprepare").hide("slow", function() {
+                $("#divupload").show();
+                $("#divmfupload").hide();
+                  $("#divmanual").hide();
+                     $("#divalgo").hide();
+            });
+        }
+    }
+    function onprepareclick(rbdchk){
+         if(rbdchk.checked){
+
+              $("#divupload").hide("slow", function() {
+                  $("#divprepare").show();
+                  $("#divpaper").show();
+                   $("#chkChoose").prop("checked", false);
+                    $("#chkSwitch").prop("checked", false);
+
+                    $("#divmfupload").hide();
+                    $("#divmanual").hide();
+                     $("#divalgo").hide();
+
+              })
+              getExamPaper();
+              getExamQuestion();
+         }
+    }
+
+        function onuploadExamPaper() {
+            var file = document.getElementById('file_upload');
+
+            if (file.files.length == 0) {
+                toastr.error("No file selected");
+            }
+            var ext = file.value.split('.').pop();
+            if (ext !== "pdf") {
+                toastr.error("only pdf is allowed");
+            } else {
+                const size = (file.files[0].size / 1024 / 1024).toFixed(2);
+                if (size > 4) {
+                    toastr.error("File size must be less than 4 MB");
+                }
+                else {
+                    $("#loaderDiv1").show();
+                    var qmodel = {};
+                    qmodel.ExamId = $("#hfexamid").val();
+                    var qfile = file.files[0];
+                    if (qfile != null) {
+                        qmodel.QPaperFileName = file.files[0].name;
+                    }
+                    //var formData = new FormData();
+                    //formData.append("qfile", file.files[0]);                  
+                    //formData.append("model", JSON.stringify(qmodel));
+
+                    var postData = new FormData();
+                    postData.append("File", file.files[0]); // file
+                    postData.append("ExamId", $("#hfexamid").val());
+                    $.ajax({
+                        type: 'POST',                      
+                        url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/ScheduleSyllabus/UploadQPaper',
+                headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                                                    },
+                        data: postData,
+                        cache: false,
+                processData: false,
+                contentType: false,
+                        success: function (response) {
+                            if (response != null) {
+                                
+                                var result = response;
+                               
+                                getBranchClassQuestionStatus();
+                                var arr = result.split(",");
+                                $("#ulexamsubject li").each((id, elem) => {
+                                  if (elem.children[0].value == $('#hfexamid').val()) {
+                                      $(elem).css("background-color", arr[0]);
+                                      //elem.style.backgroundColor = arr[0];
+                                      
+                                    }
+                                });
+
+                                 $("#loaderDiv1").hide("slow", function() {
+                                     $("#divoptions").hide();
+                                         $("#divupload").hide();
+                                         $("#divprepare").hide();
+                                         $("#divtopic").hide();
+                                        // $("#file_upload").val()=null;
+                                         $('#file_upload'). val('')
+                                          toastr.success('File uploaded Succesfully');
+                                })
+                            } else {
+                                toastr.error(`@_localization.Getkey("Error")`);
+
+                               
+
+                            }
+                        },
+                        error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                            $("#loaderDiv1").hide();
+
+
+                        }
+                    });
+                }
+            }
+
+        }
+    function getExamQuestion(){
+
+                 $("#loaderDiv1").show();
+                 $.ajax({
+                             type: "post",
+                             async : false,
+                             url: '@Url.Action("GetExamQuestion","ScheduleSyllabus")',
+                             data: { Id: $("#hfexamid").val() },
+                                 dataType: 'json',
+                             traditional: true,
+                             success: function (response) {
+                                 if(response != null){
+                                     var result = response;
+
+                                     $("#questbody").empty();
+                                     $("#filterquestbody").empty();
+                                    $("#algobody").empty();
+                                     if (result.LstQuestionBank.length > 0){
+                                         for (var j = 0; j < result.lstQuestionBank.length; j++){
+                                             insertintotblquest(result.lstQuestionBank[j]);
+                                         }
+                                     }
+
+                                     if (result.lstFilterQuestionBank.length > 0){
+                                         for (var j = 0; j < result.lstFilterQuestionBank.length; j++){
+                                             insertintotblfilterquest(result.lstFilterQuestionBank[j]);
+                                         }
+                                     }
+
+                                     if (result.lstExamQuestionAlgo.length > 0){
+                                         for (var j = 0; j < result.lstExamQuestionAlgo.length; j++){
+                                             insertintotblalgo(result.lstExamQuestionAlgo[j]);
+                                         }
+                                     }
+
+                                     $("#loaderDiv1").hide();
+
+                                 }
+                                 else{
+                                      $("#loaderDiv1").hide();
+                                      $("#topicbody").empty();
+                                 }
+                             },
+                        error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                         });
+
+      }
+      function getBranchClassQuestionStatus(){
+                 $.ajax({
+                             type: "post",
+                             async : false,
+                             url: '@Url.Action("GetBranchClassQuestionStatus","ScheduleSyllabus")',
+                             data: { scheduleId: $("#hfschedulesyllabusid").val(),branchclassId: $("#hfbranchclassid").val() },
+                              dataType: 'json',
+                             traditional: true,
+                             success: function (response) {
+                                 if (response != null) {
+                                     var result = response;
+
+                                     $("#ulist li").each((id, elem) => {
+                                      if (elem.children[1].value == $('#hfbranchclassid').val()) {
+                                         // elem.style.backgroundColor = result;
+                                          $(elem).css("background-color", result);
+                                        }
+                                    });
+                                 }
+                             },
+                            error: function (response) {
+                                toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                         });
+      }
+      function insertintotblalgo(data){
+         var tblbdy = document.getElementById("algobody");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+
+
+          cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data.QuestionTypeId;
+            cell1.style.display="none";
+
+         var chk = document.createElement("input");
+         chk.type="checkbox";
+         chk.className="form-check-input";
+         chk.checked = data.IsSelected;
+          cell2 = newRow.insertCell(1);
+         cell2.appendChild(chk);
+
+         var sp2 = document.createElement("span");
+         sp2.innerHTML =data.QuestionTypeName;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(sp2);
+
+         //for quest difficulty select element
+
+        var selectdt = document.createElement("select");
+        selectdt.className = "form-select form-select-sm";
+
+            var optiondt;
+            optiondt = document.createElement("option");
+            optiondt.setAttribute("value", "-1");
+            optiondt.innerHTML = "select";
+            selectdt.appendChild(optiondt);
+
+            for(var j=0; j < data.QuestionDifficultySheet.length; j++){
+                optiondt = document.createElement("option");
+                    optiondt.setAttribute("value", data.QuestionDifficultySheet[j].Value);
+                    optiondt.innerHTML = data.QuestionDifficultySheet[j].Text;
+                selectdt.appendChild(optiondt);
+            }
+         cell4 = newRow.insertCell(3);
+         cell4.appendChild(selectdt);
+
+         var selectdt2 = document.createElement("select");
+        selectdt2.className = "form-select form-select-sm";
+
+            var optiondt2;
+            optiondt2 = document.createElement("option");
+            optiondt2.setAttribute("value", "-1");
+            optiondt2.innerHTML = "select";
+            selectdt2.appendChild(optiondt2);
+
+            for(var j=0; j < data.QuestionCategorySheet.length; j++){
+                optiondt2 = document.createElement("option");
+                    optiondt2.setAttribute("value", data.QuestionCategorySheet[j].Value);
+                    optiondt2.innerHTML = data.QuestionCategorySheet[j].Text;
+                selectdt2.appendChild(optiondt2);
+            }
+         cell5 = newRow.insertCell(4);
+         cell5.appendChild(selectdt2);
+
+        var mrkinput = document.createElement("input");
+        mrkinput.type="text";
+        mrkinput.className = "form-control form-control-sm";
+         cell6 = newRow.insertCell(5);
+         cell6.appendChild(mrkinput);
+
+          var countinput = document.createElement("input");
+        countinput.type="text";
+        countinput.className = "form-control form-control-sm";
+         cell7 = newRow.insertCell(6);
+         cell7.appendChild(countinput);
+
+     }
+
+       function insertintotblquest(data){
+         var tblbdy = document.getElementById("questbody");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+         newRow.style.backgroundColor=data.questionColor;
+
+          cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data.Id;
+            cell1.style.display="none";
+
+         var sp1 = document.createElement("span");
+         sp1.innerHTML =data.Question;
+         cell2 = newRow.insertCell(1);
+         cell2.appendChild(sp1);
+
+         var sp2 = document.createElement("span");
+         sp2.innerHTML =data.Marks;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(sp2);
+
+         var sp3 = document.createElement("span");
+         sp3.innerHTML =data.QuestionTypeName;
+         cell4 = newRow.insertCell(3);
+         cell4.appendChild(sp3);
+
+          var sp4 = document.createElement("span");
+         sp4.innerHTML =data.QuestionDifficultyName;
+         cell5 = newRow.insertCell(4);
+         cell5.appendChild(sp4);
+
+           var sp5 = document.createElement("span");
+         sp5.innerHTML =data.QuestionCategoryName;
+         cell6 = newRow.insertCell(5);
+         cell6.appendChild(sp5);
+
+        var icon = document.createElement("i");
+        icon.className ="uil-arrow-right";
+
+        var btn = document.createElement("button");
+        btn.type="button";
+        btn.className="btn btn-primary"
+        btn.onclick =  (function(id,btn) { return function(){ onquestAdd(id,btn); }})(data.Id,btn);
+        btn.appendChild(icon);
+
+        cell7 = newRow.insertCell(6);
+        cell7.appendChild(btn);
+
+     }
+     function insertintotblfilterquest(data){
+
+         var tblbdy = document.getElementById("filterquestbody");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+
+
+          cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data.Id;
+            cell1.style.display="none";
+
+         var sp1 = document.createElement("span");
+         sp1.innerHTML =data.Question;
+         cell2 = newRow.insertCell(1);
+         cell2.appendChild(sp1);
+
+         var sp2 = document.createElement("span");
+         sp2.innerHTML =data.Marks;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(sp2);
+
+         //var sp3 = document.createElement("span");
+         //sp3.innerHTML =data.QuestionTypeName;
+         //cell4 = newRow.insertCell(3);
+         //cell4.appendChild(sp3);
+
+         // var sp4 = document.createElement("span");
+         //sp4.innerHTML =data.QuestionDifficultyName;
+         //cell5 = newRow.insertCell(4);
+         //cell5.appendChild(sp4);
+
+         //  var sp5 = document.createElement("span");
+         //sp5.innerHTML =data.QuestionCategoryName;
+         //cell6 = newRow.insertCell(5);
+         //cell6.appendChild(sp5);
+
+
+         var iconv=document.createElement('i');
+               iconv.className = "ri-delete-bin-line";
+               var btnv = document.createElement('button');
+               btnv.type = "button";
+               btnv.className = "btn btn-danger";
+               btnv.onclick =   (function(btnv) { return function(){ onDelete(btnv); }})(btnv);
+               btnv.appendChild(iconv);
+
+        cell7 = newRow.insertCell(3);
+        cell7.appendChild(btnv);
+     }
+     function onquestAdd(id,btn){
+         var isValid = CheckDuplicates(id);
+                   if(isValid){
+                       $("#QuestionGrid tbody tr").each(function () {
+                               var tr = $(this);
+                               var firstCol = tr.find("td").eq(0).text();
+
+                              if (parseInt(firstCol) === id){
+                                   var obj={};
+                                   obj.Id=id;
+                                   obj.Question= tr.find("td").eq(1).text();
+                                   obj.Marks= tr.find("td").eq(2).text();
+                                   obj.Type= tr.find("td").eq(3).text();
+                                   obj.Difficulty= tr.find("td").eq(4).text();
+                                   obj.Category= tr.find("td").eq(5).text();
+                                   insertinFilterParamTable(obj);
+                                   tr.css('background-color','#D3D3D3')
+                              }
+                       });
+                   }
+     }
+      function CheckDuplicates(id) {
+                   var isValid = true;
+        var grid = document.getElementById("FilterQuestionGrid");
+        var rows = grid.getElementsByTagName("TR");
+        if (rows.length == 1) {
+            isValid = true;
+            return isValid;
+        }
+        else{
+                    $("#FilterQuestionGrid tbody tr").each(function () {
+                    var tr = $(this);
+                    var secondCol = tr.find("td").eq(0).text();
+
+
+                    if (parseInt(secondCol) === id){
+                        isValid = false;
+                        return isValid;
+                    }
+            });
+        }
+        return isValid
+    }
+     function insertinFilterParamTable(data) {
+               var tblbdy = document.getElementById("filterquestbody");
+               var rowIndex= tblbdy.rows.length;
+               var newRow = tblbdy.insertRow(rowIndex);
+               cell1 = newRow.insertCell(0);
+               cell1.innerHTML = data.Id;
+               cell1.style.display="none";
+
+               cell2 = newRow.insertCell(1);
+               cell2.innerHTML = data.Question;
+
+               cell3 = newRow.insertCell(2);
+               cell3.innerHTML = data.Marks;
+
+               //cell4 = newRow.insertCell(3);
+               //cell4.innerHTML = data.Type;
+
+               // cell5 = newRow.insertCell(4);
+               //cell5.innerHTML = data.Difficulty;
+
+               // cell6 = newRow.insertCell(5);
+               //cell6.innerHTML = data.Category;
+
+
+
+               cell7 = newRow.insertCell(3);
+               var iconv=document.createElement('i');
+               iconv.className = "ri-delete-bin-line";
+               var btnv = document.createElement('button');
+               btnv.type = "button";
+               btnv.className = "btn btn-danger";
+               btnv.onclick =   (function(btnv) { return function(){ onDelete(btnv); }})(btnv);
+               btnv.appendChild(iconv);
+               cell7.appendChild(btnv);
+           };
+    function onDelete(button) {
+        var row = button.parentElement.parentElement;
+        var srccol = row.children[0].innerHTML;
+        document.getElementById('FilterQuestionGrid').deleteRow(row.rowIndex);
+        $("#QuestionGrid tbody tr").each(function () {
+                    var tr = $(this);
+                    var firstCol = tr.find("td").eq(0).text();
+                    if (parseInt(firstCol) === parseInt(srccol)){
+                        tr.css('background-color','#FFFFFF')
+                    }
+            });
+        }
+        function submitExamPaper(){
+                    $("#loaderDiv1").show();
+                    var obj={};
+                    obj.Id=$("#hfexampaperid").val();
+                    obj.ExamId=$('#hfexamid').val();
+                     obj.DeltaQuestion = JSON.stringify(quill.getContents());
+                    obj.Question = quill.getText();
+                     var jdata = JSON.stringify(obj);
+                    $.ajax({
+                    type: 'POST',
+                        url: '@Url.Action("SaveExaminationPaper","ScheduleSyllabus")',
+                        dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+                        if (response != null) {
+                            var result = response;
+
+                                getBranchClassQuestionStatus();
+                                $("#ulexamsubject li").each((id, elem) => {
+                                  if (elem.children[0].value == $('#hfexamid').val()) {
+                                      elem.style.backgroundColor = result;
+                                    }
+                                });
+                                $("#loaderDiv1").hide("slow", function() {
+                                     $("#divoptions").hide();
+                                         $("#divupload").hide();
+                                         $("#divprepare").hide();
+                                         $("#divtopic").hide();
+                                         toastr.success('Saved Succesfully');
+                                })
+
+                            } else {
+                                    toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                    },
+                    error: function (response) {
+                                toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+    }
+    function getExamPaper(){
+
+          //if(htmldata !="undefined"){
+          //  var deltaStr = JSON.parse(htmldata);
+          //  quill.setContents(deltaStr);
+          //}
+
+           $("#loaderDiv1").show();
+                  $.ajax({
+                  type: 'GET',
+                  async : false,
+                  url: '@Url.Action("GetExaminationPaper", "ScheduleSyllabus")?Id=' + $("#hfexamid").val(),
+                  Accept: 'application/json, text/javascript',
+                  contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                  success: function (response) {
+                      if (response != null) {
+                          var result = response;
+                          $("#hfexampaperid").val(result.id);
+                          var deltaStr = JSON.parse(result.deltaQuestion);
+                            quill.setContents(deltaStr);
+                              $("#loaderDiv1").hide();
+
+                          } else {
+                                  toastr.error(`@_localization.Getkey("Error")`);
+                          }
+                  },
+                  error: function (response) {
+                              toastr.error(`@_localization.Getkey("Error")`);
+                  }
+              })
+      }
+
+    function submitExamQuestion(){
+                        $("#loaderDiv1").show();
+
+                        var lstparam = new Array();
+                $("#FilterQuestionGrid tbody tr").each(function () {
+                    var tr = $(this);
+                        var param = {};
+                        var FirstCol = tr.find("td").eq(0).html();
+                        param.Id = parseInt(FirstCol);
+                        lstparam.push(param);
+                });
+                var obj={};
+                obj.Examination={};
+                 obj.Examination.Id=$('#hfexamid').val();
+                obj.LstFilterQuestionBank=lstparam;
+                var jdata = JSON.stringify(obj);
+                 $.ajax({
+                    type: 'POST',
+                     url: '@Url.Action("UpdateExamQuestion","ScheduleSyllabus")',
+                     dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+
+                        if (response != null) {
+                            var result = response;
+                                getBranchClassQuestionStatus();
+                                $("#ulexamsubject li").each((id, elem) => {
+                                      if (elem.children[0].value == $('#hfexamid').val()) {
+                                          elem.style.backgroundColor = result;
+                                        }
+                                    });
+
+                                   $("#loaderDiv1").hide("slow", function() {
+                                     $("#divoptions").hide();
+                                         $("#divupload").hide();
+                                         $("#divprepare").hide();
+                                         $("#divtopic").hide();
+                                          toastr.success("Saved successfully");
+                                })
+                            } else {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+
+                            }
+                    },
+                    error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+
+                    }
+                })
+    }
+    function getAlgoArray(){
+         var chkAlgoArray=[];
+         $("#AlgoGrid tbody tr").each(function () {
+
+                     var tr = $(this);
+             var paramcls = {};
+             var FirstCol = tr.find("td").eq(0).html();
+             var SecondCol = tr.find("input").eq(0).is(':checked');
+
+             var ThirdCol = tr.find("select").eq(0).val();
+             var FourthCol = tr.find("select").eq(1).val();
+
+             var FifthCol = tr.find("input").eq(1).val();
+             var SixthCol = tr.find("input").eq(2).val();
+
+             paramcls.QuestionTypeId = parseInt(FirstCol);
+             paramcls.IsSelected = SecondCol;
+             paramcls.QuestionDifficultyId = ThirdCol;
+             paramcls.QuestionCategoryId = FourthCol;
+             paramcls.Marks = FifthCol;
+             paramcls.QuestionCount = SixthCol;
+
+             chkAlgoArray.push(paramcls);
+         });
+
+         return chkAlgoArray;
+     }
+     function processQuestAlgo(){
+         $("#loaderDiv1").show();
+         var obj={};
+            obj.Examination={};
+            obj.Examination.Id=$('#hfexamid').val();
+            obj.LstExamQuestionAlgo=getAlgoArray();
+
+                var jdata = JSON.stringify(obj);
+               // console.log(jdata);
+                 $.ajax({
+                    type: 'POST',
+                     url: '@Url.Action("ProcessQuestionAlgo","ScheduleSyllabus")',
+                     dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+                        if (response != null) {
+                            var result = response;
+                            $("#algoresultbody").empty();
+                            $("#divalgoresult").show();
+
+                            if(response.length > 0){
+                                for (var j = 0; j < result.length; j++){
+                                    insertintotblalgoresult(result[j]);
+                                }
+                            }
+                            $("#loaderDiv1").hide();
+
+                        } else {
+                                toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    },
+                    error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+    }
+    function insertintotblalgoresult(data){
+         var tblbdy = document.getElementById("algoresultbody");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+
+
+          cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data.Id;
+            cell1.style.display="none";
+
+         var sp1 = document.createElement("span");
+         sp1.innerHTML =data.Question;
+         cell2 = newRow.insertCell(1);
+         cell2.appendChild(sp1);
+
+         var sp2 = document.createElement("span");
+         sp2.innerHTML =data.Marks;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(sp2);
+
+         var sp3 = document.createElement("span");
+         sp3.innerHTML =data.QuestionTypeName;
+         cell4 = newRow.insertCell(3);
+         cell4.appendChild(sp3);
+
+          var sp4 = document.createElement("span");
+         sp4.innerHTML =data.QuestionDifficultyName;
+         cell5 = newRow.insertCell(4);
+         cell5.appendChild(sp4);
+
+           var sp5 = document.createElement("span");
+         sp5.innerHTML =data.QuestionCategoryName;
+         cell6 = newRow.insertCell(5);
+         cell6.appendChild(sp5);
+
+     }
+    function submitQuestAlgo(){
+        var lstalgo = new Array();
+        //var tbldata = $("#AlgoResultGrid").DataTable();
+        //jQuery(tbldata.rows().nodes()).each(function (item) {
+        //    var tr =this;
+        //    var tblFirstCol = tbldata.row(tr).data();
+        //    var algo={};
+        //    algo.Id=parseInt(tblFirstCol[0]);
+        //    lstalgo.push(algo);
+
+        //});
+         $("#AlgoResultGrid tbody tr").each(function () {
+
+             var tr = $(this);
+             var paramcls = {};
+             var FirstCol = tr.find("td").eq(0).html();
+             paramcls.Id = parseInt(FirstCol);
+             lstalgo.push(paramcls);
+         });
+
+         var obj={};
+                obj.Examination={};
+                 obj.Examination.Id=$('#hfexamid').val();
+                obj.LstFilterQuestionBank=lstalgo;
+                var jdata = JSON.stringify(obj);
+                 $.ajax({
+                    type: 'POST',
+                     url: '@Url.Action("UpdateExamQuestion","ScheduleSyllabus")',
+                     dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+                        if (response != null) {
+                            var result = response;
+                             getBranchClassQuestionStatus();
+                              $("#ulexamsubject li").each((id, elem) => {
+                                      if (elem.children[0].value == $('#hfexamid').val()) {
+                                          elem.style.backgroundColor = result;
+                                        }
+                                    });
+
+                                  $("#loaderDiv1").hide("slow", function() {
+                                     $("#divoptions").hide();
+                                         $("#divupload").hide();
+                                         $("#divprepare").hide();
+                                         $("#divtopic").hide();
+                                          toastr.success("Saved successfully");
+                                })
+                            } else {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                    },
+                    error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+    }
+</script>

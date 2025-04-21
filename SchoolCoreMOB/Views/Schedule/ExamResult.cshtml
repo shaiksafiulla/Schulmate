@@ -1,0 +1,175 @@
+﻿@model ScheduleTitle
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+@Html.HiddenFor(m => m.Id, new{ @id="hfscheduleresultid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Classes</h2>
+</div>
+<div class="content">
+    <div class="input-style has-borders input-style-always-active no-icon mb-4">
+        <select id="branchclass-dropdown">
+            <option value="default" disabled>Select Class</option>
+        </select>
+        <span><i class="fa fa-chevron-down"></i></span>
+        <i class="fa fa-check disabled valid color-green-dark"></i>
+        <i class="fa fa-check disabled invalid color-red-dark"></i>
+        <em></em>
+    </div>
+
+    <div id="schedsubject-container" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+    </div>
+
+</div>
+<div id="schedstudent-container" class="mt-3">
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+                  $(document).ready(function () {
+                      setActiveNav("@Url.Action("Index", "Home")");
+                       showLoading();
+                       getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/MbBranchClass/` + $("#hfscheduleresultid").val() +``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                               .then(response => {
+                                    var dropdown = $('#branchclass-dropdown');
+                                               dropdown.empty();
+                                               dropdown.append('<option value="">Select Option</option>');
+                                               $.each(response, function(i, item) {
+                                                   dropdown.append('<option value="' + item.id + '">' + item.className + '</option>');
+                                               });
+                                                 var defaultValue = response[0].id;
+                                               dropdown.val(defaultValue);
+                                               getSubjectsBySchedule(defaultValue);
+                                               //hideLoading();
+                               })
+                               .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                               });
+                                       $('#branchclass-dropdown').change(function() {
+                                           var selectedValue = $(this).val();
+                                           if (selectedValue) {
+                                               getSubjectsBySchedule(selectedValue);
+                                           }
+                                           else{
+                                               $('#schedsubject-container').empty();
+                                               $('#schedstudent-container').empty();
+                                           }
+                                       });
+
+                  });
+    function getSubjectsBySchedule(branchclassid) {
+
+               showLoading();
+               getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/MbSubject/`+$("#hfscheduleresultid").val()+`,`+branchclassid+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                               .then(response => {
+                                    setSubjectBinding(response,branchclassid);
+                                     hideLoading();
+                               })
+                               .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                               });
+
+
+           }
+
+          function setSubjectBinding(data,branchclassid){
+                 $('#schedsubject-container').empty();
+                  $('#schedstudent-container').empty();
+                const container = document.getElementById('schedsubject-container');
+                 data.forEach(card => {
+                     const div = document.createElement('div');
+                     div.className = 'weekdaycard';
+                     div.setAttribute('data-value', card.id);
+                     div.textContent = card.subjectName;
+
+                    // Add click event listener
+                     div.addEventListener('click', () => {
+                             const selectedCard = container.querySelector('.weekdaycard.selected');
+                             if (selectedCard) {
+                                 selectedCard.classList.remove('selected');
+                             }
+                             div.classList.add('selected');
+                             getStudentsBySchedule(branchclassid,card.id)
+                            // getExaminationTimeTable(card.id);
+                     });
+                     container.appendChild(div);
+                 });
+                  if (container.firstElementChild) {
+                      container.firstElementChild.classList.add('selected');
+                       const firstCardId = container.firstElementChild.getAttribute('data-value');
+                       getStudentsBySchedule(branchclassid, firstCardId);
+                   }
+
+
+             }
+    function getStudentsBySchedule(branchclassid, subjectId) {
+
+               showLoading();
+               getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/MbStudentMark/`+$("#hfscheduleresultid").val()+`,`+branchclassid+`,`+subjectId+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                               .then(response => {
+                                   appendCardsToContainer(response);
+                                     hideLoading();
+                               })
+                               .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                               });
+
+
+           }
+     function appendCardsToContainer(data) {
+
+            $('#schedstudent-container').empty();
+           data.forEach(item => {
+              // Create a card for each subject
+                   const card = document.createElement('div');
+                   card.className = "card card-style mb-2 custom-card rounded-2 d-flex flex-column"; // Apply card styling
+
+                     const subcard = document.createElement('div');
+                   subcard.className = "content mt-2 mb-2 flex-grow-1"; // Apply card styling
+
+                    const subsubcard = document.createElement('div');
+                   subsubcard.className = "d-flex justify-content-start align-items-center"; // Apply card styling
+
+                   const studentDiv = document.createElement('span');
+                   studentDiv.innerHTML = item.studentName;
+                   studentDiv.className = "me-3";
+                   studentDiv.style.width = "100px";  // Fixed width for student name
+                   studentDiv.style.overflow = "hidden";  // Hide any overflow content
+                   studentDiv.style.textOverflow = "ellipsis";  // Show ellipsis when the text overflows
+                   studentDiv.style.whiteSpace = "wrap";  // Prevent the text from wrapping to the next line
+
+                   const maxMarksDiv = document.createElement('span');
+                   maxMarksDiv.innerHTML = `M.Marks: ${item.maxMarks}`;
+                   maxMarksDiv.className = "me-3";
+
+                   var marksDiv = document.createElement('span')
+                   marksDiv.className="badge font-xl py-2 px-3";
+                   marksDiv.style.marginLeft = "auto";
+                   marksDiv.style.minWidth = "50px";  // Minimum width for the badge
+                   marksDiv.style.textAlign = "center";  // Center the text within the badge
+                   //marksDiv.style.padding = "6px 12px";  // Adjust padding to give it a consistent look
+                   //marksDiv.style.fontSize = "14px";  // Adjust the font size if needed
+                   marksDiv.style.backgroundColor=`${item.gradeColor}`;
+                   marksDiv.innerHTML=`${item.marks}`;
+
+                   // Append the elements to the card
+                   subsubcard.appendChild(studentDiv);
+                   subsubcard.appendChild(maxMarksDiv);
+                   subsubcard.appendChild(marksDiv);
+
+                   subcard.appendChild(subsubcard);
+                   card.appendChild(subcard);
+                $('#schedstudent-container').append(card);
+           });
+       }
+
+
+
+
+
+</script>

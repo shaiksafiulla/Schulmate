@@ -1,0 +1,165 @@
+﻿@using Localization.Services
+@inject LanguageService _localization
+@model SchoolCoreWEB.Models.Attachment
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string struserid = string.Empty;
+    string strtoken;
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+    var userInfokey = @HttpContextAccessor.HttpContext.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        var userInfo = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+        struserid = userInfo.Id.ToString();
+    }
+    strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+}
+
+
+<div class="card">
+    <div class="card-body">
+        <form id="attForm" class="forms-sample was-validated">
+            @Html.HiddenFor(m => m.Id, new { @id = "hfattachid" })
+            @Html.HiddenFor(m => m.AttachType)
+            @Html.HiddenFor(m => m.ReferenceId)
+            <div class="form-group mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control", @id = "name", @required = "required", @maxlength = "80", onkeyup = "Validate();" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("UploadType")</label>
+                @Html.RadioButtonFor(model => model.FileType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Image")</label> &nbsp;
+                @Html.RadioButtonFor(model => model.FileType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Pdf")</label>
+            </div>
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control", @id = "address", @rows = "2", @maxlength = "250" })
+            </div>
+            <div class="form-group mb-3">
+                <img id="imgphoto" src="@(Model.FilePath)" alt="attach image" width="100" height="100"/>
+                <div class="input-group">                    
+                    <input type="file" id="filephoto" name="postedFile1" accept="image/*,.pdf" class="form-control form-control-sm" onchange="uploadFile(5,this)">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitAttachment()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                    <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="onAttachCancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv3" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+
+       function chkFields(){
+        var isvalid=true;
+        var fname = document.getElementById("name");
+        if(fname.value === ""){
+             isvalid =false;
+        }
+       return isvalid;
+    }
+    function onAttachCancel() {
+        $("#primary-header-modal3").modal("hide");        
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function uploadFile(type, file) {
+        var filetype = $('[name="FileType"]:checked').val();
+        if (validateuploadFile(type, filetype, file) == "") {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+              //  $("#imgheader").attr("src", URL.createObjectURL(file.files[0]));               
+            }
+        }
+        else {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", "");
+            }
+            if (filetype == 2) {
+                    $("#imgphoto").hide();
+               // $("#imgheader").attr("src", "");
+            }
+        }
+    }
+    function submitAttachment() {
+          $("#loaderDiv3").show("slow", function () {
+
+             
+
+            var postData = new FormData($('#attForm')[0]);
+            postData.append("File", $("input[name=postedFile1]")[0].files[0]); // file
+             $.ajax({
+              type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/Attachment/save',
+                 headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                   },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                //headers: {
+                //    'Authorization': 'Bearer' + `@strtoken`,
+                //    'UserParam': userparam
+                //                                        },
+                //data: postData,
+                //cache: false,
+                //processData: false,
+                //contentType: false,
+              success: function (response) {
+                  if (response != null) {   
+                      
+                      var serviceresult = response;
+                      actionAfterResponse('AttachmentGrid', serviceresult.recordId, serviceresult.statusId, '27');
+                      } else {
+                           toastr.error(`@_localization.Getkey("Error")`);
+                      }
+              },
+              error: function (response) {
+                       toastr.error(`@_localization.Getkey("Error")`);
+
+              }
+          })
+          })
+
+    }   
+
+      Validate();
+</script>

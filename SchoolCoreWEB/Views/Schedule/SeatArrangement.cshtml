@@ -1,0 +1,441 @@
+﻿@using SchoolCoreWEB.Models
+@model Schedule
+@using Localization.Services
+@inject LanguageService _localization
+
+<style>
+    .seat-map {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 30px);
+        grid-gap: 5px;
+        margin-bottom: 20px;
+    }
+
+    .seat {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ccc;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 30px;
+        cursor: pointer;
+        position: relative;
+        border-radius: 5px;
+        font-size: 10px;
+    }
+
+        .seat.allocated {
+            background-color: #90ee90; /* Light green */
+        }
+
+        .seat.available {
+            background-color: #f0f0f0; /* Light gray */
+        }
+
+        .seat:hover {
+            background-color: #d3d3d3;
+        }
+</style>
+<div class="row">
+    @Html.HiddenFor(m=>m.Id, new { @id="hfnewscheduleid" })
+    <div class="col-2">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Classes</div>
+                <div class="ribbon-content">
+                    <table id="tblbranchclassgroup" class="table table-sm table-bordered table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th style="display:none">Id</th>
+                                <th style="display:none">BranchId</th>
+                                <th style="display:none">ClassId</th>
+                                <th>
+                                    <div class="form-check form-check-inline">
+                                        <input type="checkbox" class="form-check-input" id="chkclassgroup">
+                                        <label class="form-check-label" for="chksec">@_localization.Getkey("All")</label>
+                                    </div>
+                                </th>
+                                <th>@_localization.Getkey("Class")</th>
+                            </tr>
+                        </thead>
+                        <tbody id="branchclassgroupbody"></tbody>
+                    </table>
+                    <button type="button" class="btn btn-primary" onclick="getClassStudents()">@_localization.Getkey("Allocate")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-10">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Seat Arrangement</div>
+                <div class="ribbon-content">
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="row">
+                                <div class="col-5">
+                                    <label>@_localization.Getkey("HallName") : </label>
+                                </div>
+                                <div class="col-7">
+                                    <input type="text" id="inputname" class="form-control form-control-sm" onkeyup="ValidateHallButton();" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="row">
+                                <div class="col-5">
+                                    <label>@_localization.Getkey("Rows") : </label>
+                                </div>
+                                <div class="col-7">
+                                    <input type="text" id="inputrow" class="form-control form-control-sm" width="50" onkeyup="ValidateHallButton();" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="row">
+                                <div class="col-5">
+                                    <label>@_localization.Getkey("Columns") : </label>
+                                </div>
+                                <div class="col-7">
+                                    <input type="text" id="inputcol" class="form-control form-control-sm" width="50" onkeyup="ValidateHallButton();" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="row">
+                                <button type="button" class="btn btn-primary" id="btnHallSubmit" onclick="AddExamHall()" disabled="disabled">Add Hall</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+
+                        <ul id="ulExamHallTbl" class="list-group list-group-horizontal-sm">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary">@_localization.Getkey("Save")</button>
+
+</div>
+<script>
+        $(document).ready(function () {
+            getScheduleBranchClassGroup();
+             $('#chkclassgroup').change(function () {
+                $('#tblbranchclassgroup tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+                //Validate();
+            });
+            setGridLayouts();
+        });
+         function getScheduleBranchClassGroup(){
+                 $.ajax({
+                     type: "post",
+                     async : false,
+                     url: '@Url.Action("GetScheduleBranchClassGroup","Schedule")',
+                     data: {scheduleId : $("#hfnewscheduleid").val() },
+                         dataType: 'json',
+                     traditional: true,
+                     success: function (response) {
+                         if (response != null) {
+                             var lstArr = JSON.parse(response);
+                                $("#branchclassgroupbody").empty();
+                                for (var j = 0; j < lstArr.length; j++){
+                                    insertintobranchclassgrouptbl(lstArr[j]);
+                                }
+                         }
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 });
+         }
+          function insertintobranchclassgrouptbl(data){
+
+                 var tblbdy = document.getElementById("branchclassgroupbody");
+                     var rowIndex= tblbdy.rows.length;
+                     var newRow = tblbdy.insertRow(rowIndex);
+                     cell1 = newRow.insertCell(0);
+                     cell1.innerHTML = data.id;
+                     cell1.style.display="none";
+
+                     cell2 = newRow.insertCell(1);
+                     cell2.innerHTML = data.branchId;
+                     cell2.style.display="none";
+
+                    cell3 = newRow.insertCell(2);
+                    cell3.innerHTML = data.classId;
+                    cell3.style.display = "none";
+
+                     var chk = document.createElement("input");
+                     chk.type="checkbox";
+                     chk.id="ClsIsSelected";
+                     chk.className="form-check-input";
+                     chk.checked=false;
+                     //chk.onclick=(function() { return function(){ Validate(); }})();
+
+                     cell4 = newRow.insertCell(3);
+                     cell4.appendChild(chk);
+
+                    var spcls = document.createElement("span");
+                    spcls.innerText = data.className +' (Students : '+data.studentCount+')'; //+' (Students : '+data.StudentCount+')';
+                    cell5 = newRow.insertCell(4);
+                    cell5.appendChild(spcls);
+         }
+         function chkHallFields(){
+              var isvalid=true;
+              //var validNumber = new RegExp(/^\d*\.?\d*$/);
+              var validNumber = new RegExp(/^\d+$/);
+              if($('#inputname').val()==''){
+                  isvalid =false;
+              }
+              if($('#inputrow').val()==''){
+                  isvalid =false;
+              }
+               if($('#inputcol').val()==''){
+                  isvalid =false;
+              }
+              if($('#inputrow').val()!=''){
+                  if(!$('#inputrow').val().match(validNumber)){
+                      isvalid =false;
+                  }
+              }
+               if($('#inputcol').val()!=''){
+                  if(!$('#inputcol').val().match(validNumber)){
+                      isvalid =false;
+                  }
+              }
+              return isvalid;
+        }
+         function ValidateHallButton(){
+              if (chkHallFields()){
+                  $('#btnHallSubmit').prop('disabled', false);
+              }
+              else{
+                   $('#btnHallSubmit').prop('disabled', true);
+              }
+          }
+          var examHallArr=[];
+         // var seatArr=[];
+         function AddExamHall(){
+             var hallObj = {};
+             const nextHallId = examHallArr.length > 0
+    ? Math.max(...examHallArr.map(s => s.HallId)) + 1
+    : 1;
+            hallObj.HallId = nextHallId;
+             hallObj.HallName = $('#inputname').val();
+             hallObj.RowCount = $('#inputrow').val();
+             hallObj.ColCount = $('#inputcol').val();
+
+             var li=document.createElement('li');
+             li.className ="list-group-item";
+
+             var sp=document.createElement('span');
+             sp.innerHTML = hallObj.HallName+' (rows : '+hallObj.RowCount+' cols : '+hallObj.ColCount+')';
+
+             var div=document.createElement('div');
+             div.className="bg-info p-2 text-white bg-opacity-75";
+
+             var lstseatdiv = generateSeats(hallObj.RowCount,hallObj.ColCount);
+             // hallObj.LstSeat=seatArr;
+             examHallArr.push(hallObj);
+
+
+             div.appendChild(sp);
+            // setGridLayouts(); // Re-apply grid layouts for new content
+             li.appendChild(div);
+             li.appendChild(lstseatdiv);
+
+                $("#ulExamHallTbl").append(li);
+
+         }
+
+
+         function generateSeats(rows,cols){
+             //seatArr=[];
+             var lstdivseat=document.createElement('div');
+             lstdivseat.className="seat-map";
+             for(var row = 1; row <= rows; row++){
+                 for (var col = 1; col <= cols; col++){
+
+                    var seatNumber = String.fromCharCode(65 + row - 1) + col;
+                   var divprep= prepareDivForSeat('1', seatNumber)
+
+    //                  var seatObj={};
+    //                   seatObj.HallId=row;
+    //                  seatObj.HallName=hallname;
+    //                  const nextSeatId = seatArr.length > 0
+    //? Math.max(...seatArr.map(s => s.SeatId)) + 1
+    //: 1;
+    //                   seatObj.SeatId= nextSeatId;
+    //                  seatObj.SeatNumber = seatNumber;
+    //                  seatObj.StudentId='';
+
+    //                  seatArr.push(seatObj);
+
+                     lstdivseat.appendChild(divprep);
+                 }
+             }
+             setGridLayouts();
+             return lstdivseat;
+         }
+
+           function setGridLayouts() {
+            $('.seat-map').each(function () {
+                var columns = $(this).data('columns') || $(this).find('.seat').length; // Fallback to total seats if columns not defined
+                $(this).css('grid-template-columns', `repeat(${columns}, 30px)`);
+            });
+        }
+        function getCheckedClassIds(){
+             var selectedArr =[];
+             $("#tblbranchclassgroup tbody tr").each(function () {
+                     var tr = $(this);
+                         var clsObj = {};
+                         var firstCol = tr.find("td").eq(0).html();
+                         var secondCol = tr.find("input").eq(0).is(':checked');
+                         clsObj.Id = firstCol;
+                         clsObj.IsSelected = secondCol;
+                         selectedArr.push(clsObj);
+             });
+             return selectedArr;
+         }
+      
+        function getClassStudents(){
+             var lstchk = getCheckedClassIds();
+            const filteredchks = lstchk.filter(el => el.IsSelected == true);
+            let resultids = filteredchks.map(a => a.Id);
+
+             var obj={};
+             obj.ScheduleId=$("#hfnewscheduleid").val();
+             obj.ScheduleBranchClassIds=resultids;
+             //console.log(obj);
+             var jdata = JSON.stringify(obj);
+                     $.ajax({
+                     type: 'POST',
+                         url: '@Url.Action("GetScheduleBranchClassStudentAllocation","Schedule")',
+                         dataType: "JSON",
+                     data: {model :jdata },
+                     success: function (response) {
+                         var lststud = JSON.parse(response);
+                        $("#ulExamHallTbl").empty();
+                         //var seatAllocations = allocateSeats(lststud, examHallArr);
+                         //console.log(seatAllocations);
+                        allocateSeats(lststud, examHallArr);
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+
+                     }
+                 })
+        }
+
+        function allocateSeats(students, examHalls) {
+                const allocations = []; const seats = [];
+                let studentIndex = 0; var newLi={}; var lstdivseat={};
+
+                // Loop through each exam hall
+                examHalls.forEach(function (hall) {
+                    newLi = createLi(hall);
+                     lstdivseat=document.createElement('div');
+                    lstdivseat.className="seat-map";
+                    // Loop through rows and columns of the hall
+                    for (let row = 1; row <= hall.RowCount; row++) {
+                        for (let col = 1; col <= hall.ColCount; col++) {
+
+                            // Check if there are no more students left
+                            if (studentIndex >= students.length) {
+                                break;
+                            }
+
+                            // Convert row number to letter and combine with column number to get seat number
+                            const seatNumber = String.fromCharCode(65 + row - 1) + col; // 'A' + row - 1 converts to letter
+
+                            const nextSeatId = seats.length > 0
+    ? Math.max(...seats.map(s => s)) + 1
+    : 1;
+                            // Create an allocation for this seat
+                            allocations.push({
+                                studentId: students[studentIndex].studentId,
+                                scheduleId:students[studentIndex].scheduleId,
+                                branchClassId:students[studentIndex].branchClassId,
+                                branchId:students[studentIndex].branchId,
+                                classId:students[studentIndex].classId,
+                                sectionId:students[studentIndex].sectionId,
+                                fullName:students[studentIndex].fullName,
+                                rollNo:students[studentIndex].rollNo,
+
+                                hallId: hall.HallId,
+                                hallName: hall.HallName,
+                                seatId : nextSeatId,
+                                seatNo: seatNumber
+
+                            });
+                            seats.push(nextSeatId);
+                            var divprep= prepareDivForSeat('2', seatNumber);
+                            lstdivseat.appendChild(divprep);
+                            // Move to the next student
+                            studentIndex++;
+                        }
+
+                        // Break out of row loop if no more students
+                        if (studentIndex >= students.length) {
+                            break;
+                        }
+                    }
+
+                    // Break out of exam hall loop if no more students
+                    if (studentIndex >= students.length) {
+                          newLi.appendChild(lstdivseat);
+                    $("#ulExamHallTbl").append(newLi);
+                        return;
+                    }
+                   
+
+                });
+
+               // return newLi;
+    }
+    function createLi(hall){
+            var li=document.createElement('li');
+             li.className ="list-group-item";
+
+             var sp=document.createElement('span');
+             sp.innerHTML = hall.HallName+' (rows : '+hall.RowCount+' cols : '+hall.ColCount+')';
+
+             var div=document.createElement('div');
+             div.className="bg-info p-2 text-white bg-opacity-75";
+             div.appendChild(sp);
+              li.appendChild(div);
+             return li;
+    }
+    function prepareDivForSeat(type, seatNumber){
+                    var div=document.createElement('div');
+                    if(type=='1'){
+                         div.className="seat available";
+                     $(div).attr('title','Available Seat');
+                    }
+                    else{
+                        div.className="seat allocated";
+
+                    }
+
+                     var sp=document.createElement('span');
+                     sp.innerHTML = seatNumber;
+                       div.appendChild(sp);
+                       return div;
+         }
+</script>
+
+
+
+
+
+
+
+
+
+

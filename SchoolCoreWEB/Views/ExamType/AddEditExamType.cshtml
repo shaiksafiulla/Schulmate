@@ -1,0 +1,100 @@
+﻿@model SchoolCoreWEB.Models.ExamType
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="card">
+    <div class="card-body">
+        <form id="myForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id)
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "80", onkeyup = "Validate();" })
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "description", @rows = "2", @maxlength = "250" })
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitExamType()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+       function chkFields(){
+        var isvalid=true;
+        var fname = document.getElementById("name");
+        if(fname.value === ""){
+             isvalid =false;
+        }
+       return isvalid;
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+
+
+    }
+
+      function submitExamType(){
+          $("#loaderDiv1").show("slow", function () {
+          var myformdata = $("#myForm").serialize();
+             $.ajax({
+              type: 'POST',
+               url: '@Url.Action("Save","ExamType")',
+              contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+              data: myformdata,
+              success: function (response) {
+                 if (response != null) {
+                      var serviceresult = JSON.parse(response);
+                      if (serviceresult === true) {
+                          $("#loaderDiv1").hide();
+                            toastr.error(`@_localization.Getkey("ExamTypeExists")`);
+                      }
+                      else {
+                          actionAfterResponse('ExamTypeGrid', serviceresult.recordId, serviceresult.statusId, '7');
+                      }
+                      } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                      }
+              },
+              error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+              }
+             })
+          })
+      }
+      Validate();
+</script>

@@ -1,0 +1,337 @@
+﻿@model SchoolCoreWEB.Models.TeacherAnnouncement
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string struserid = string.Empty;
+    string strtoken;
+    var userInfokey = @HttpContextAccessor.HttpContext.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        var userInfo = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+        struserid = userInfo.Id.ToString();
+    }
+    strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+}
+<style>
+    .mul-select {
+        min-width: 100%;
+    }
+</style>
+
+
+<form id="myForm" class="forms-sample">
+     @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.SessionYearId)
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+    @Html.HiddenFor(m => m.BranchClassId)
+    @Html.HiddenFor(m => m.ClasssubjectId)
+    @Html.HiddenFor(m => m.SectionIds, new { @id = "hfsectionids" })
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Criteria")</div>
+            <div class="ribbon-content">
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-group required mb-3">
+                            <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                            @Html.DropDownListFor(model => model.ClassId, Model.BranchClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlclass", @required = "required", onChange = "selectedClassIndexChanged()" })
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group required mb-3">
+                            <label for="class" class="form-label">@_localization.Getkey("Section")</label>
+                            <div id="section-container">
+                                <select id="ddlsection" style="width:100%" multiple="multiple"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group required mb-3">
+                            <label for="class" class="form-label">@_localization.Getkey("Subject")</label>
+                            @Html.DropDownListFor(model => model.SubjectId, Model.SubjectSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlsubject", @required = "required", onChange = "selectedSubjectIndexChanged()" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Details")</div>
+            <div class="ribbon-content">
+                <div class="row">
+                    <div class="col-8">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group required mb-3">
+                                    <label for="title" class="form-label">@_localization.Getkey("Title")</label>
+                                    @Html.TextBoxFor(model => model.Title, new { @class = "form-control form-control-sm", @id = "title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group mb-3">
+                                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "address", @rows = "2", @maxlength = "250" })
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group mb-3">
+                            <img id="imgphoto" src="@(Model.FilePath)" alt="assignment image" width="100" height="100" />
+                            <div class="input-group">
+                                <input type="file" id="filephoto" name="postedFile1" accept="image/*,.pdf" class="form-control form-control-sm" onchange="uploadFile(6,this)">
+                            </div>
+                            <br />
+                            <label for="name" class="form-label">@_localization.Getkey("UploadType")</label>
+                            @Html.RadioButtonFor(model => model.FileType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Image")</label> &nbsp;
+                            @Html.RadioButtonFor(model => model.FileType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Pdf")</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="submitTeacherAnnouncement()" id="btnsubmit" disabled="disabled">
+            @if (Model.Id > 0)
+            {
+                <span>@_localization.Getkey("Update")</span>
+            }
+            else
+            {
+                <span>@_localization.Getkey("Save")</span>
+            }
+        </button>
+        <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        Validate();
+        $('#ddlsection').multiSelect();
+    });
+
+    function chkFields() {
+        var isvalid = true;
+        var fname = document.getElementById("name");
+        if ($("#ddlbranch").val() == "" || $("#ddlbranch").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlsessionyear").val() == "" || $("#ddlsessionyear").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlclass").val() == "" || $("#ddlclass").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlsubject").val() == "" || $("#ddlsubject").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#title").val() == "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function uploadFile(type, file) {
+        var filetype = $('[name="FileType"]:checked').val();
+        if (validateuploadFile(type, filetype, file) == "") {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+                //  $("#imgheader").attr("src", URL.createObjectURL(file.files[0]));
+            }
+        }
+        else {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", "");
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+                // $("#imgheader").attr("src", "");
+            }
+        }
+    }
+   
+    function selectedClassIndexChanged() {
+        getSections();
+        getSubjects();
+        Validate();
+    }
+    function selectedSubjectIndexChanged() {
+        Validate();
+    }
+     function getSections() {
+        $("#loaderDiv1").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetSectionByClass", "StudentAssignment")',
+                data: { BranchId: $('#hfbranchid').val(), ClassId: $('#ddlclass').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+
+                    var multiselect = $('#section-container').find('#ddlsection');
+                    // Check if multiselect exists
+                    if (multiselect.length > 0) {
+                        // Remove the multiselect element
+                        $('div.multi-select-container').remove();
+                        multiselect.remove();
+                    }
+
+                    // Create new select element
+                    var select = $('<select>', {
+                        id: 'ddlsection',
+                        multiple: 'multiple',
+                        class: 'form-control',
+                        style: 'width: 100%;'
+
+                    });
+
+                    $.each(response, function (index, item) {
+                        select.append($('<option>', {
+                            value: item.value,
+                            text: item.text
+                        }));
+                    });
+
+                    $('#section-container').append(select);
+                    // Initialize the multiselect plugin
+                    $('#ddlsection').multiSelect();
+                    var divcls = $('.multi-select-container');
+                    divcls.css('width', '100%');
+                    var spancls = $('.multi-select-button');
+                    spancls.css('width', '100%');
+
+                    $("#loaderDiv1").hide();
+                }
+            });
+        })
+    }
+    //function getSections() {
+    //    $('#ddlsection').select2({
+    //        dropdownParent: $('#myModalBodyDiv1'),
+    //        placeholder: "select sections",
+    //        tags: true,
+    //        ajax: {
+    //            url: '@Url.Action("GetSectionByClass", "StudentAssignment")',
+    //            data: { BranchId: $('#ddlbranch').val(), ClassId: $('#ddlclass').val() },
+    //            dataType: 'json',
+    //            traditional: true,
+    //            processResults: function (data) {
+    //                var formattedData = data.map(function (item) {
+    //                    return {
+    //                        id: item.value,
+    //                        text: item.text // Assuming your data has a 'name' property
+
+    //                    };
+    //                });
+    //                return {
+    //                    results: formattedData
+    //                };
+    //            }
+    //        }
+    //        // templateSelection: customFormatSelection
+    //    });
+    //}
+   
+
+    function getSubjects() {
+        $('#ddlsubject')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+        $.ajax({
+            type: "post",
+            url: '@Url.Action("GetSubjectByClass", "StudentAssignment")',
+            data: { ClassId: $('#ddlclass').val() },
+            dataType: 'json',
+            traditional: true,
+            success: function (response) {
+                var lstdata = response;
+                var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                for (var i = 0; i < lstdata.length; i++) {
+                    s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                }
+                $('.selectsubject').selectpicker('destroy')
+                $("#ddlsubject").html(s);
+                $('.selectsubject').selectpicker({
+                    liveSearch: true,
+                    showSubtext: true
+                });
+            }
+        });
+    }
+
+    
+
+    function submitTeacherAnnouncement() {
+        $("#loaderDiv1").show("slow", function () {
+            var selectedSectionIds = $('#ddlsection').val();
+            var serializedArray = JSON.stringify(selectedSectionIds);
+            $("#hfsectionids").val(serializedArray);
+            var postData = new FormData($('#myForm')[0]);
+            postData.append("AssignmentFile", $("input[name=postedFile1]")[0].files[0]); // file
+
+            $.ajax({
+                type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/TeacherAnnouncement/save',
+                headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserId': @struserid
+                                            },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = response;
+                        actionAfterResponse('TeacherAnnouncementGrid', serviceresult.recordId, serviceresult.statusId, '39');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            });
+        })
+    }
+   
+</script>

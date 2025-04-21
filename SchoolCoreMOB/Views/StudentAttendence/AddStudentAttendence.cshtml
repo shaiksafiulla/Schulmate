@@ -1,0 +1,331 @@
+﻿@model SectionAttendenceVM;
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Attendance : @Model.StrWorkingDate</h2>
+</div>
+<div class="content mb-0">
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+    @Html.HiddenFor(m => m.Id, new { @id = "hfattendenceid" })
+    @Html.HiddenFor(m => m.StrWorkingDate, new { @id = "hfworkingdate" })
+    @*<h3 class="text-center bottom-0">Attendance : @Model.StrWorkingDate</h3>*@
+
+
+    <div id="sectionattendence-container" style="display: flex; justify-content: center;">
+    </div>
+    <br />
+    <table class="table table-borderless text-center rounded-sm shadow-l" style="overflow: hidden;" id="tblstudent">
+        <thead>
+            <tr>
+                <th>@_localization.Getkey("RollNo")</th>
+                <th>@_localization.Getkey("Name")</th>
+                <th>@_localization.Getkey("Result")</th>
+                @*<th>@_localization.Getkey("Remarks")</th>*@
+            </tr>
+        </thead>
+        <tbody id="studentbody">
+        </tbody>
+    </table>
+    @if (Model.IsEdit)
+    {
+        @* <a href="#" onclick="submitAttendence('4')"><span>@_localization.Getkey("Post")</span></a>    *@
+        <a href="#" class="btn btn-m btn-full mb-3 rounded-xs text-uppercase font-900 shadow-s bg-blue-dark" onclick="submitAttendence('4')"><span>@_localization.Getkey("Post")</span></a>
+    }
+
+
+
+
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+         $(document).ready(function () {
+            // setActiveNav("@Url.Action("Index", "StudentAttendence")");
+             var sectionAttendence = @Html.Raw(Json.Serialize(Model));
+             if(sectionAttendence !=null){
+                 setSectionBinding(sectionAttendence.lstSectionAttendence);
+             }
+             //getSectionAttendence();
+
+         });
+
+        function getStudentAttendence(id) {
+             showLoading();
+              getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/Student/`+$("#hfattendenceid").val()+`,`+id+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {
+                                    var result = response;
+                                    $("#studentbody").empty();
+                                    for (var j = 0; j < result.length; j++) {
+                                        insertintotbl(result[j]);
+                                    }
+                                    hideLoading();
+                            })
+                            .catch(error => {
+                                 showToast('2', `@_localization.Getkey("Error")`);
+                            });
+
+        }
+        function insertintotbl(data) {
+
+            var tblbdy = document.getElementById("studentbody");
+            var rowIndex = tblbdy.rows.length;
+            var newRow = tblbdy.insertRow(rowIndex);
+            cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data.studentId;
+            cell1.style.display = "none";
+
+            cell2 = newRow.insertCell(1);
+            cell2.innerHTML = data.branchClassId;
+            cell2.style.display = "none";
+
+            cell3 = newRow.insertCell(2);
+            cell3.innerHTML = data.classId;
+            cell3.style.display = "none";
+
+            cell4 = newRow.insertCell(3);
+            cell4.innerHTML = data.sectionId;
+            cell4.style.display = "none";
+
+            cell5 = newRow.insertCell(4);
+            cell5.innerHTML = data.leaveType;
+            cell5.style.display = "none";
+
+            var spcls = document.createElement("span");
+            spcls.innerHTML = data.rollNo;
+            cell6 = newRow.insertCell(5);
+            cell6.appendChild(spcls);
+
+            var spcls2 = document.createElement("span");
+            spcls2.innerHTML = data.studentName;
+            cell7 = newRow.insertCell(6);
+            cell7.appendChild(spcls2);
+
+
+            //var divparent = document.createElement('div');
+            //divparent.className = "ms-auto align-self-center mt-n2";
+
+            //var divswitch = document.createElement('div');
+            //divswitch.className = "custom-control small-switch ios-switch me-1 mt-n2";
+
+
+
+            //var chk = document.createElement("input");
+            //chk.id="toggleId"+data.studentId;
+            //chk.type = "checkbox";
+
+            //chk.className = "ios-input";
+            //chk.checked = data.isSelected;
+            //if (data.leaveType != "") {
+            //    chk.readOnly = "readOnly";
+            //}
+            //var lbl=document.createElement('label');
+            //lbl.className = "custom-control-label";
+            //lbl.setAttribute('for', "toggleId"+data.studentId);
+
+
+            //var icheck=document.createElement('i');
+            //icheck.className = "fa fa-check color-white";
+
+            //var tcheck=document.createElement('i');
+            //tcheck.className = "fa fa-times color-white";
+
+
+            //divswitch.appendChild(chk);
+            //divswitch.appendChild(lbl);
+            //divparent.appendChild(divswitch);
+            //cell8 = newRow.insertCell(7);
+            //cell8.appendChild(divparent);
+
+             const toggleContainer = document.createElement('div');
+    toggleContainer.classList.add('d-flex', 'no-effect');
+    toggleContainer.setAttribute('data-trigger-switch', 'toggle-id-2');
+    toggleContainer.setAttribute('role', 'button');
+    toggleContainer.setAttribute('aria-expanded', 'false');
+
+    // Create the inner div for switch alignment
+    const innerDiv = document.createElement('div');
+    innerDiv.classList.add('ms-auto', 'me-4', 'pe-2');
+
+    // Create the custom control div for the switch
+    const switchDiv = document.createElement('div');
+    switchDiv.classList.add('custom-control', 'ios-switch', 'ios-switch-icon');
+
+    // Create the input checkbox for the switch
+    const inputCheckbox = document.createElement('input');
+    inputCheckbox.type = 'checkbox';
+    inputCheckbox.classList.add('ios-input');
+    inputCheckbox.id = "toggleId"+data.studentId;
+     inputCheckbox.checked = data.isSelected;
+    if (data.leaveType != "") {
+        inputCheckbox.readOnly = "readOnly";
+    }
+
+
+    // Create the label for the checkbox
+    const label = document.createElement('label');
+    label.classList.add('custom-control-label');
+    label.setAttribute('for', "toggleId"+data.studentId);
+
+    // Create the check icon (font-awesome)
+    const checkIcon = document.createElement('i');
+    checkIcon.classList.add('fa', 'fa-check', 'font-8', 'color-white');
+
+    // Create the times icon (font-awesome)
+    const timesIcon = document.createElement('i');
+    timesIcon.classList.add('fa', 'fa-times', 'font-8', 'color-white');
+
+    // Append the input, label, and icons to the switch div
+    switchDiv.appendChild(inputCheckbox);
+    switchDiv.appendChild(label);
+    switchDiv.appendChild(checkIcon);
+    switchDiv.appendChild(timesIcon);
+
+    // Append the switch div to the inner div
+    innerDiv.appendChild(switchDiv);
+
+    // Append the inner div to the toggle container
+    toggleContainer.appendChild(innerDiv);
+
+     cell8 = newRow.insertCell(7);
+            cell8.appendChild(toggleContainer);
+
+
+            if (data.leaveType != "") {
+                var input = document.createElement("input");
+                input.className = "form-control form-control-sm"
+                input.readOnly = "readOnly";
+                if (data.leaveType == "2") {
+                    input.value = `@_localization.Getkey("FirstHalf")`;
+                }
+                if (data.leaveType == "3") {
+                    input.value = `@_localization.Getkey("SecondHalf")`;
+                }
+                cell9 = newRow.insertCell(8);
+                cell9.appendChild(input);
+                cell9.style.display = "none";
+            }
+            else {
+                var input1 = document.createElement("input");
+                input1.className = "form-control form-control-sm"
+                input1.value = data.remarks;
+                cell9 = newRow.insertCell(8);
+                cell9.appendChild(input1);
+                cell9.style.display = "none";
+            }
+        }
+        function getStudentArray() {
+            var chkStudentArray = [];
+            $("#tblstudent tbody tr").each(function () {
+
+                var tr = $(this);
+                var paramcls = {};
+                var FirstCol = tr.find("td").eq(0).html();
+                var BrclsCol = tr.find("td").eq(1).html();
+                var clsCol = tr.find("td").eq(2).html();
+                var secCol = tr.find("td").eq(3).html();
+                var leaveCol = tr.find("td").eq(4).html();
+                var SecondCol = tr.find("input").eq(0).is(':checked');
+                var ThirdCol = tr.find("input").eq(1).val();
+
+                paramcls.StudentId = parseInt(FirstCol);
+                paramcls.SessionYearId = $("#hfsessionyearid").val();
+                paramcls.BranchId = $("#hfbranchid").val();
+                paramcls.BranchClassId = parseInt(BrclsCol);
+                paramcls.ClassId = parseInt(clsCol);
+                paramcls.SectionId = parseInt(secCol);
+                paramcls.LeaveType = leaveCol;
+
+                paramcls.IsSelected = SecondCol;
+                paramcls.Remarks = ThirdCol;
+
+                chkStudentArray.push(paramcls);
+            });
+
+            return chkStudentArray;
+        }
+    function parseDate(dateString) {
+        // Split the string by the dash (-)
+        var parts = dateString.split("-");
+        // Create a new Date object: Date(year, month, day)
+        // Note: months are 0-indexed in JavaScript, so we subtract 1 from the month.
+        var date = new Date(parts[2], parts[1] - 1, parts[0]);
+        return date;
+    }
+        function submitAttendence(type) {
+
+                var obj = {};
+                obj.Id = $("#hfattendenceid").val();
+                obj.BranchId = $("#hfbranchid").val();
+                obj.SessionYearId = $("#hfsessionyearid").val();
+                obj.WorkingDate = parseDate($("#hfworkingdate").val());
+                obj.PersonnelType = type;
+                if (type == '4') {
+                    obj.LstStudentAttendence = getStudentArray();
+                    obj.LstPersonnelAttendence = [];
+                }
+                else {
+                    obj.LstStudentAttendence = [];
+                    obj.LstPersonnelAttendence = getPersonnelArray(type);
+                }
+                var jdata = JSON.stringify(obj);
+
+                showLoading();
+
+           fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/Attendence/save', {
+                    method: 'POST', // HTTP method
+                    headers: {
+                        'Content-Type': 'application/json', // Standard content type for JSON data
+                        'Authorization': 'Bearer ' + `@strtoken`,
+                        'UserParam': `@Html.Raw(@userParamkey)`
+                    },
+                    body: jdata // Stringify the data object to JSON format
+                })
+                .then(response => response.json()) // Parse the JSON response
+                .then(result => {
+                            showToast('1', `@_localization.Getkey("Success")`);
+                            hideLoading();
+                            window.location.href="@Url.Action("Index", "StudentAttendence")";
+                })
+                .catch(error => {
+                    showToast('2', `@_localization.Getkey("Error")`);
+                });
+
+        }
+        function setSectionBinding(data){
+            $('#sectionattendence-container').empty();
+
+           const container = document.getElementById('sectionattendence-container');
+            data.forEach((card, index) => {
+                const div = document.createElement('div');
+                div.className = 'weekdaycard';
+                div.setAttribute('id', card.id);
+                div.textContent = card.name;
+
+                // Add click event listener
+                div.addEventListener('click', () => {
+                        const selectedCard = container.querySelector('.weekdaycard.selected');
+                        if (selectedCard) {
+                            selectedCard.classList.remove('selected');
+                        }
+                        div.classList.add('selected');
+                        getStudentAttendence(card.id);
+                });
+                container.appendChild(div);                
+            });       
+            const attendanceCards = container.querySelectorAll('.weekdaycard');           
+            attendanceCards.forEach(card => {               
+                if (card.id == data[0].id) {                  
+                    card.classList.add('selected');  // Manually add selected class
+                    getStudentAttendence(card.id);
+                }
+            });
+
+        }
+</script>

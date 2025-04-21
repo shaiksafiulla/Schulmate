@@ -1,0 +1,295 @@
+﻿@model SchoolCoreWEB.Models.LeaveRequest
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<form id="myForm" class="forms-sample">
+    @Html.HiddenFor(m => m.Id, new { @id = "hfleaverequestid" })
+    @Html.HiddenFor(m => m.PersonnelType, new { @id = "hfpersonneltype" })
+    @Html.HiddenFor(m => m.PersonnelId, new { @id = "hfpersonnelid" })
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="form-group required mb-3">
+                    <label for="startdate" class="form-label">@_localization.Getkey("StartDate")</label>
+                    @Html.EditorFor(model => model.FromDate, "{0:dd-MM-yyyy}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @required = "required", @name = "fromdate", @id = "fromdate", onChange = "getDatelist();" } })
+                </div>
+                <div class="form-group required mb-3">
+                    <label for="enddate" class="form-label">@_localization.Getkey("EndDate")</label>
+                    @Html.EditorFor(model => model.ToDate, "{0:dd-MM-yyyy}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @required = "required", @name = "todate", @id = "todate", onChange = "getDatelist();" } })
+                </div>
+                <div class="form-group mb-3">
+                                    <label class="form-label">@_localization.Getkey("RequestType")</label>
+                                    @Html.RadioButtonFor(model => model.LeaveRequestType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Casual")</label> &nbsp;
+                                    @Html.RadioButtonFor(model => model.LeaveRequestType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Sick")</label>
+                                </div>
+                <div class="form-group required mb-3">
+                    <label for="reason" class="form-label">@_localization.Getkey("Reason")</label>
+                    @Html.TextAreaFor(model => model.Reason, new { @class = "form-control form-control-sm", @id = "reason", @rows = "2", @maxlength = "300", onkeyup = "Validate()" })
+                </div>
+                <div class="form-group required mb-3">
+                    <label for="selectdate" class="form-label">@_localization.Getkey("SelectDates")</label>
+                    <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblrequestdate">
+                        <thead>
+                            <tr>
+                                <th>@_localization.Getkey("Date")</th>
+                                <th>@_localization.Getkey("Day")</th>
+                                <th>@_localization.Getkey("Type")</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestdatebody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitLeaveRequest()" id="btnsubmit" disabled="disabled">
+                        @if (Model.Id > 0)
+                        {
+                            <span>@_localization.Getkey("Update")</span>
+                        }
+                        else
+                        {
+                            <span>@_localization.Getkey("Save")</span>
+                        }
+                    </button>
+                    <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+                </div>
+            </div>
+            <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</form>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        Validate();
+        getDatelist();
+    });
+    function chkFields() {
+        var isvalid = true;
+        if ($("#fromdate").val() == "") {
+            isvalid = false;
+        }
+        if ($("#todate").val() == "") {
+            isvalid = false;
+        }
+        if ($("#reason").val() == "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function getDatelist() {
+        if ($("#fromdate").val() !== "" && $("#todate").val() !== "") {
+
+            const dates = [];
+            var strstartDate = $("#fromdate").val();
+            var strendDate = $("#todate").val();
+            var startDate = new Date(strstartDate);
+            var endDate = new Date(strendDate);
+
+            if (endDate >= startDate) {
+                // Strip hours minutes seconds etc.
+                var currentDate = new Date(
+                    startDate.getFullYear(),
+                    startDate.getMonth(),
+                    startDate.getDate()
+                );
+
+                while (currentDate <= endDate) {
+                    var dtobj = {};
+                    dtobj.strDate = convertDate(currentDate);
+                    dtobj.strDay = currentDate.toLocaleString('en-us', { weekday: 'long' });
+                    dates.push(dtobj);
+
+                    currentDate = new Date(
+                        currentDate.getFullYear(),
+                        currentDate.getMonth(),
+                        currentDate.getDate() + 1, // Will increase month if over range
+                    );
+                }
+                $("#requestdatebody").empty();
+                for (var i = 0; i < dates.length; i++) {
+                    // createHTML(dates[i]);
+                    insertintotbl(dates[i]);
+                }
+                Validate();
+                // console.log(dates);
+                //  return dates;
+            }
+
+
+        }
+    }
+    function convertDate(inputFormat) {
+        function pad(s) { return (s < 10) ? '0' + s : s; }
+        var d = new Date(inputFormat)
+        return [pad(d.getDate()), pad(d.getMonth() + 1), d.getFullYear()].join('-')
+    }
+    function insertintotbl(data) {
+
+        var tblbdy = document.getElementById("requestdatebody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.strDate;
+
+        cell2 = newRow.insertCell(1);
+        cell2.innerHTML = data.strDay;
+
+        var maindiv = document.createElement('div');
+        var fulldiv = document.createElement('div');
+        var fullelem = document.createElement('input');
+        fullelem.className = "form-check-input";
+        fullelem.type = 'radio';
+        fullelem.name = 'leaveType' + data.strDate;
+        fullelem.checked = true;
+        fullelem.value = '1';
+
+        var fulllabel = document.createElement('label');
+        fulllabel.innerHTML = 'Full';
+        fulllabel.className = "form-label";
+
+        fulldiv.appendChild(fullelem);
+        fulldiv.appendChild(fulllabel);
+
+        var firstHalfdiv = document.createElement('div');
+        var firstHalfelem = document.createElement('input');
+        firstHalfelem.className = "form-check-input";
+        firstHalfelem.type = 'radio';
+        firstHalfelem.name = 'leaveType' + data.strDate;
+        firstHalfelem.checked = false;
+        firstHalfelem.value = '2';
+
+        var firstHallabel = document.createElement('label');
+        firstHallabel.innerHTML = 'First Half';
+        firstHallabel.className = "form-label";
+
+        firstHalfdiv.appendChild(firstHalfelem);
+        firstHalfdiv.appendChild(firstHallabel);
+
+        var secondHalfdiv = document.createElement('div');
+        var secondHalfelem = document.createElement('input');
+        secondHalfelem.className = "form-check-input";
+        secondHalfelem.type = 'radio';
+        secondHalfelem.name = 'leaveType' + data.strDate;
+        secondHalfelem.checked = false;
+        secondHalfelem.value = '3';
+
+        var secondHalflabel = document.createElement('label');
+        secondHalflabel.innerHTML = 'Second Half';
+        secondHalflabel.className = "form-label";
+
+        secondHalfdiv.appendChild(secondHalfelem);
+        secondHalfdiv.appendChild(secondHalflabel);
+
+
+        maindiv.appendChild(fulldiv);
+        maindiv.appendChild(firstHalfdiv);
+        maindiv.appendChild(secondHalfdiv);
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(maindiv);
+
+    }
+
+    function getLeaveRequestArray() {
+        var chkClsArray = [];
+
+        $("#tblrequestdate tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+            var FirstCol = tr.find("td").eq(0).html();
+            var SecondCol = $("input[name='leaveType" + FirstCol + "']:checked").val();
+            paramcls.Id = 0;
+            paramcls.LeaveRequestId = 0;
+            paramcls.LeaveDate = tryParseDateFromString(FirstCol, "dmy");
+            paramcls.LeaveType = SecondCol;
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    }
+    function tryParseDateFromString(dateStringCandidateValue, format = "ymd") {
+        const candidate = (dateStringCandidateValue || ``)
+            .split(/[ :\-\/]/g).map(Number).filter(v => !isNaN(v));
+        const toDate = () => {
+            format = [...format].reduce((acc, val, i) => ({ ...acc, [val]: i }), {});
+            const parts =
+                [candidate[format.y], candidate[format.m] - 1, candidate[format.d]]
+                    .concat(candidate.length > 3 ? candidate.slice(3) : []);
+            const checkDate = d => d.getDate &&
+                ![d.getFullYear(), d.getMonth(), d.getDate()]
+                    .find((v, i) => v !== parts[i]) && d || undefined;
+
+            return checkDate(new Date(Date.UTC(...parts)));
+        };
+
+        return candidate.length < 3 ? undefined : toDate();
+    }
+
+    function submitLeaveRequest() {
+        var obj = {};
+        obj.Id = $("#hfleaverequestid").val();
+        obj.statusId = "1";
+        obj.PersonnelType = $("#hfpersonneltype").val();
+         obj.LeaveRequestType = $('[name="LeaveRequestType"]:checked').val();
+        obj.PersonnelId = $("#hfpersonnelid").val();
+        obj.SessionYearId = $("#hfsessionyearid").val();
+        obj.BranchId = $("#hfbranchid").val();
+        obj.FromDate = $("#fromdate").val();
+        obj.ToDate = $("#todate").val();
+        obj.Reason = $("#reason").val();
+        obj.LstLeaveRequestDate = getLeaveRequestArray();
+        var jdata = JSON.stringify(obj);
+        $("#loaderDiv1").show("slow", function () {
+
+            $.ajax({
+                type: 'POST',
+                async: false,
+                url: '@Url.Action("Save", "LeaveRequest")',
+                data: { model: jdata },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('LeaveRequestGrid', serviceresult.recordId, serviceresult.statusId, '35');
+
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        })
+    }
+    
+</script>

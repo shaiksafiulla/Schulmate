@@ -1,0 +1,269 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<VSection>
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("SectionsInfo")</div>
+		<button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('5','0')"><i class="ri-add-line"></i></button>
+		<div class="ribbon-content">
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="SectionGrid">
+				<thead>
+					<tr>
+						<th style="display:none;">Id</th>
+						<th>@_localization.Getkey("Section")</th>
+						<th>@_localization.Getkey("ShortName")</th>
+						<th>@_localization.Getkey("Branch")</th>
+						<th>@_localization.Getkey("Class")</th>
+						<th>@_localization.Getkey("Shift")</th>
+						<th>@_localization.Getkey("SlotDuration")</th>
+						@*  <th>@_localization.Getkey("MaxCount")</th> *@
+						<th>@_localization.Getkey("Students")</th>
+						<th>@_localization.Getkey("ClassTeachers")</th>
+						<th>@_localization.Getkey("SubjectTeachers")</th>
+						<th>@_localization.Getkey("TimeTable")</th>
+						<th>@_localization.Getkey("Actions")</th>
+					</tr>
+				</thead>
+
+			</table>
+		</div>
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+	<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="myModalBodyDiv1">
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="primary-header-modal2" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-full-width modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h4 class="modal-title" id="primary-header-modalLabel2">Modal Heading</h4>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="myModalBodyDiv2">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Styles {
+	<link href="~/assets/vendor/select2/css/select2.min.css" rel="stylesheet" />
+	<link href="~/assets/css/easyui.css" rel="stylesheet" type="text/css" />	
+}
+
+@section Scripts {
+	<script src="~/assets/js/easyui.min.js"></script>
+	<script src="~/assets/vendor/select2/js/select2.min.js"></script>	
+	<script>
+		$(document).ready(function () {
+			$("#loaderDiv").show("slow", function () {
+				getSections();
+				var resObj = setResourceObj();
+				getResourceObj(JSON.stringify(resObj));
+			})
+
+		});
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.sections = `@_localization.Getkey("Sections")`;
+			msgobj.viewsection = `@_localization.Getkey("ViewSection")`;
+			msgobj.editsection = `@_localization.Getkey("EditSection")`;
+			msgobj.addsection = `@_localization.Getkey("AddSection")`;
+			msgobj.students = `@_localization.Getkey("Students")`;
+			msgobj.classteacher = `@_localization.Getkey("ClassTeacher")`;
+			msgobj.activityteacher = `@_localization.Getkey("ActivityTeacher")`;
+			msgobj.timetable = `@_localization.Getkey("TimeTable")`;
+			msgobj.incomplete = `@_localization.Getkey("InComplete")`;
+			msgobj.complete = `@_localization.Getkey("Complete")`;
+
+			return msgobj;
+		}
+		function getSections() {
+			$.ajax({
+				type: 'POST',
+				async: false,
+				url: '@Url.Action("GetAll", "Section")',
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+
+				success: function (response) {
+					if (response != null) {
+
+						var sectionData = [];
+						$.each(JSON.parse(response), function (key, value) {
+							var spanslot = "";
+							var spanshift = "";
+
+							var spanclsteacher = "";
+							var spansubteacher = "";
+							var spantimetable = "";
+							var btndelete = "";
+							if (value.slotDuration != "" && value.slotDuration != null) {
+								spanslot = value.slotDuration + " min";
+							}
+							if (value.fromTime != "" && value.fromTime != null && value.toTime != "" && value.toTime != null) {
+								spanshift = value.fromTime + " - " + value.toTime;
+							}
+
+							if (value.classTeachers == "" || value.classTeachers == null) {
+								spanclsteacher = `<span class="badge bg-danger"> <i class="ri-close-line"> </span>`
+							}
+							else {
+								spanclsteacher = `<span class="badge bg-success">` + value.classTeachers + `</span>`
+							}
+							if (value.subjectCount == value.classSubjectCount) {
+								spansubteacher = `<span class="badge bg-success"><i class="ri-check-line"></i></span>`
+							}
+							else {
+								spansubteacher = `<span class="badge bg-danger"> <i class="ri-close-line"></i></span>`
+							}
+							if (value.timeTableCount == value.classSubjectCount) {
+								spantimetable = `<span class="badge bg-success"><i class="ri-check-line"></i></span>`
+							}
+							else {
+								spantimetable = `<span class="badge bg-danger"> <i class="ri-close-line"></i></span>`
+							}
+							// if ((value.subjectCount == "" || value.subjectCount == null) || (value.subjectCount < value.classSubjectCount)) {
+							//     spansubteacher = `<span class="badge bg-warning"> @_localization.Getkey("InComplete") </span>`
+							// }
+							// else {
+							//     spansubteacher = `<span class="badge bg-success"> @_localization.Getkey("Complete") </span>`
+							// }
+							// if ((value.timeTableCount == "" || value.timeTableCount == null) || (value.timeTableCount < value.classSubjectCount)) {
+							//     spantimetable = `<span class="badge bg-warning"> @_localization.Getkey("InComplete") </span>`
+							// }
+							// else {
+							//     spantimetable = `<span class="badge bg-success"> @_localization.Getkey("Complete") </span>`
+							// }
+
+							if (value.isDelete == "1") {
+								btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`5`,`SectionGrid`, ' + value.id + ')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+							}
+							var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,SectionGrid);"> ' +
+								'<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+								'<div class="dropdown-menu dropdown-menu-end">' +
+								'<a class="dropdown-item" href="#" onclick="viewAction(`5`, ' + value.id + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("View")</a>' +
+								'<a class="dropdown-item" href="#" onclick="addEditAction(`5`, ' + value.id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' +
+								' <a class="dropdown-item" href="#" onclick="AddEditSectionTeacher(' + value.id + ')"><i class="ri-list-ordered"></i>&nbsp; @_localization.Getkey("ClassTeachers")</a>' +
+								' <a class="dropdown-item" href="#" onclick="AddEditSectionActivityPersonnel(' + value.id + ')"><i class="ri-list-ordered"></i>&nbsp; @_localization.Getkey("ActivityTeachers")</a>' +
+								' <a class="dropdown-item" href = "#" onclick = "AddEditSectionTimeTable(' + value.id + ')" > <i class="ri-list-ordered" > </i>&nbsp; @_localization.Getkey("TimeTable")</a > ' + btndelete +
+
+								'</div>' +
+								'</div>'
+
+							sectionData.push([value.id, value.name,value.shortName, value.branchName, value.className, spanshift, spanslot, value.studentCount, spanclsteacher, spansubteacher, spantimetable, btnaction])
+						})
+
+						$("#SectionGrid").DataTable({
+							"bDestroy": true,
+							data: sectionData,
+							order: [[0, "desc"]],
+							"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+							dom: 'lBfrtip',
+							buttons: [
+								{
+									extend: 'csvHtml5',
+									text: '<i class="ri-file-excel-line"></i>',
+									titleAttr: 'csv',
+									filename: `@_localization.Getkey("Sections")`,
+									className: 'btn btn-outline-light btn-sm',
+									exportOptions: {
+										columns: [1, 2, 3, 4,5,6,7,8]
+									}
+								}
+							]
+
+						})
+						$("#loaderDiv").hide();
+
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+		}
+		var AddEditSectionTeacher = function (sectionId) {
+			if (sectionId > 0) {
+				document.getElementById('primary-header-modalLabel').innerHTML = `@_localization.Getkey("ClassTeacher")`;
+			}
+			var url = '@Url.Action("AddEditSectionTeacher", "Section")?Id=' + sectionId;
+			$("#myModalBodyDiv1").load(url, function () {
+				$("#primary-header-modal").modal("show");
+			})
+		}
+		var AddEditSectionActivityPersonnel = function (sectionId) {
+			if (sectionId > 0) {
+				document.getElementById('primary-header-modalLabel').innerHTML = `@_localization.Getkey("ActivityTeacher")`;
+			}
+			var url = '@Url.Action("AddEditSectionActivityPersonnel", "Section")?Id=' + sectionId;
+			$("#myModalBodyDiv1").load(url, function () {
+				$("#primary-header-modal").modal("show");
+			})
+		}
+
+		var AddEditSectionTimeTable = function (sectionId) {
+			if (sectionId > 0) {
+				document.getElementById('primary-header-modalLabel2').innerHTML = `@_localization.Getkey("TimeTable")`;
+			}
+			var url = '@Url.Action("AddEditSectionTimeTable", "Section")?Id=' + sectionId;
+			$("#myModalBodyDiv2").load(url, function () {
+				$("#primary-header-modal2").modal("show");
+			})
+			//$('#primary-header-modal2').on('shown.bs.modal', function () {
+			//        setCalendar();
+			//});
+			//$('#primary-header-modal2').on('hidden.bs.modal', function (e) {
+			//    destroyCalendar(); // Call the function to destroy the calendar
+			//});
+		}
+
+
+	</script>
+}
+
+
+
+
+
+
+
+
+

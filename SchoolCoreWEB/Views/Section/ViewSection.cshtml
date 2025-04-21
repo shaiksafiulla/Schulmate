@@ -1,0 +1,36 @@
+﻿@model SchoolCoreWEB.Models.VSection
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("Name") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.Name)
+                        </div>
+               </div>
+                <div class="row">
+                        <div class="col-5">
+                    <label>@_localization.Getkey("Branch") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.BranchName)
+                        </div>
+               </div>             
+          
+                <div class="row">
+                        <div class="col-5">
+                    <label>@_localization.Getkey("Class") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.ClassName)
+                        </div>
+               </div>
+              
+        </div>
+    </div>   
+</div>

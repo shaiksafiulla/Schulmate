@@ -1,0 +1,149 @@
+﻿@using SchoolCoreMOB.Models
+@model IEnumerable<VStudentAssignmentStatus>
+@using Localization.Services
+@inject LanguageService _localization
+
+@using (Html.BeginForm())
+{
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("StudentAssignmentStatusInfo")</div>
+            <div class="ribbon-content">
+                <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="StudentAssignStatusGrid">
+                    <thead>
+                        <tr>
+                            <th style="display:none;">Id</th>
+                            <th>@_localization.Getkey("Branch")</th>
+                            <th>@_localization.Getkey("SessionYear")</th>
+                            <th>@_localization.Getkey("Title")</th>
+                            <th>@_localization.Getkey("Class")</th>
+                            <th>@_localization.Getkey("Subject")</th>
+                            <th>@_localization.Getkey("Section")</th>
+                            <th>@_localization.Getkey("Name")</th>
+                            <th>@_localization.Getkey("Status")</th>
+                            <th>@_localization.Getkey("FileName")</th>
+                            <th>@_localization.Getkey("Actions")</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+   
+}
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#loaderDiv").show("slow", function () {
+            getStudentAssignmentStatus();
+
+            var resObj = setResourceObj();
+            getResourceObj(JSON.stringify(resObj));
+        })
+    });
+    function setResourceObj() {
+        var msgobj = {};
+        msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+        msgobj.yes = `@_localization.Getkey("Yes")`;
+        msgobj.no = `@_localization.Getkey("No")`;
+        msgobj.error = `@_localization.Getkey("Error")`;
+        msgobj.added = `@_localization.Getkey("Added")`;
+        msgobj.updated = `@_localization.Getkey("Updated")`;
+
+        msgobj.deleted = `@_localization.Getkey("Deleted")`;
+        msgobj.delete = `@_localization.Getkey("Delete")`;
+        msgobj.view = `@_localization.Getkey("View")`;
+        msgobj.edit = `@_localization.Getkey("Edit")`;
+        msgobj.studentassignmentstatus = `@_localization.Getkey("StudentAssignmentStatus")`;
+        msgobj.viewstudentassignmentstatus = `@_localization.Getkey("ViewStudentAssignmentStatus")`;
+        msgobj.editstudentassignmentstatus = `@_localization.Getkey("EditStudentAssignmentStatus")`;
+        msgobj.addstudentassignmentstatus = `@_localization.Getkey("AddStudentAssignmentStatus")`;
+        msgobj.rejected = `@_localization.Getkey("Rejected")`;
+        msgobj.accepted = `@_localization.Getkey("Accepted")`;
+        
+        return msgobj;
+    }
+    function getStudentAssignmentStatus() {
+        $("#loaderDiv").show();
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: '@Url.Action("GetAll", "StudentAssignmentStatus")',
+            Accept: 'application/json, text/javascript',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function (response) {
+                if (response != null) {
+                    // console.log(response);
+                    var studentAssignStatusData = [];
+                    $.each(JSON.parse(response), function (key, value) {
+                        var btnpath = "";
+                        btnpath = '<a href="' + value.FilePath + '">' + value.FileName + '</a>'
+                        var statusName = "";
+                        if (value.StatusId == "0") {
+                            statusName = `<span class="badge bg-warning">@_localization.Getkey("New")</span>`
+                            // statusName = `<span class="badge" style="background-color:#FFC0CB;">@_localization.Getkey("UnderProcess")</span>`
+                        }
+                        if (value.StatusId == "2") {
+                            statusName = `<span class="badge bg-danger">@_localization.Getkey("Rejected")</span>`
+                        }
+                        if (value.StatusId == "1") {
+                            statusName = `<span class="badge bg-success">@_localization.Getkey("Accepted")</span>`
+                        }
+
+                        var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,StudentAssignStatusGrid);"> ' +
+                            '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+                            '<div class="dropdown-menu dropdown-menu-end">' +
+                            '<a class="dropdown-item" href="#" onclick="addEditAction(`38`, ' + value.Id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' +
+                            '</div>' +
+                            '</div>'
+                        studentAssignStatusData.push([value.Id, value.BranchName, value.SessionYearName, value.Title, value.ClassName, value.SubjectName, value.SectionName, value.FullName, statusName, btnpath, btnaction])
+                    })
+
+                    $("#StudentAssignStatusGrid").DataTable({
+                        "bDestroy": true,
+                        data: studentAssignStatusData,
+                        order: [[0, "desc"]],
+                        "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                        dom: 'lBfrtip',
+                        buttons: [
+                            {
+                                extend: 'csvHtml5',
+                                text: '<i class="ri-file-excel-line"></i>',
+                                titleAttr: 'csv',
+                                filename: `@_localization.Getkey("StudentAssignmentStatus")`,
+                                className: 'btn btn-outline-light btn-sm',
+                                exportOptions: {
+                                    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                                }
+                            }
+                        ]
+                    })
+                    $("#loaderDiv").hide();
+
+                } else {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+                toastr.error(`@_localization.Getkey("Error")`);
+            }
+        })
+    }
+
+</script>
+
+

@@ -1,0 +1,313 @@
+﻿@using SchoolCoreWEB.Models
+@using SchoolCoreWEB.Helpers
+@model QuestionPaper
+@using Localization.Services
+@inject LanguageService _localization
+
+<style type="text/css">
+	#pdf_container {
+		background: #ccc;
+		text-align: center;
+		display: none;
+		padding: 5px;
+		height: auto;
+		width: auto;
+		overflow: auto;
+	}
+</style>
+
+<div class="row" id="divquestpaper">
+	@if (Model.QPaperType == "1" && Model.Attach != null && !string.IsNullOrEmpty(Model.Attach.url))
+	{
+		<div class="row">
+			<div id="pdf_container"></div>
+
+		</div>
+	}
+	@if (Model.QPaperType != "1")
+	{
+		<div class="row">
+			<div class="card">
+				<div id="a4reportbody">
+					<div class="card-body">
+						<table style="width:100%">
+							<thead>
+								<tr>
+									<td style="word-break: break-all;">
+									</td>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<div class="content">
+											<div class="row">
+												<div class="text-center">
+													<strong>@Model.BranchName</strong>
+												</div>
+												<div class="text-center">
+													<strong>@Model.ExamTypeName / @Model.ScheduleMonth / @Model.ClassName / @Model.SubjectName / @Model.ExamDate</strong>
+												</div>
+											</div>
+											<hr />
+											<div class="row">
+												<div class="d-flex justify-content-between align-items-center mb-2">
+													<p>@_localization.Getkey("Time") : @Model.ExamTime</p>
+													<p>@_localization.Getkey("Name") : </p>
+													<p>@_localization.Getkey("MaxMarks") : @Model.Marks</p>
+												</div>
+											</div>
+											<hr />
+											<div class="row">
+												<div id="editor-container" style="height:300px"></div>
+
+											</div>
+
+
+										</div>
+									</td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr>
+									<td>
+										<div class="footer-space">
+										</div>
+									</td>
+								</tr>
+							</tfoot>
+						</table>
+						<div class="header">
+							<br />
+							<br />
+							<br />
+							<br />
+							<br />
+							<br />
+							<br />
+							<br />
+							<br />
+							<br />
+						</div>
+						<div class="footer">
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer" id="a4footer">
+
+					<button type="button" class="btn btn-primary" onclick="printDiv('a4reportbody')">
+						<i class="ri-printer-line"></i> @_localization.Getkey("Print")
+					</button>
+
+				</div>
+
+			</div>
+		</div>
+	}
+	<div class="modal-footer" id="a4footer">
+		<button type="button" class="btn btn-primary" id="btnprint">
+			<i class="ri-printer-line"></i> @_localization.Getkey("Print")
+		</button>
+	</div>
+
+</div>
+@section Scripts {
+	<script src="~/assets/js/pdf.min.js"></script>
+	<script src="~/assets/js/pdf.worker.min.js"></script>
+	<script>
+				//var quill2 = new Quill('#editor-container', {
+				//      theme: 'snow',
+				//      modules: {
+				//                syntax: false,
+				//                toolbar: '',
+				//            },
+				//    });
+
+			//var fileurl = "\\examapp\\Uploads\\QuestionPaper\\";
+			var filepath="";
+			//var pdfjsLib = window['pdfjs-dist/build/pdf'];
+			var pdfjsLib = window['pdfjsLib'];
+			 //pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://localhost:7203/schoolcoreweb/assets/js/pdf.worker.min.js';
+			 // pdfjsLib.GlobalWorkerOptions.workerSrc = '\\assets\\js\\pdf.worker.min.js';
+			  pdfjsLib.GlobalWorkerOptions.workerSrc = "/assets/js/pdf.worker.min.js";
+			var pdfDoc = null;
+			var scale = 1; //Set Scale for zooming PDF.
+			var resolution = 1; //Set Resolution to Adjust PDF clarity.
+			 function LoadPdfFromUrl(url) {
+
+				pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+					pdfDoc = pdfDoc_;
+
+					//Reference the Container DIV.
+					var pdf_container = document.getElementById("pdf_container");
+					pdf_container.style.display = "block";
+
+					//Loop and render all pages.
+					for (var i = 1; i <= pdfDoc.numPages; i++) {
+						RenderPage(pdf_container, i);
+					}
+				});
+			};
+			function RenderPage(pdf_container, num) {
+				pdfDoc.getPage(num).then(function (page) {
+					//Create Canvas element and append to the Container DIV.
+					var canvas = document.createElement('canvas');
+					canvas.id = 'pdf-' + num;
+					ctx = canvas.getContext('2d');
+					pdf_container.appendChild(canvas);
+
+					//Create and add empty DIV to add SPACE between pages.
+					var spacer = document.createElement("div");
+					spacer.style.height = "20px";
+					pdf_container.appendChild(spacer);
+
+					//Set the Canvas dimensions using ViewPort and Scale.
+					var viewport = page.getViewport({ scale: scale });
+					canvas.height = resolution * viewport.height;
+					canvas.width = resolution * viewport.width;
+
+					//Render the PDF page.
+					var renderContext = {
+						canvasContext: ctx,
+						viewport: viewport,
+						transform: [resolution, 0, 0, resolution, 0, 0]
+					};
+
+					page.render(renderContext);
+				});
+			};
+			//   function setQuillEditor(lstdata){
+
+			//          if(lstdata !="undefined"){
+			//              var deltaarray=[];
+			//              var lstparse = [];
+
+			//              for(var i=0; i<lstdata.length; i++){
+			//                  var strparse = JSON.parse(lstdata[i])
+			//                  lstparse.push(strparse);
+			//              }
+			//              for(var i=0; i<lstparse.length; i++){
+
+			//                   deltaarray.push(lstparse[i].ops);
+			//                  //if(lstparse[i].ops.length >1){
+			//                  //  var stringy = JSON.stringify(lstparse[i].ops);
+			//                  //   var str1= stringy.replace('[', '');
+			//                  //   var str2=  str1.replace(']', '');
+			//                  //     console.log(str2);
+			//                  //     deltaarray.push(lstparse[i].ops);
+			//                  //}
+			//                  //else{
+			//                  //     deltaarray.push(lstparse[i].ops);
+			//                  //}
+			//              }
+
+			//              var filterarr =[];
+			//               for(var i=0; i<deltaarray.length; i++){
+
+			//                   if(deltaarray[i].length > 1){
+
+			//                        var nestobj={};
+			//                       // console.log(deltaarray[i]);
+			//                       // console.log(Object.assign({}, ...deltaarray[i]));
+			//                        for(var j = 0; j < deltaarray[i].length; j++) {
+
+			//                        //nestobj = {
+			//                        //    ...deltaarray[i][j]
+			//                        //};
+			//                             Object.assign(nestobj, ...deltaarray[i]);
+			//                           //  console.log(nestobj);
+			//                            //if(deltaarray[i][j].length >1){
+
+			//                            //    for(let k = 0; k < deltaarray[i][j].length; k++){
+			//                            //        Object.assign(nestobj, deltaarray[i][j][k]);
+			//                            //    }
+			//                            //}
+			//                            //else{
+			//                            //    Object.assign(nestobj, deltaarray[i][j]);
+			//                            //}
+
+			//                         }
+			//                             console.log(nestobj);
+			//                        // filterarr.push(nestobj);
+			//                   }
+			//                   else{
+			//                       filterarr.push(deltaarray[i][0]);
+			//                   }
+			//              }
+			//            //  console.log(filterarr);
+			//             // console.log(filterarr[0]);
+
+			//            quill.setContents(filterarr);
+			//          }
+			//   }
+			//  function toObject(arr) {
+			//          var rv = {};
+			//          for (var i = 0; i < arr.length; ++i)
+			//            rv[i] = arr[i];
+			//          return rv;
+			//}
+		@*//$(document).ready(function() {
+
+        //    var lstDelta = @Json.Serialize(Model.LstExaminationQuestion);
+        //    var lstquest= lstDelta.map(a => a.deltaQuestion);
+
+        //    setQuillEditor(lstquest);
+        // });*@
+			$(document).ready(function() {
+				if (@Html.Raw(Json.Serialize(Model)) != null) {
+					  var qmodel = @Html.Raw(Json.Serialize(Model));
+					if(qmodel.qPaperType=="1"){
+						//$("#editor-container").hide();
+						//$("#pdf_container").show();
+						filepath = qmodel.attach.url;
+						LoadPdfFromUrl(filepath);
+					}
+					//else{
+					//    // $("#pdf_container").hide();
+					//    //$("#editor-container").show();
+					//    if(qmodel.QPaperType=="2"){
+					//        var str= Qmodel.ExaminationPaper.DeltaQuestion;
+					//         var deltaStr = JSON.parse(str);
+					//           quill2.setContents(deltaStr);
+					//    }
+					//    if(qmodel.QPaperType=="3"){
+					//         //var Delta = Quill.import('delta');
+					//        //var passedDelta = new Delta(JSON.parse(passedValue));
+					//        //var existingDelta = this.get("quill").getContents()
+					//        //var combinedDelta = existingDelta.concat(passedDelta);
+					//        //this.get("quill").setContents(combinedDelta)
+
+					//         var Delta = Quill.import('delta');
+					//        if(qmodel.LstExaminationQuestion !=null && qmodel.LstExaminationQuestion.length > 0){
+
+					//            for(var i=0; i< qmodel.LstExaminationQuestion.length; i++){
+					//                var strdlt = new Delta(JSON.parse(qmodel.LstExaminationQuestion[i].DeltaQuestion));
+					//                var existingDelta = quill2.getContents();
+					//                var combinedDelta = existingDelta.concat(strdlt);
+					//                quill2.setContents(combinedDelta)
+					//            }
+
+					//        }
+					//    }
+					//}
+				}
+
+			});
+		$("#btnprint").click(function(){
+		   // console.log(filepath);
+			   // printPdf(filepath);
+			   printDiv('divquestpaper');
+		});
+
+	</script>
+}
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,302 @@
+﻿@model SchoolCoreWEB.Models.ReportSettings
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+
+     string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+    //string struserid = string.Empty;
+    //string strtoken;
+    //var userInfokey = @HttpContextAccessor.HttpContext.Session.GetString("UserInfo");
+    //if (userInfokey != null)
+    //{
+    //    var userInfo = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+    //    struserid = userInfo.Id.ToString();
+    //}
+    //strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+}
+<form id="rptSettingsForm" class="forms-sample was-validated">
+    @Html.HiddenFor(m=>m.Id, new{ @id="hfreportsettingsid"})
+    @Html.HiddenFor(m=>m.BranchId, new{ @id="hfbranchid"})
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ReportSettings")</div>
+            <div class="ribbon-content">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="header-title mb-0">@_localization.Getkey("A4Size")</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <img id="imgafourheader" src="@(Model.AFourHeaderPhotoPath)" alt="@_localization.Getkey("A4HeaderImage")" width="300" height="100" />
+                                            <div class="input-group">
+                                                <input type="file" id="photo" name="postedFile1" accept="image/*" class="form-control form-control-sm" onchange="uploadFile(3,1,this,1)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <img id="imgafourfooter" src="@(Model.AFourFooterPhotoPath)" alt="@_localization.Getkey("A4FooterImage")" width="300" height="100" />
+                                            <div class="input-group">
+                                                <input type="file" id="photo" name="postedFile2" accept="image/*" class="form-control form-control-sm" onchange="uploadFile(3,1,this,2)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="mb-2 row">
+                                        <label for="afourheaderType" class="col-5 col-form-label">@_localization.Getkey("ShowHeaderImage")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.RadioButtonFor(model => model.AFourHeaderType, "1", new {  @name="afourheaderType", @id="withheader" }) &nbsp;
+                                            <label class="form-check-label">@_localization.Getkey("Yes")</label> &nbsp;
+                                            @Html.RadioButtonFor(model => model.AFourHeaderType, "2", new { @name="afourheaderType", @id="withoutheader" }) &nbsp;
+                                        <label class="form-check-label">@_localization.Getkey("No")</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 row">
+                                        <label for="afourfooterType" class="col-5 col-form-label">@_localization.Getkey("ShowFooterImage")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.RadioButtonFor(model => model.AFourFooterType, "1", new {  @name="afourfooterType", @id="withfooter" }) &nbsp;
+                                            <label class="form-check-label">@_localization.Getkey("Yes")</label> &nbsp;
+                                            @Html.RadioButtonFor(model => model.AFourFooterType, "2", new {  @name="afourfooterType", @id="withoutfooter" }) &nbsp;
+                                        <label class="form-check-label">@_localization.Getkey("No")</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 row">
+                                        <label for="afourheaderspace" class="col-5 col-form-label">@_localization.Getkey("HeaderSpace")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.TextBoxFor(model => model.AFourHeaderSpace, new { @class = "form-control", type = "number", id="afourheaderspace", min = 0, max = 1000 })
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 row">
+                                        <label for="afourfooterspace" class="col-5 col-form-label">@_localization.Getkey("FooterSpace")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.TextBoxFor(model => model.AFourFooterSpace, new { @class = "form-control", type = "number", id="afourfooterspace", min = 0, max = 1000 })
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="header-title mb-0">@_localization.Getkey("A5Size")</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <img id="imgafiveheader" src="@(Model.AFiveHeaderPhotoPath)" alt="@_localization.Getkey("A5HeaderImage")" width="300" height="100" />
+                                            <div class="input-group">
+                                                <input type="file" id="photo" name="postedFile3" accept="image/*" class="form-control form-control-sm" onchange="uploadFile(3,1,this,3)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <img id="imgafivefooter" src="@(Model.AFiveFooterPhotoPath)" alt="@_localization.Getkey("A5FooterImage")" width="300" height="100" />
+                                            <div class="input-group">
+                                                <input type="file" id="photo" name="postedFile4" accept="image/*" class="form-control form-control-sm" onchange="uploadFile(3,1,this,4)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="mb-2 row">
+                                        <label for="afiveheaderType" class="col-5 col-form-label">@_localization.Getkey("ShowHeaderImage")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.RadioButtonFor(model => model.AFiveHeaderType, "1", new {  @name="afiveheaderType", @id="withheader" }) &nbsp;
+                                            <label class="form-check-label">@_localization.Getkey("Yes")</label> &nbsp;
+                                            @Html.RadioButtonFor(model => model.AFiveHeaderType, "2", new { @name="afiveheaderType", @id="withoutheader" }) &nbsp;
+                                        <label class="form-check-label">@_localization.Getkey("No")</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 row">
+                                        <label for="afivefooterType" class="col-5 col-form-label">@_localization.Getkey("ShowFooterImage")</label>
+
+                                        <div class="col-7 col-form-label">
+                                            @Html.RadioButtonFor(model => model.AFiveFooterType, "1", new {  @name="afivefooterType", @id="withfooter" }) &nbsp;
+                                            <label class="form-check-label">@_localization.Getkey("Yes")</label> &nbsp;
+                                            @Html.RadioButtonFor(model => model.AFiveFooterType, "2", new {  @name="afivefooterType", @id="withoutfooter" }) &nbsp;
+                                        <label class="form-check-label">@_localization.Getkey("No")</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 row">
+                                        <label for="afiveheaderspace" class="col-5 col-form-label">@_localization.Getkey("HeaderSpace")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.TextBoxFor(model => model.AFiveHeaderSpace, new { @class = "form-control", type = "number", id="afiveheaderspace", min = 0, max = 1000 })
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 row">
+                                        <label for="afivefooterspace" class="col-5 col-form-label">@_localization.Getkey("FooterSpace")</label>
+                                        <div class="col-7 col-form-label">
+                                            @Html.TextBoxFor(model => model.AFiveFooterSpace, new { @class = "form-control", type = "number", id="afivefooterspace", min = 0, max = 1000 })
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                   @* <div class="col-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="header-title mb-0">Other</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2 row">
+                                    <label for="barcodeType" class="col-5 col-form-label">@_localization.Getkey("ShowBarCode")</label>
+                                    <div class="col-7 col-form-label">
+                                        @Html.RadioButtonFor(model => model.BarcodeType, "1", new {  @name="barcodeType", @id="withbarcode" }) &nbsp;
+                                        <label class="form-check-label">@_localization.Getkey("Yes")</label> &nbsp;
+                                        @Html.RadioButtonFor(model => model.BarcodeType, "2", new {  @name="barcodeType", @id="withoutbarcode" }) &nbsp;
+                                    <label class="form-check-label">@_localization.Getkey("No")</label>
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <label for="esign" class="col-5 col-form-label">@_localization.Getkey("ShowESign")</label>
+                                    <div class="col-7 col-form-label">
+                                        @Html.RadioButtonFor(model => model.EsignType, "1", new {  @name="esign", @id="withesign" }) &nbsp;
+                                        <label class="form-check-label">@_localization.Getkey("Yes")</label> &nbsp;
+                                        @Html.RadioButtonFor(model => model.EsignType, "2", new {  @name="esign", @id="withoutesign" }) &nbsp;
+                                    <label class="form-check-label">@_localization.Getkey("No")</label>
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <label for="preparedby" class="col-5 col-form-label">@_localization.Getkey("PreparedBy")</label>
+                                    <div class="col-7 col-form-label">
+                                        @Html.DropDownListFor(model => model.PreparedById, Model.LstPreparedBy, @_localization.Getkey("PleaseSelect"), new { @class = "form-control", @id="ddlPreparedById"})
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <label for="verifiedby" class="col-5 col-form-label">@_localization.Getkey("VerifiedBy")</label>
+                                    <div class="col-7 col-form-label">
+                                        @Html.DropDownListFor(model => model.VerifiedById, Model.LstVerifiedBy, @_localization.Getkey("PleaseSelect"), new { @class = "form-control", @id="ddlVerifiedById"})
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>*@
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitReportSettings()" id="btnsubmit">
+                        @if (Model.Id > 0)
+                        {
+                        <span>@_localization.Getkey("Update")</span>
+                        }
+                        else
+                        {
+                    <span>@_localization.Getkey("Save")</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+
+</form>
+
+
+@section Scripts {
+    <script>
+        function uploadFile(type, filetype, file,num) {
+             if(validateuploadFile(type, filetype, file) == ""){
+                 if(num ==1){
+                     $("#imgafourheader").attr("src",URL.createObjectURL(file.files[0]));
+                 }
+                  if(num ==2){
+                     $("#imgafourfooter").attr("src",URL.createObjectURL(file.files[0]));
+                 }
+                 if(num ==3){
+                     $("#imgafiveheader").attr("src",URL.createObjectURL(file.files[0]));
+                 }
+                 if(num ==4){
+                     $("#imgafivefooter").attr("src",URL.createObjectURL(file.files[0]));
+                 }
+             }
+             else{
+                 if(num ==1){
+                     $("#imgafourheader").attr("src","");
+                 }
+                  if(num ==2){
+                     $("#imgafourfooter").attr("src","");
+                 }
+                 if(num ==3){
+                     $("#imgafiveheader").attr("src","");
+                 }
+                 if(num ==4){
+                     $("#imgafivefooter").attr("src","");
+                 }
+             }
+        }
+        function submitReportSettings() {
+            $("#loaderDiv").show("slow", function () {
+                        var postData = new FormData($('#rptSettingsForm')[0]);
+                        postData.append("AFourHeaderFile", $("input[name=postedFile1]")[0].files[0]); // file
+                        postData.append("AFourFooterFile", $("input[name=postedFile2]")[0].files[0]); // file
+                        postData.append("AFiveHeaderFile", $("input[name=postedFile3]")[0].files[0]); // file
+                        postData.append("AFiveFooterFile", $("input[name=postedFile4]")[0].files[0]); // file
+                       $.ajax({
+                            type: 'POST',
+                            url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/ReportSettings/save',
+                            headers: {
+                                 'Authorization': 'Bearer ' + `@strtoken`,
+                                'UserParam': `@Html.Raw(@userParamkey)`
+                                },
+                    data: postData,
+                    cache: false,
+                           processData: false,
+                           contentType: false,
+                            success: function (response) {
+                                if (response != null) {
+                                    var serviceresult = response;
+                                    if (serviceresult.statusId == 1) {
+                                        toastr.success(`@_localization.Getkey("Added")`);
+                                    }
+                                    else if (serviceresult.statusId == 2) {
+                                        toastr.success(`@_localization.Getkey("Updated")`);
+                                    }
+                                    $("#loaderDiv").hide();
+                                }
+                            },
+                            error: function (response) {
+                                    toastr.error(`@_localization.Getkey("Error")`,response);
+
+                            }
+                       })
+            })
+               }
+    </script>
+}
+
+
+

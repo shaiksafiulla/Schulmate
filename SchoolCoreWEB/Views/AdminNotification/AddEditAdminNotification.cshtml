@@ -1,0 +1,472 @@
+﻿@model SchoolCoreWEB.Models.AdminNotification
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+
+
+
+
+
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Details")</div>
+		<div class="ribbon-content">
+			<form id="adminNotificationForm" class="forms-sample">
+				@Html.HiddenFor(m => m.Id)
+				@Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+				@Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+				@Html.HiddenFor(m => m.LstCastStudPersonNotification, new { @id = "hfcaststudpersonnotification" })
+
+				<div class="row">
+					<div class="col-6">
+						<div class="row">
+							<div class="form-group mb-3">
+								@Html.RadioButtonFor(model => model.IsTag, "1", new { @id = "rdoTag", @class = "form-check-input" }) <label>@_localization.Getkey("Tags")</label> &nbsp;
+								@Html.RadioButtonFor(model => model.IsTag, "0", new { @id = "rdoUser", @class = "form-check-input" })<label>@_localization.Getkey("Recipients")</label> &nbsp;
+							</div>
+							<div id="tagTypeDiv" style="display:none;">
+								<div class="form-group required mb-3">
+									<label for="tagtypeid" class="form-label">@_localization.Getkey("TagType")</label>
+									@Html.DropDownListFor(model => model.TagTypeId, Model.TagTypeSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltagtype", @required = "required", onChange = "selectedTagTypeIndexChanged()" })
+								</div>
+							</div>
+							<div id="userTypeDiv" style="display:none;">
+								<div class="form-group mb-3">
+									<label for="ddlusertype" class="form-label">@_localization.Getkey("UserTypes")</label>
+									@Html.DropDownListFor(model => model.UserTypeId, Model.UserTypeSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlusertype", @required = "required", onChange = "selectedUserTypeIndexChanged()" })
+								</div>
+								<label id="lblPersonSelectedCount"></label>
+								<div class="form-group required mb-3">
+									<label for="title" class="form-label">@_localization.Getkey("Title")</label>
+									@Html.TextBoxFor(model => model.Title, new { @class = "form-control form-control-sm", @id = "title", @placeholder = "Title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+								</div>
+								<div class="form-group required mb-3">
+									<label for="description" class="form-label">@_localization.Getkey("Message")</label>
+									@Html.TextAreaFor(model => model.Message, new { @class = "form-control form-control-sm", @id = "message", @placeholder = "Message", @maxlength = "200", @required = "required", onkeyup = "Validate();" })
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group mb-3">
+								<img id="imgphoto" src="@(Model.FilePath)" alt="assignment image" width="100" height="100" />
+								<div class="input-group">
+									<input type="file" id="filephoto" name="postedFile1" accept="image/*,.pdf" class="form-control form-control-sm" onchange="uploadFile(6,this)">
+								</div>
+								<br />
+								<label for="name" class="form-label">@_localization.Getkey("UploadType")</label>
+								@Html.RadioButtonFor(model => model.FileType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Image")</label> &nbsp;
+								@Html.RadioButtonFor(model => model.FileType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Pdf")</label>
+							</div>
+						</div>
+
+					</div>
+					<div class="col-6">
+						<div class="row" id="divstudperson" style="display:none">
+							<input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Search ..." onkeyup="performSearch('searchBox','tblstudperson')">
+							<table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblstudperson">
+								<thead>
+									<tr>
+										<th style="display:none;">StudPersonId</th>
+										<th style="display:none;">PersonnelType</th>
+										<th>
+											<div class="form-check form-check-inline">
+												<input type="checkbox" class="form-check-input" id="chkstudperson">
+												<label class="form-check-label" for="chkstudperson">@_localization.Getkey("SelectAll")</label>
+											</div>
+										</th>
+										<th id="throllempNo"></th>
+										<th>@_localization.Getkey("Name")</th>
+										<th id="thclass">@_localization.Getkey("Class")</th>
+										<th id="thsection">@_localization.Getkey("Section")</th>
+									</tr>
+								</thead>
+								<tbody id="studpersonbody">
+									@*  @for(int i =0; i < Model.LstCastStudPersonNotification.Count; i++)
+                            {
+                                <tr>
+                                    <td>@Html.HiddenFor(m => @Model.LstCastStudPersonNotification[i].StudPersonId)</td>
+                                    <td> @Html.HiddenFor(m => @Model.LstCastStudPersonNotification[i].PersonnelType)</td>
+                                    <td>@Html.HiddenFor(m => @Model.LstCastStudPersonNotification[i].IsSelected)</td>
+                                    <td>@Model.LstCastStudPersonNotification[i].RollEmployeeNo</td>
+                                    <td>@Model.LstCastStudPersonNotification[i].FullName</td>
+                                    <td>@Model.LstCastStudPersonNotification[i].ClassName</td>
+                                    <td>@Model.LstCastStudPersonNotification[i].SectionName</td>
+                                </tr>
+                            } *@
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+			</form>
+
+		</div>
+	</div>
+</div>
+
+<div class="modal-footer">
+	<button type="button" class="btn btn-primary" onclick="submitAdminNotification()" id="btnsubmit" disabled="disabled">
+		@if (Model.Id > 0)
+		{
+			<span>@_localization.Getkey("Update")</span>
+		}
+		else
+		{
+			<span>@_localization.Getkey("Save")</span>
+		}
+	</button>
+	<button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+</div>
+<div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+	<div class="loader">
+		<div class="loader-inner line-scale">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+
+	</div>
+</div>
+
+
+
+<script type="text/javascript">
+
+	$('#chkstudperson').change(function () {
+		$('#tblstudperson tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+	});
+
+	$(document).ready(function () {
+		   $('input[type="radio"]').change(function() {
+				toggleDropdown();
+			});
+			toggleDropdown();
+	});
+	  function toggleDropdown() {
+		if ($('#rdoTag').prop('checked')) {
+			$('#tagTypeDiv').show();  // Show the TagType dropdown
+			$('#userTypeDiv').hide(); // Hide the UserType dropdown
+			$("#studpersonbody").empty();
+			$("#lblPersonSelectedCount").html('');
+		} else if ($('#rdoUser').prop('checked')) {
+			$('#userTypeDiv').show(); // Show the UserType dropdown
+			$('#tagTypeDiv').hide();  // Hide the TagType dropdown
+		}
+		 Validate();
+	}
+
+
+		function chkFields() {
+		var isvalid = true;
+
+		if ($('#rdoTag').prop('checked')){
+			if($("#ddltagtype").val() == "" || $("#ddltagtype").val() == "-1"){
+				isvalid = false;
+			}
+		}
+		else if ($('#rdoUser').prop('checked')){
+			 if ($("#title").val() == "") {
+				isvalid = false;
+			}
+			if ($("#message").val() == "") {
+				isvalid = false;
+			}
+			if ($("#ddlusertype").val() == "" || $("#ddlusertype").val() == "-1") {
+				isvalid = false;
+			}
+			else {
+				if ($("#ddlusertype").val() != "7") {
+					var lstStudperson = getStudPersonArray();
+					var found2 = lstStudperson.some(el => el.IsSelected == true);
+					if (!found2) {
+						isvalid = false;
+					}
+				}
+			}
+		}
+		return isvalid;
+	}
+
+	function Validate() {
+		if (chkFields()) {
+			$('#btnsubmit').prop('disabled', false);
+		}
+		else {
+			$('#btnsubmit').prop('disabled', true);
+		}
+	}
+	  function selectedTagTypeIndexChanged(){
+		var selectedText = $('#ddltagtype option:selected').text();
+		$('#title').val(selectedText);
+		$('#message').val(selectedText);
+	   // console.log('title:' + $('#title').val(),'message: ' + $('#message').val())
+		Validate();
+	}
+	function selectedUserTypeIndexChanged() {
+		  $('#title').val('');
+		$('#message').val('');
+		getStudPersonnel();
+	   //  Validate();
+	}
+	function uploadFile(type, file) {
+		var filetype = $('[name="FileType"]:checked').val();
+		if (validateuploadFile(type, filetype, file) == "") {
+			if (filetype == 1) {
+				$("#imgphoto").show();
+				$("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+			}
+			if (filetype == 2) {
+				$("#imgphoto").hide();
+				//  $("#imgheader").attr("src", URL.createObjectURL(file.files[0]));
+			}
+		}
+		else {
+			if (filetype == 1) {
+				$("#imgphoto").show();
+				$("#imgphoto").attr("src", "");
+			}
+			if (filetype == 2) {
+				$("#imgphoto").hide();
+				// $("#imgheader").attr("src", "");
+			}
+		}
+	}
+	function selectedUserTypeIndexChanged() {
+		getStudPersonnel();
+	}
+	// int BranchId, int SessionYearId, int PersonnelType
+	function getStudPersonnel() {
+
+		if ($('#ddlusertype').val() == 7 || $('#ddlusertype').val() == "") {
+
+			$("#divstudperson").hide();
+			$("#studpersonbody").empty();
+		}
+		else if ($('#ddlusertype').val() != 7 && $('#ddlusertype').val() != "") {
+			// if ($('#ddlusertype').val() == 4) {
+			//     $("#throllempNo").html(`@_localization.Getkey("RollNo")`);
+			//     $("#thclass").show();
+			//     $("#thsection").show();
+			// }
+			// else {
+			//     $("#throllempNo").html(`@_localization.Getkey("EmployeeNo")`);
+			//     $("#thclass").hide();
+			//     $("#thsection").hide();
+			// }
+			$("#loaderDiv1").show("slow", function () {
+				$.ajax({
+					type: "post",
+					url: '@Url.Action("GetStudPersonNotification", "AdminNotification")',
+					data: { PersonnelType: $('#ddlusertype').val() },
+					dataType: 'json',
+					traditional: true,
+					success: function (response) {
+						if (response != null) {
+							var lstdata = response;
+							if ($('#ddlusertype').val() == 4) {
+								$("#throllempNo").html(`@_localization.Getkey("RollNo")`);
+								$("#thclass").show();
+								$("#thsection").show();
+							}
+							else {
+								$("#throllempNo").html(`@_localization.Getkey("EmployeeNo")`);
+								$("#thclass").hide();
+								$("#thsection").hide();
+							}
+
+							$("#divstudperson").show();
+							$("#studpersonbody").empty();
+
+							for (var j = 0; j < lstdata.length; j++) {
+								insertintotbl(lstdata[j]);
+							}
+
+							$("#loaderDiv1").hide();
+						}
+						else {
+							toastr.error(`@_localization.Getkey("Error")`);
+						}
+					},
+					error: function (response) {
+						toastr.error(`@_localization.Getkey("Error")`);
+
+					}
+				});
+			})
+		}
+
+		Validate();
+	}
+
+	function insertintotbl(data) {
+
+		var tblbdy = document.getElementById("studpersonbody");
+		var rowIndex = tblbdy.rows.length;
+		var newRow = tblbdy.insertRow(rowIndex);
+
+		cell1 = newRow.insertCell(0);
+		cell1.innerHTML = data.studPersonId;
+		cell1.style.display = "none";
+
+		cell2 = newRow.insertCell(1);
+		cell2.innerHTML = data.personnelType;
+		cell2.style.display = "none";
+
+		var chk = document.createElement("input");
+		chk.type = "checkbox";
+		chk.className = "form-check-input";
+		chk.checked = data.isSelected;
+		chk.onclick = (function () { return function () { Validate(); } })();
+
+		cell3 = newRow.insertCell(2);
+		cell3.appendChild(chk);
+
+		var sp = document.createElement("span");
+		sp.innerHTML = data.rollEmployeeNo;
+
+		cell4 = newRow.insertCell(3);
+		cell4.appendChild(sp);
+
+		var sp2 = document.createElement("span");
+		sp2.innerHTML = data.fullName;
+
+		cell5 = newRow.insertCell(4);
+		cell5.appendChild(sp2);
+
+		if (data.personnelType == 4) {
+			var sp3 = document.createElement("span");
+			sp3.innerHTML = data.className;
+
+			cell6 = newRow.insertCell(5);
+			cell6.appendChild(sp3);
+
+			var sp4 = document.createElement("span");
+			sp4.innerHTML = data.sectionName;
+
+			cell7 = newRow.insertCell(6);
+			cell7.appendChild(sp4);
+		}
+
+	}
+	function getStudPersonArray() {
+		var chkClsArray = [];
+
+		$("#tblstudperson tbody tr").each(function () {
+			var tr = $(this);
+			var paramcls = {};
+			var FirstCol = tr.find("td").eq(0).html();
+			var perTypeCol = tr.find("td").eq(1).html();
+			var SecondCol = tr.find("input").eq(0).is(':checked');
+
+			paramcls.StudPersonId = parseInt(FirstCol);
+			paramcls.PersonnelType = parseInt(perTypeCol);
+			paramcls.IsSelected = SecondCol;
+			chkClsArray.push(paramcls);
+		});
+		return chkClsArray;
+	}
+	function submitAdminNotification1() {
+		$("#loaderDiv1").show("slow", function () {
+
+			// if ($("#ddlusertype").val() != "7") {
+			//     var lstStudperson = getStudPersonArray();
+			//    // var serializedArray = JSON.stringify(lstStudperson);
+			//     $("#hfcaststudpersonnotification").val(lstStudperson);
+			// }
+
+			var postData = new FormData($('#adminNotificationForm')[0]);
+			postData.append("NotificationFile", $("input[name=postedFile1]")[0].files[0]); // file
+
+				var lstStudperson = getStudPersonArray();
+			   var serializedArray = JSON.stringify(lstStudperson);
+			postData.append("StrCastStudPerson", serializedArray); // file
+
+
+			// var lstStudperson = getStudPersonArray();
+			// for (var i = 0; i < lstStudperson.length; i++) {
+
+			//     postData.append("LstCastStudPersonNotification[" + i + "].StudPersonId", lstStudperson[i].StudPersonId);
+			//     postData.append("LstCastStudPersonNotification[" + i + "].PersonnelType", lstStudperson[i].PersonnelType);
+			//     postData.append("LstCastStudPersonNotification[" + i + "].IsSelected", lstStudperson[i].IsSelected);
+			// }
+		   // postData.append("LstCastStudPersonNotification", 1);
+			// lstStudperson.forEach(item => {
+			//     postData.append('LstCastStudPersonNotification', item);
+			// });
+		   // postData.append("LstCastStudPersonNotification", $("#hfcaststudpersonnotification").val())
+			// $.ajax({
+			//     type: 'POST',
+			//     url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/AdminNotification/save',
+			//     headers: {
+			//         'Authorization': 'Bearer ' + `@strtoken`,
+			//         'UserId': struserid
+			//                                             },
+			//     data: postData,
+			//     cache: false,
+			//     processData: false,
+			//     contentType: false,
+			//     success: function (response) {
+			//         if (response != null) {
+			//             var serviceresult = response;
+			//             actionAfterResponse('AdminNotificationGrid', serviceresult.recordId, serviceresult.statusId, '48');
+			//         } else {
+			//             toastr.error(`@_localization.Getkey("Error")`);
+			//         }
+			//     },
+			//     error: function (response) {
+			//         toastr.error(`@_localization.Getkey("Error")`);
+
+			//     }
+			// });
+		})
+	}
+	function submitAdminNotification() {
+		 $("#loaderDiv1").show("slow", function () {
+			var postData = new FormData($('#adminNotificationForm')[0]);
+			postData.append("NotificationFile", $("input[name=postedFile1]")[0].files[0]); // file
+
+				var lstStudperson = getStudPersonArray();
+			   var serializedArray = JSON.stringify(lstStudperson);
+			postData.append("StrCastStudPerson", serializedArray);
+
+			$.ajax({
+				type: 'POST',
+				url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/AdminNotification/save',
+				headers: {
+					'Authorization': 'Bearer ' + `@strtoken`,
+					'UserParam': `@Html.Raw(@userParamkey)`
+				   },
+				data: postData,
+				cache: false,
+				processData: false,
+				contentType: false,
+				success: function (response) {
+					console.log(response);
+					if (response != null) {
+						var serviceresult = response;
+						actionAfterResponse('AdminNotificationGrid', serviceresult.recordId, serviceresult.statusId, '48');
+
+					} else {
+					   toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (error) {
+					console.log(error);
+					toastr.error(`@_localization.Getkey("Error")`);
+
+				}
+			});
+		})
+	}
+</script>

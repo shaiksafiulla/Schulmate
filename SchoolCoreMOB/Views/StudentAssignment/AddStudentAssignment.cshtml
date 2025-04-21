@@ -1,0 +1,295 @@
+﻿@model SchoolCoreMOB.Models.StudentAssignment
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+
+<form id="assignmentForm" class="forms-sample">
+    @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.SessionYearId)
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+   @* @Html.HiddenFor(m => m.BranchClassId)*@
+    @Html.HiddenFor(m => m.ClasssubjectId)
+    @Html.HiddenFor(m => m.SectionIds, new { @id = "hfsectionids" })
+
+    <div class="card card-style">
+
+        <div class="content mb-0">
+            <div class="row">
+                <div class="input-style has-borders no-icon mb-4">
+                    <label for="ddlclass" class="color-highlight">Class</label>
+                    @Html.DropDownListFor(model => model.BranchClassId, Model.BranchClassSheet, @_localization.Getkey("PleaseSelect"), new {  @id = "ddlclass", @required = "required", onChange = "selectedClassIndexChanged()" })
+                    <span><i class="fa fa-chevron-down"></i></span>
+                    <i class="fa fa-check disabled valid color-green-dark"></i>
+                    <i class="fa fa-check disabled invalid color-red-dark"></i>
+                    <em></em>
+                </div>
+                <div class="input-style has-borders no-icon mb-4">
+                    <label for="ddlsubject" class="color-highlight">Subject</label>
+                    @Html.DropDownListFor(model => model.SubjectId, Model.SubjectSheet, @_localization.Getkey("PleaseSelect"), new {  @id = "ddlsubject", @required = "required", onChange = "selectedSubjectIndexChanged()" })
+                    <span><i class="fa fa-chevron-down"></i></span>
+                    <i class="fa fa-check disabled valid color-green-dark"></i>
+                    <i class="fa fa-check disabled invalid color-red-dark"></i>
+                    <em></em>
+                </div>
+                <div class="form-group required mb-3">
+                    <label for="class" class="form-label">@_localization.Getkey("Section")</label>
+                    <div id="assignmentsection-container">
+                    </div>
+                </div>
+                <hr />
+                <div class="input-style has-borders no-icon validate-field mb-4">
+                    @Html.TextBoxFor(model => model.Title, new { @class = "form-control validate-name", @id = "title", @placeholder="Title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                    <label for="title" class="color-highlight">Title</label>
+                    <i class="fa fa-times disabled invalid color-red-dark"></i>
+                    <i class="fa fa-check disabled valid color-green-dark"></i>
+                    <em>(required)</em>
+                </div>
+                <div class="input-style has-borders no-icon mb-4">
+                    @Html.TextAreaFor(model => model.Description, new {  @id = "description", @placeholder="Description",  @maxlength = "200" })
+                    <label for="description" class="color-highlight">Description</label>
+                    <em class="mt-n3">(required)</em>
+                </div>
+                <div class="input-style has-borders no-icon mb-4">                   
+                    @Html.EditorFor(model => model.SubmissionDate, "0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control validate-text", @required = "required", @name = "submissiondate", @id = "submissiondate", @placeholder="Submission Date", onChange = "Validate()" } })
+                    <label for="submissiondate" class="color-highlight">Submission Date</label>
+                    <i class="fa fa-check disabled valid me-4 pe-3 font-12 color-green-dark"></i>
+                    <i class="fa fa-check disabled invalid me-4 pe-3 font-12 color-red-dark"></i>
+                </div>
+                 <img id="imgphoto" src="@(Model.FilePath)" class="img-fluid" style="width:100%; display:block; height:300px">
+                <div class="file-data pb-5">
+                    <input type="file" id="file-upload" class="upload-file bg-highlight shadow-s rounded-s" name="postedFile1" accept="image/*,.pdf" onchange="uploadFile(7,this)">
+                    <p class="upload-file-text color-white">Upload Image</p>
+                </div>
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.FileType, "1", new { @id="rdoImg", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoImg">Image</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.FileType, "2", new { @id="rdoPdf", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoPdf">Pdf</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <button type="button" class="btn btn-primary" style="border-radius:10px" onclick="submitStudentAssignment()" id="btnsubmit">Post</button>
+            </div>
+
+            <div class="row">
+                @*<div class="form-group required mb-3">
+                    <label for="title" class="form-label">@_localization.Getkey("Title")</label>
+                    @Html.TextBoxFor(model => model.Title, new { @class = "form-control form-control-sm", @id = "title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                    </div>
+                <div class="form-group required mb-3">
+                    <label for="startdate" class="form-label">@_localization.Getkey("SubmissionDate")</label>
+                    @Html.EditorFor(model => model.SubmissionDate, "0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @required = "required", @name = "submissiondate", @id = "submissiondate", onChange = "Validate()" } })
+                </div>*@
+               @* <div class="form-group mb-3">
+                    <img id="imgphoto" src="@(Model.FilePath)" alt="assignment image" width="100" height="100" />
+                    <div class="input-group">
+                        <input type="file" id="filephoto" name="postedFile1" accept="image/*,.pdf" class="form-control form-control-sm" onchange="uploadFile(7,this)">
+                    </div>
+                    <br />
+                    <label for="name" class="form-label">@_localization.Getkey("UploadType")</label>
+                    @Html.RadioButtonFor(model => model.FileType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Image")</label> &nbsp;
+                    @Html.RadioButtonFor(model => model.FileType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Pdf")</label>
+                </div>*@
+                @* <div class="form-group mb-3">
+                    <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                    @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "address", @rows = "2", @maxlength = "250" })
+                    </div>*@
+
+            </div>
+        </div>
+
+       
+    </div>
+
+
+
+</form>
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+       Validate();
+        //setActiveNav("@Url.Action("Index", "StudentAssignment")");
+    });
+    function chkFields() {
+        var isvalid = true;
+        var fname = document.getElementById("name");
+        //if ($("#ddlbranch").val() == "" || $("#ddlbranch").val() == "-1") {
+        //    isvalid = false;
+        //}
+        //if ($("#ddlsessionyear").val() == "" || $("#ddlsessionyear").val() == "-1") {
+        //    isvalid = false;
+        //}
+        if ($("#ddlclass").val() == "" || $("#ddlclass").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlsubject").val() == "" || $("#ddlsubject").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#title").val() == "") {
+            isvalid = false;
+        }
+
+        if ($("#submissiondate").val() == "") {
+            isvalid = false;
+        }
+         var lstcard = getSelectedCardIds();
+        if(lstcard.length <= 0){
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function uploadFile(type, file) {
+        var filetype = $('[name="FileType"]:checked').val();
+        if (validateuploadFile(type, filetype, file) == "") {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+                //  $("#imgheader").attr("src", URL.createObjectURL(file.files[0]));
+            }
+        }
+        else {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", "");
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+                // $("#imgheader").attr("src", "");
+            }
+        }
+    }
+    function selectedClassIndexChanged() {
+        getSections();
+        getSubjects();
+        Validate();
+    }
+    function selectedSubjectIndexChanged() {
+        Validate();
+    }
+    function getSections() {
+       showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/TeacherAnnouncement/TeacherSection/`+$("#ddlclass").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                              setSectionBinding(response);
+                              hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+
+    }
+     function setSectionBinding(data){
+        $('#assignmentsection-container').empty();
+
+       const container = document.getElementById('assignmentsection-container');
+        data.forEach(card => {
+            const div = document.createElement('div');
+            div.className = 'sectioncard';
+            div.setAttribute('data-value', card.value);
+            div.textContent = card.text;
+
+            // Add click event listener
+            div.addEventListener('click', () => {
+                div.classList.toggle('selected');
+            });
+            container.appendChild(div);
+        });
+
+    }
+     function getSubjects() {
+
+        $('#ddlsubject')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+
+            showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/TeacherAnnouncement/Subject/`+$("#ddlclass").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                              var lstdata = response;
+                                var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                                for (var i = 0; i < lstdata.length; i++) {
+                                    s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                                }
+
+                                $("#ddlsubject").html(s);
+                                 hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+    }
+
+
+    function getSelectedCardIds() {
+        const selectedCards = document.querySelectorAll('.sectioncard.selected');
+        const selectedIds = Array.from(selectedCards).map(card => card.getAttribute('data-value'));
+        return selectedIds;
+    }
+    function submitStudentAssignment() {
+      showLoading();
+             var serializedArray = JSON.stringify(getSelectedCardIds());
+            $("#hfsectionids").val(serializedArray);
+            // console.log(selectedSectionIds);
+            var postData = new FormData($('#assignmentForm')[0]);
+            postData.append("AssignmentFile", $("input[name=postedFile1]")[0].files[0]); // file
+            // postData.append('SectionIds', serializedArray);
+            $.ajax({
+                type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/studentassignment/save',
+                headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                   },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response != null) {
+                         hideLoading();
+                        showToast('1', `@_localization.Getkey("Success")`);
+                          window.location.href="@Url.Action("Index", "StudentAssignment")";
+                    } else {
+                       showToast('2', `@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                   showToast('2', `@_localization.Getkey("Error")`);
+
+                }
+            });
+    }
+
+</script>

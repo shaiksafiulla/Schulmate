@@ -1,0 +1,365 @@
+﻿@model SchoolCoreMOB.Models.MbPersonnelDetail
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+@*<input type"hidden" value="@anonymousModel.Id" id="hfprofileid" />
+    <input type"hidden" value="@anonymousModel.PersonnelType" id="hfprofileid" />*@
+@Html.HiddenFor(m => m.Id, new{ @id="hfprofileid"})
+@Html.HiddenFor(m => m.PersonnelType, new{ @id="hfprofiletype"})
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Profile</h2>
+</div>
+<div class="card card-style">
+    <input type="hidden" id="hfstudentid" />
+    <div class="content">
+        <div class="d-flex">
+            <div>
+                <img id="imgpersonnel" width="50" class="me-3 bg-highlight rounded-xl">
+            </div>
+            <div>
+                <h1 class="mb-0 pt-1" id="headerpersonnelname"></h1>
+                <p class="color-highlight font-11 mt-n2 mb-3" id="pusertypename"></p>
+            </div>
+        </div>
+        <hr />
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Branch : <strong id="spbranchname"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Admission No :<strong id="spadmissionno"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Admission Date :<strong id="spadmissiondate"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Roll No : <strong id="spemployeeno"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Status :<span id="spactivestatus"></span>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Attendance :<span id="spattendance"></span><span>%</span>
+        </div>
+        <hr />
+        <div>
+            <h6 class="mb-0 pt-1">Personal Information</h6>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Name :<strong id="txtname"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Gender :<strong id="txtgender"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Date Of Birth :<strong id="txtdob"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Blood Group :<strong id="txtbloodgroup"></strong>
+        </div>
+        <hr />
+        <div>
+            <h6 class="mb-0 pt-1">Parent's Information</h6>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Father Name :<strong id="txtfathername"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Mother Name :<strong id="txtmothername"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Mobile Number :<strong id="txtmobileno"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Alternate Number :<strong id="txtothermobileno"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Current Address :<strong id="txtcurrentaddress"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-blue-dark me-2"></i>Permanent Address :<strong id="txtpermanentaddress"></strong>
+        </div>
+    </div>
+</div>
+@*<div class="card card-style mb-3">
+    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+    <a data-bs-toggle="collapse" class="no-effect" href="#collapsebasic">
+    <i class="fa font-14 fa-phone color-white"></i>
+    <span class="font-14 color-white">Personal Information</span>
+    <i class="fa fa-angle-down color-white"></i>
+    </a>
+    </div>
+    <div class="collapse ps-2 pe-4" id="collapsebasic">
+    <div class="list-group list-custom-small">
+    <a href="#"><span>Name : </span><span id="txtname"></span></a>
+    <a href="#"><span>Gender : </span><span id="txtgender"></span></a>
+    <a href="#"><span>Date Of Birth : </span><span id="txtdob"></span></a>
+    <a href="#"><span>Blood Group : </span><span id="txtbloodgroup"></span></a>
+    </div>
+    </div>
+    </div>
+    <div class="card card-style mb-3">
+    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+    <a data-bs-toggle="collapse" class="no-effect" href="#collapseother">
+    <i class="fa font-14 fa-phone color-white"></i>
+    <span class="font-14 color-white">Parent's Information</span>
+    <i class="fa fa-angle-down color-white"></i>
+    </a>
+    </div>
+    <div class="collapse ps-2 pe-4" id="collapseother">
+    <div class="list-group list-custom-small">
+    <a href="#"><span>Father Name : </span><span id="txtfathername"></span></a>
+    <a href="#"><span>Mother Name : </span><span id="txtmothername"></span></a>
+    <a href="#"><span>Mobile Number : </span><span id="txtmobileno"></span></a>
+    <a href="#"><span>Alternate Mobile Number : </span><span id="txtothermobileno"></span></a>
+    <a href="#"><span>Current Address : </span><span id="txtcurrentaddress"></span></a>
+    <a href="#"><span>Permanent Address : </span><span id="txtpermanentaddress"></span></a>
+    </div>
+    </div>
+    </div>
+    <div class="card card-style mb-3">
+    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+    <a class="no-effect" href="#" id="anchorAttendance">
+    <i class="fa font-14 fa-phone color-white"></i>
+    <span class="font-14 color-white">Attendance</span>
+    <i class="fa fa-angle-right color-white"></i>
+    </a>
+    </div>
+    </div>
+    <div class="card card-style mb-3">
+    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+        <a class="no-effect" href="#" id="anchorPayment">
+            <i class="fa font-14 fa-phone color-white"></i>
+            <span class="font-14 color-white">Fee Payments</span>
+            <i class="fa fa-angle-right color-white"></i>
+        </a>
+    </div>
+</div>
+<div class="card card-style mb-3">
+    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+        <a class="no-effect" href="#" id="anchorReportCard">
+            <i class="fa font-14 fa-phone color-white"></i>
+            <span class="font-14 color-white">Report Card</span>
+            <i class="fa fa-angle-right color-white"></i>
+        </a>
+    </div>
+</div>
+<div class="card card-style mb-3">
+    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+        <a class="no-effect" href="#" id="anchorPerformance">
+            <i class="fa font-14 fa-phone color-white"></i>
+            <span class="font-14 color-white">Performance</span>
+            <i class="fa fa-angle-right color-white"></i>
+        </a>
+    </div>
+</div>
+    *@
+<div class="row text-center mb-0">
+            <a href="#" id="anchorAttendance" class="col-6 pe-2">
+                <div class="card card-style me-0 mb-3">
+                    <h1 class="center-text pt-4 mt-2">
+                        <i data-feather="check-circle"
+                           data-feather-line="1"
+                           data-feather-size="50"
+                           data-feather-color="blue-dark"
+                           data-feather-bg="blue-fade-light">
+                        </i>
+                    </h1>
+                    <h4 class="color-theme font-600">Attendance</h4>
+                    <p class="mt-n2 font-11 color-highlight">
+                        Track Attendance
+                    </p>
+                  
+                </div>
+            </a>
+            <a href="#" id="anchorPayment" class="col-6 ps-2">
+                <div class="card card-style ms-0 mb-3">
+                    <h1 class="center-text pt-4 mt-2">
+                        <i data-feather="credit-card"
+                           data-feather-line="1"
+                           data-feather-size="50"
+                           data-feather-color="blue-dark"
+                           data-feather-bg="blue-fade-light">
+                        </i>
+                    </h1>
+                    <h4 class="color-theme font-600">Fee Payments</h4>
+                    <p class="mt-n2 font-11 color-highlight">
+                        Fee Payment History
+                    </p>
+                   
+                </div>
+            </a>
+            <a href="#" id="anchorReportCard" class="col-6 pe-2">
+                <div class="card card-style me-0 mb-3">
+                    <h1 class="center-text pt-4 mt-2">
+                        <i data-feather="award"
+                           data-feather-line="1"
+                           data-feather-size="50"
+                           data-feather-color="blue-dark"
+                           data-feather-bg="blue-fade-light">
+                        </i>
+                    </h1>
+                    <h4 class="color-theme font-600">Report Cards</h4>
+                    <p class="mt-n2 font-11 color-highlight">
+                        View Report Cards
+                    </p>
+                   
+                </div>
+            </a>
+            <a href="#" id="anchorPerformance" class="col-6 ps-2">
+                <div class="card card-style ms-0 mb-3">
+                    <h1 class="center-text pt-4 mt-2">
+                        <i data-feather="zap"
+                           data-feather-line="1"
+                           data-feather-size="50"
+                           data-feather-color="blue-dark"
+                           data-feather-bg="blue-fade-light">
+                        </i>
+                    </h1>
+                    <h4 class="color-theme font-600">Performance</h4>
+                    <p class="mt-n2 font-11 color-highlight">
+                        Track Performance
+                    </p>                    
+                </div>
+            </a>
+        </div>
+
+
+
+
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+      $(document).ready(function () {
+          //var objProfile = @Html.Raw(Json.Serialize(Model));
+          //setBindingValues(objProfile);
+          showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/MbPersonnel/PersonnelDetailView/`+$("#hfprofileid").val()+`,`+$("#hfprofiletype").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             setBindingValues(response);
+                              hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+     });
+
+    $("#anchorAttendance").on("click", function(event) {
+                 event.preventDefault();
+                 setNewChildNavigation(`/Student/Attendance?Id=`+$("#hfstudentid").val()+``);
+                 //var url = '@Url.Action("Attendance", "Student", new { Id = "__studentId__" })';
+                 //url = url.replace('__studentId__', $("#hfstudentid").val());
+                 // setChildNavigation('${url}');
+     });
+    $("#anchorPayment").on("click", function(event) {
+                 event.preventDefault();
+                  setNewChildNavigation(`/Student/Payments?Id=`+$("#hfstudentid").val()+``);
+                 //  var url = '@Url.Action("Payments", "Student", new { Id = "__studentId__" })';
+                 //url = url.replace('__studentId__', $("#hfstudentid").val());
+                 // setChildNavigation('${url}');
+     });
+      $("#anchorReportCard").on("click", function(event) {
+                 event.preventDefault();
+                 setNewChildNavigation(`/Student/ReportCard?Id=`+$("#hfstudentid").val()+``);
+                 //var url = '@Url.Action("ReportCard", "Student", new { Id = "__studentId__" })';
+                 //url = url.replace('__studentId__', $("#hfstudentid").val());
+                 // setChildNavigation('${url}');
+     });
+      $("#anchorPerformance").on("click", function(event) {
+                 event.preventDefault();
+                 setNewChildNavigation(`/Student/Performance?Id=`+$("#hfstudentid").val()+``);
+                 //var url = '@Url.Action("Performance", "Student", new { Id = "__studentId__" })';
+                 //url = url.replace('__studentId__', $("#hfstudentid").val());
+                 // setChildNavigation('${url}');
+     });
+
+
+     function setBindingValues(data){       
+         $("#hfstudentid").val(data.id)
+          $("#headerpersonnelname").html(data.fullName || '&nbsp;');
+         $("#txtname").html(data.fullName ? data.fullName : '&nbsp;');
+         $("#txtgender").html(data.genderName || '&nbsp;');
+         $("#txtdob").html(data.dateOfBirth || '&nbsp;');
+          $("#txtbloodgroup").html(data.bloodGroupName || '&nbsp;');
+           $("#txtqualification").html(data.qualification || '&nbsp;');
+
+          $("#txtdesignation").html(data.designation || '&nbsp;');
+          $("#txtemail").html(data.emailAddress || '&nbsp;');   
+          
+           $("#imgpersonnel").attr("src", '@Configuration["WebApi:ImageBaseUrl"]' + data.filePath);
+
+            $("#txtfathername").html(data.fatherName || '&nbsp;');
+             $("#txtmothername").html(data.motherName || '&nbsp;');
+              $("#txtmobileno").html(data.defaultMobileNo || '&nbsp;');
+               $("#txtothermobileno").html(data.alternateMobileNo || '&nbsp;');
+                $("#txtcurrentaddress").html(data.currentAddress || '&nbsp;');
+                 $("#txtpermanentaddress").html(data.permanentAddress || '&nbsp;');
+
+
+                   $("#spbranchname").html(data.branchName || '&nbsp;');
+                    $("#spadmissionno").html(data.admissionNo || '&nbsp;');
+                     $("#spadmissiondate").html(data.admissionDate || '&nbsp;');
+                      $("#spemployeeno").html(data.employeeRollNo || '&nbsp;');
+                      $("#spattendance").html(data.attPercent || '&nbsp;');
+
+                      if(data.activeStatus=="1"){
+                          $("#spactivestatus").html('Active');
+                          $("#spactivestatus").addClass('badge bg-green-dark me-2');
+                      }
+                      else{
+                           $("#spactivestatus").html('In Active');
+                            $("#spactivestatus").addClass('badge bg-red-dark me-2');
+                      }
+                      if(data.personnelType == "2"){
+                          $("#pusertypename").html('Admin');
+                      }
+                      if(data.personnelType == "3"){
+                           $("#pusertypename").html('Teacher');
+                      }
+                      if(data.personnelType == "4"){
+                           $("#pusertypename").html('Student');
+                      }
+
+                      var className = "";
+                         var spans = "";
+                         if (data.classTeacherCount > 0 && data.teacherClassName != null) {
+                             if (data.classTeacherCount == 1) {
+                                 spans = `<span class="badge bg-info">` + data.teacherClassName + `</span>`
+                             }
+                             if (data.classTeacherCount > 1) {
+                                 var clsArray = data.teacherClassName.split(",");
+                                 for (var i = 0; i < clsArray.length; i++) {
+                                     spans += `<span class="badge bg-info">` + clsArray[i] + `</span><br/>`
+                                 }
+                             }
+                             className = '<div>' + spans + '</div>'
+                         }
+                          $("#spclassteacher").html(className);
+
+                          var subjName = "";
+                         var subspans = "";
+                         if (data.classSubjectTeacherCount > 0) {
+                             if (data.ClassSubjectTeacherCount == 1) {
+                                 subspans = `<span class="badge bg-info">` + data.teacherSubjectName + `</span>`
+                             }
+                             if (data.classSubjectTeacherCount > 1) {
+                                 var clssubArray = data.teacherSubjectName.split(",");
+                                 for (var i = 0; i < clssubArray.length; i++) {
+                                     subspans += `<span class="badge bg-info">` + clssubArray[i] + `</span><br/>`
+                                 }
+                             }
+                             subjName = '<div>' + subspans + '</div>'
+                         }
+                          $("#spsubjectteacher").html(subjName);
+     }
+
+</script>

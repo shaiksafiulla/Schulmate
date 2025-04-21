@@ -1,0 +1,19 @@
+﻿.table tbody tr.highlight td {
+    background-color: #ddd;
+}
+table tr.active {
+    background: #ccc;
+}
+.highlight {
+    background: #40CADA;
+}
+.focusedRow {
+    font-weight: bold;
+    text-shadow: 1px 1px 0px #EEE;
+    color: #111;
+}
+div.dt-buttons {
+    float: right;
+}
+
+

@@ -1,0 +1,174 @@
+﻿@model VPersonnelAttendenceBenchmark
+@using Localization.Services
+@using Newtonsoft.Json
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    VUserInfo userStudent = new VUserInfo();
+    var userInfokey = @Context.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        userStudent = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+    }
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Examinations</h2>
+</div>
+@*<input type="hidden" id="hfscheduletitledetailid" />*@
+<div class="content mb-0">
+    <div class="input-style has-borders input-style-always-active no-icon mb-4">
+        <select id="schedules-dropdown">
+            <option value="default" disabled>Select Examination</option>
+        </select>
+        <span><i class="fa fa-chevron-down"></i></span>
+        <i class="fa fa-check disabled valid color-green-dark"></i>
+        <i class="fa fa-check disabled invalid color-red-dark"></i>
+        <em></em>
+    </div>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+
+    <div class="content">
+        <h5 class="mb-n1">Examination Details</h5>
+        <hr />
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Title : <strong id="spschedTitle"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Start Date :<strong id="spschedStartDate"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>End Date :<strong id="spschedEndDate"></strong>
+        </div>
+        @*  <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Status : <strong id="spschedStatus"></strong>
+            </div>
+            <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Exam Halls : <strong id="spschedexamHall"></strong>
+            </div>
+            <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Classes : <strong id="spschedclassCount"></strong>
+            </div>
+            <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Students : <strong id="spschedStudentCount"></strong>
+            </div>*@
+    </div>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content mb-0">
+        <h5 class="mb-n1">Exam Time Table</h5>
+        <hr />
+    </div>
+    <div id="examtimetable-container">
+    </div>
+</div>
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+    let scheduleArr=[];
+    $(document).ready(function () {
+        // setActiveNav('/Home');
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/PersonnelSchedule`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                .then(response => {
+                    scheduleArr = response;
+                    // setBindingValues(response);
+                    setScheduleBinding(response);
+                    hideLoading();
+                })
+                .catch(error => {
+                        showToast('2', `@_localization.Getkey("Error")`);
+                });
+    });
+
+    function setScheduleBinding(data) {
+        const dropdown = $('#schedules-dropdown');
+        dropdown.empty();
+        dropdown.append('<option value="">Select Examination</option>');
+        data.forEach(card => {
+            const option = $('<option></option>')
+                .val(card.id)
+                .text(card.title);
+            dropdown.append(option);
+        });
+         var defaultValue = data[0].id;
+         //$("#hfscheduletitledetailid").val(defaultValue);
+        dropdown.val(defaultValue);
+        viewScheduleInfo(data[0]);
+        getExaminationTimeTable(data[0].id);
+
+
+        dropdown.on('change', function() {
+            const selectedId = $(this).val();
+            if (selectedId) {
+                var objsched = scheduleArr.find(item=> item.id == selectedId);
+                if(objsched !== null && objsched !==undefined){
+                    //$("#hfscheduletitledetailid").val(objsched.id);
+                    viewScheduleInfo(objsched);
+                    getExaminationTimeTable(objsched.id);
+                }
+            }
+            else{
+
+            }
+        });
+    }
+    function viewScheduleInfo(item){
+        if(item !== null && item !== undefined){
+            $("#spschedTitle").html(item.title || '&nbsp;');
+            $("#spschedStartDate").html(item.strStartDate || '&nbsp;');
+            $("#spschedEndDate").html(item.strEndDate || '&nbsp;');
+            //$("#spschedStatus").html(item.status || '&nbsp;');
+            //$("#spschedexamHall").html(data.examHallCount || '&nbsp;');
+            //$("#spschedclassCount").html(data.classCount || '&nbsp;');
+            //$("#spschedStudentCount").html(data.studentCount || '&nbsp;');
+        }
+    }
+    function getExaminationTimeTable(id){
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/ExamTimeTable/`+id+`,`+@userStudent.BranchClassId+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(childresponse => {
+                                    setExamAndSyllabusBindingValues(childresponse);
+                                    hideLoading();
+                            })
+                            .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                            });
+    }
+    function setExamAndSyllabusBindingValues(data) {
+        const container = document.getElementById('examtimetable-container');
+        let htmlContent = '';
+        data.forEach((result, index) => {
+            const lessonNames = result.lstExaminationLesson.map(lesson => lesson.lessonName).join(', ');
+            const sectionHTML=`<a href="#" class="card card-style mb-2 custom-card rounded-2">
+                                    <div class="d-flex pt-2 pb-0">
+                                            <div class="d-flex flex-column justify-content-center ms-3">
+                                                <h5 class="color-theme font-600 text-start">${result.subjectName}</h5>
+                                                <p class="mt-n1 font-10 color-highlight mb-1 text-start">Date : ${result.strExamDate}  Time : ${result.strExamTime}</p>
+                                                ${lessonNames ? `<div class="font-12 text-start color-dark">
+                                                    <i class="far fa-clock font-14 color-brown-dark"></i>
+                                                    <span class="ms-2">syllabus : ${lessonNames}</span>
+                                                </div>` : ''}
+                                            </div>
+
+                                    </div>
+                                    </a>`;
+
+
+            htmlContent += sectionHTML;
+        });
+        container.innerHTML = htmlContent;
+    }
+
+
+
+
+
+</script>

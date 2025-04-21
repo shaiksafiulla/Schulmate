@@ -1,0 +1,112 @@
+﻿@model SchoolCoreWEB.Models.PeriodBreakVM
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+
+            <form id="branchclassPeriodBreakForm" class="forms-sample">
+                @Html.HiddenFor(m => m.BranchId)
+                @Html.HiddenFor(m => m.BranchClassId)
+                @Html.HiddenFor(m => m.ClassId)
+                <div class="table-responsive-sm">
+                    <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblclssub">
+                        <thead>
+                            <tr>
+                                <th>@_localization.Getkey("Select")</th>
+                                <th>@_localization.Getkey("Break")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < @Model.LstPeriodBreak.Count(); i++)
+                            {
+                                <tr style="padding:0px">
+                                    <td>
+                                        @if (@Model.LstPeriodBreak[i].IsDelete == "0")
+                                        {
+                                            @Html.CheckBoxFor(m => @Model.LstPeriodBreak[i].IsSelected, new { @class="form-check-input", @disabled="disabled" })
+                                        }
+                                        else
+                                        {
+                                            @Html.CheckBoxFor(m => @Model.LstPeriodBreak[i].IsSelected, new { @class = "form-check-input" })
+                                        }
+                                        @Html.HiddenFor(m => @Model.LstPeriodBreak[i].Id)
+                                        @Html.HiddenFor(m => @Model.LstPeriodBreak[i].IsDelete)
+                                        </td>                                      
+                                    <td>
+                                        @{
+                                            var forecolor = @Model.LstPeriodBreak[i].SubjectColor == "#FFFFFF" ? "#000000" : "#FFFFFF";
+                                            //style="background-color:@Model.LstPeriodBreak[i].SubjectColor; color:@forecolor"
+                                            <div>
+                                               @Html.DisplayFor(m=> @Model.LstPeriodBreak[i].Name)
+                                            </div>
+                                        }
+                                        
+                                          
+                                    </td>
+                                    
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <br />
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary mr-2" onclick="submitBranchClassPeriodBreak()">@_localization.Getkey("Update")</button>
+
+                </div>
+
+            </form>
+
+
+            <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script type="text/javascript">
+        $('#chkcls').change(function () {
+        $('#tblclssub tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+    });
+        function submitBranchClassPeriodBreak(){
+            $("#loaderDiv1").show("slow", function () {
+            var myformdata = $("#branchclassPeriodBreakForm").serialize();
+               $.ajax({
+                type: 'POST',
+                url: '@Url.Action("UpdatePeriodBreak","BranchClass")',
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                data: myformdata,
+                success: function (response) {
+                   if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                          actionAfterResponse('BranchClassGrid', serviceresult.recordId, serviceresult.statusId, '25');
+
+                        } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+               })
+            })
+        }
+</script>

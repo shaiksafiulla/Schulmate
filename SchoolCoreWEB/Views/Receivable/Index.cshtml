@@ -1,0 +1,205 @@
+﻿@using SchoolCoreWEB.Models
+@model SearchReceivableParams
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<form id="receivableForm" class="forms-sample">
+    <br />
+    <ul class="list-group list-group-horizontal">
+        <li class="list-group-item" style="margin:2px"><a class="nav-link" href="@Url.Action("Index","Expense")">Expenses</a></li>
+        <li class="list-group-item active" style="margin:2px"><a class="nav-link" href="@Url.Action("Index","Receivable")">Receivables</a></li>       
+    </ul>
+    <br />
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Receivables</div>      
+             <button class="btn btn-sm btn-info float-end mt-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"><i class="ri-search-line"></i>Advance Search</button>
+            <div class="ribbon-content">
+                <div class="table-responsive-sm">
+                    <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="ReceivableSummaryGrid">
+                         <thead>
+                            <tr> <th  style="display:none;">Id</th>                              
+                                <th>Receivable Date</th>
+                                <th>Total Receivable Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>                          
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header modal-colored-header bg-info">
+                        <h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="myModalBodyDiv1">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>
+    </div>
+     <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+        <div class="d-flex align-items-center bg-info p-3 offcanvas-header">
+            <h5 class="text-white m-0" id="offcanvasRightLabel">Advance Search</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label for="fromdate" class="form-label">From Date</label>
+                        @Html.EditorFor(model => model.FromDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @id="fromdate" } })
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="todate" class="form-label">To Date</label>
+                        @Html.EditorFor(model => model.ToDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @id="todate" } })
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="searchReceivableSummary()">
+                    <i class="ri-search-line">Search</i>
+                </button>
+                <button type="button" class="btn btn-light" onclick="resetReceivableSummary()">
+                    <i class="ri-refresh-line"></i>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+@section Scripts {
+
+	<script>
+		 $(document).ready(function(){
+			   $("#loaderDiv").show("slow", function() {
+					   getLimitedReceivableSummary();
+				 })
+
+		 });
+		   function getLimitedReceivableSummary() {
+			   getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Expense/GetReceivableSummary`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+							  .then(response => {
+								   setBindingValues(response);
+							  })
+							  .catch(error => {
+								  console.log(error);
+								   toastr.error(`@_localization.Getkey("Error")`);
+							  });
+		  }
+			function setBindingValues(data){
+
+						   var expenseData=[];
+
+							$.each(data,function(key,value){
+
+								var btnaction='<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,ReceivableSummaryGrid);"> '+
+									'<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false" ><i class="mdi mdi-dots-horizontal"></i></a>'+
+									'<div class="dropdown-menu dropdown-menu-end">'+
+										'<a class="dropdown-item" href="#" onclick="getAllReceivableByDate(`'+value.strCreatedDate+'`,'+value.id+')"><i class="ri-eye-line"></i>&nbsp; View</a>'+
+									'</div>'+
+								'</div>'
+
+								expenseData.push([value.id,value.strCreatedDate,value.totalAmount,btnaction])
+							})
+
+							$("#ReceivableSummaryGrid").DataTable({
+								"bDestroy": true,
+								data : expenseData,
+								order: [],
+								"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+								// dom: 'lBfrtip',
+								dom: '<"container-fluid"<"row"<"col"l><"col"Bf>>>rt<"row"<"col"i><"col"p>>',
+									buttons: [
+										{
+											extend:    'csvHtml5',
+											text:      '<i class="ri-file-excel-line"></i>',
+											titleAttr: 'csv',
+											filename : 'Receivable Summary',
+											className: 'btn btn-outline-light btn-sm',
+											exportOptions: {
+													columns: [ 1,2]
+												}
+										}
+									]
+							})
+							$("#loaderDiv").hide();
+
+		  }
+
+			   function resetReceivableSummary(){
+						 $("#fromdate").val('');
+						 $("#todate").val('');
+						   $("#ddlsessionyear").val('');
+						  window.location = '@Url.Action("Index", "Receivable")';
+			}
+			   function searchReceivableSummary() {
+
+				   $("#loaderDiv").show("slow", function() {
+						var obj = {};
+					   obj.FromDate = $("#fromdate").val();
+					   obj.ToDate = $("#todate").val();
+						obj.SessionYearId = $("#ddlsessionyear").val();
+						var jdata = JSON.stringify(obj);
+						fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/Expense/SearchReceivableSummary', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'Authorization': 'Bearer ' + `@strtoken`,
+								'UserParam': `@Html.Raw(@userParamkey)`
+							},
+							body: jdata
+						})
+						.then(response => response.json())
+						.then(result => {
+							setBindingValues(result);
+						})
+						.catch(error => {
+							toastr.error(`@_localization.Getkey("Error")`);
+						});
+				 })
+
+
+			   }
+
+		var getAllReceivableByDate=function(strDate, id){
+			 if(id != null && id > 0){
+				 document.getElementById('primary-header-modalLabel').innerHTML="Receivables :" + strDate;
+			 }
+			  var url = '@Url.Action("GetAllReceivableByDate", "Receivable")?Id=' + id;
+			 $("#myModalBodyDiv1").load(url,function(){
+				 $("#primary-header-modal").modal("show");
+			 })
+
+		 }
+
+	</script>
+}
+
+
+
+

@@ -1,0 +1,449 @@
+﻿@model SchoolCoreMOB.Models.LoginUser
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@{
+    Layout = null;
+}
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <title>schulmate</title>
+    <link rel="stylesheet" type="text/css" href="~/styles/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="~/styles/style.css">
+    <link rel="stylesheet" type="text/css" href="~/styles/action.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900|Roboto:300,300i,400,400i,500,500i,700,700i,900,900i&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/fonts/css/fontawesome-all.min.css">
+  
+   @*  <link rel="apple-touch-icon" sizes="180x180" href="/schoolcoremob/app/icons/icon-192x192.png">
+      <link rel="shortcut icon" href="/schoolcoremob/app/icons/favicon.ico">
+     <link rel="manifest" href="/schoolcoremob/_manifest.json"  data-pwa-version="set_in_manifest_and_pwa_js"> *@
+    
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/app/icons/icon-192x192.png">
+    <link rel="shortcut icon" href="/app/icons/favicon.ico"> 
+    <link rel="manifest" href="/_manifest.json"  data-pwa-version="set_in_manifest_and_pwa_js">
+
+      <link rel="stylesheet" class="page-highlight" type="text/css" href="~/styles/highlights/highlight_gray.css">
+
+
+
+
+
+	
+   
+</head>
+
+<body class="theme-light" data-highlight="gray">
+
+    <div id="preloader"><div class="spinner-border color-highlight" role="status"></div></div>
+
+    <div id="page">
+        <div class="page-content">
+            <div id="divloginloader" class="loading-overlay" style="display: none;">
+                <div class="spinner" role="status"></div> <!-- Your spinner element -->
+            </div>
+            <div class="card" data-card-height="cover">
+                <div class="card-center card card-style mb-2 custom-card rounded-2 text-center">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border color-teal-dark" role="status" id="loginspinner" style="display:none">
+                        </div>
+                    </div>
+                    <div class="content mb-0">
+                        <h1 class="font-700 mb-0">Login</h1>
+                        <p class="font-11  mt-n1 mb-0">
+                            Hello ! Please enter your credentials below.
+                        </p>
+                        <form id="loginForm">
+                            <div class="input-style no-borders has-icon validate-field mb-4 mt-3">
+                                @*<i class="fa fa-user"></i>*@
+                                @*<input type="name" class="form-control validate-name" id="form1aa" placeholder="Username">*@
+                                @Html.TextBoxFor(model => model.UserName, new { @class = "form-control validate-name", @id = "form1aa", @placeholder="Username", @maxlength = "50", onkeyup = "Validate();", onkeypress = "return AvoidSpace()" })
+                                <label for="form1aa" class="color-highlight mt-1 font-500 font-11">Username</label>
+                                <i class="fa fa-times disabled invalid color-red-dark"></i>
+                                <i class="fa fa-check disabled valid color-green-dark"></i>
+                                <em>(required)</em>
+                            </div>
+                            <div class="input-style no-borders has-icon validate-field mb-4">
+                                @* <i class="fa fa-lock"></i>*@
+                                @*  <input type="password" class="form-control validate-password" id="form1aab" placeholder="Password">*@
+                                @Html.PasswordFor(model => model.Password, new { @class = "form-control validate-password", @id = "form1aab", @placeholder = "Password", @maxlength = "50", onkeyup = "Validate();", onkeypress = "return AvoidSpace()" })
+                                <label for="form1aab" class="color-highlight mt-1 font-500 font-11">Password</label>
+                                <i class="fa fa-times disabled invalid color-red-dark"></i>
+                                <i class="fa fa-check disabled valid color-green-dark"></i>
+                                <em>(required)</em>
+                            </div>
+                            <a href="#" class="btn btn-full btn-m shadow-l rounded-s text-uppercase font-900 bg-blue-dark" id="anchLogin">LOGIN</a>
+                            @* <button type="button" class="btn btn-full btn-m shadow-l rounded-s text-uppercase font-900 bg-green-dark" id="anchLogin">LOGIN</button>*@
+                        </form>
+
+
+                    </div>
+                  @*  <div class="content mb-0">
+                        <h1 class="font-700 mb-0">Register Biometric</h1>       
+                        <input type="text" id="regUserName" />
+                          
+                            <a href="#" class="btn btn-full btn-m shadow-l rounded-s text-uppercase font-900 bg-green-dark" id="anchRegister">REGISTER</a>
+                    </div>*@
+
+                </div>
+               @* <div class="card-overlay bg-highlight"></div>
+                <div class="card-overlay bg-theme opacity-20"></div>*@
+            </div>
+
+        </div>
+        <div id="divlogintoast" class="snackbar-toast bg-green-dark" data-bs-delay="1500" data-bs-autohide="true"><i class="fa fa-check me-3"></i></div>
+
+      @*  <div id="menu-highlights"
+             class="menu menu-box-bottom menu-box-detached rounded-m"
+             data-menu-load="@Url.Content("~/menu-colors.html")"
+             data-menu-height="510"
+             data-menu-effect="menu-over">
+        </div>*@
+
+
+    </div>
+
+
+    <script src="~/scripts/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="~/scripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/scripts/custom.js"></script>
+    <script type="text/javascript" src="~/scripts/action.js"></script>
+    <script type="text/javascript">
+
+            $(document).ready(function () {
+
+                Validate();
+                $('#anchLogin').on('click', function(event) {
+                    event.preventDefault(); // Prevent default anchor click behavior
+                    submitLogin();
+                });
+                 $('#anchRegister').on('click', function(event) {
+                    event.preventDefault(); // Prevent default anchor click behavior
+                    register();
+                });
+                
+            });
+            //if (window.history && window.history.pushState) {
+            //    window.history.pushState(null, null, window.location.href);
+            //    window.onpopstate = function () {
+            //        window.history.pushState(null, null, window.location.href);
+            //    };
+            //}
+
+            var input = document.getElementById("form1aab");
+                input.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    document.getElementById("anchLogin").click();
+                }
+            });
+
+        function chkFields(){
+                var isvalid=true;
+                if($("#form1aa").val() === ""){
+                        isvalid =false;
+                }
+                if($("#form1aab").val() === ""){
+                        isvalid =false;
+                }
+                return isvalid;
+        }
+        function Validate(){
+            if (chkFields()){
+                $('#anchLogin').prop('disabled', false);
+                //  $('#anchLogin').attr("disabled","disabled");
+                // $('#anchLogin').addAttr('href');
+            }
+            else{
+                    $('#anchLogin').prop('disabled', true);
+                    //$('#anchLogin').attr("disabled","disabled");
+                //  $('#anchLogin').removeAttr('href');
+
+            }
+        }
+        function AvoidSpace() {
+
+            if (event.keyCode == 32) {
+                event.returnValue = false;
+                return false;
+            }
+        }
+        function submitLogin()
+        {
+           showloginLoading();
+                    var myformdata = $("#loginForm").serialize();
+                    $.ajax({
+                    type: 'POST',
+                    url : '@Url.Action("CheckUserLogin", "Login")',
+                    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                    data: myformdata,
+                            success: function (response) {
+                                if (response != null) {
+                                    var user = JSON.parse(response);
+                                        if (user.loginStatus == "1") {
+                                                    if (user.licenseStatus == "1") {
+                                                            $.ajax({
+                                                                url: '@Url.Action("SetUser", "Login")?userId=' + user.userId + '&token=' + user.token + '',
+                                                            type: 'POST',
+                                                                success: function (data) {
+                                                                    if (data != null) {
+                                                                         hideloginLoading();
+                                                                            showLoginToast('1', 'Logged In successfully');
+                                                                             window.location.href = '@Url.Action("Index", "Home")';
+
+                                                                    }
+                                                            },
+                                                            error: function (error) {
+                                                                 showLoginToast('2', `@_localization.Getkey("Error")`);
+                                                                 hideloginLoading();
+                                                            }
+                                                        });
+                                                    }
+                                                    else {
+                                                        showLoginToast('2', 'License is Expired.. Please contact Administrator');
+                                                        hideloginLoading();
+                                                    }
+                                        }
+                                        else {
+                                             showLoginToast('2', 'Invalid User Name or Password');
+                                             hideloginLoading();
+                                        }
+                                    } else {
+                                         showLoginToast('2', 'success but no response' + response);
+                                         hideloginLoading();
+                                    }
+                            },
+                            error: function (response) {
+                                showLoginToast('2', 'success but no response' + response);
+                                hideloginLoading();
+                            }
+                    })
+
+        }
+  function registerFingerPrint(){
+           // console.log($("#regUserName").val());
+           var usrname = $("#regUserName").val();
+             $.ajax({
+                 type: 'POST',
+                  // url: '@Url.Action("RegisterFingerPrint", "Login")',
+                           url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/WebAuthn/credential-options',
+                           contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                   data: { userName : usrname },
+                     success: function (response){
+                         
+                         var credentialOptionsResponse = JSON.parse(response);
+                         const options = credentialOptionsResponse.options;
+                         const userId = credentialOptionsResponse.userId;                     
+
+                         
+                         const publicKeyCredentialCreationOptions = {
+                                    challenge: new Uint8Array(options.challenge),
+                                    rp: options.rp,
+                                   // user: options.user,
+                                     user: {
+                                                id: new TextEncoder().encode(options.user.id), // The unique identifier for the user, usually a database ID
+                                                name: options.user.name,             // A unique name or email for the user
+                                                displayName: options.user.name,                 // The name to be displayed to the user
+                                              },
+                                    pubKeyCredParams: options.pubKeyCredParams,
+                                    timeout: options.timeout,
+                                    attestation: options.attestation
+                                };
+                              
+                         //const publicKeyCredentialCreationOptions = {
+                         //                     challenge: new Uint8Array([0x8a, 0x73, 0x1d, 0x42, 0x7b, 0x89, 0x96, 0xf1, 0x4a, 0x29, 0x89, 0xbf, 0xd3, 0x87, 0x3b, 0x01]), // A random challenge generated by your server
+                         //                     rp: {
+                         //                       name: "SchoolCoreMOB",  // Name of the relying party (your application)
+                         //                       id: "localhost"        // The domain of the relying party (your site)
+                         //                     },
+                         //                     user: {
+                         //                       id: new TextEncoder().encode("user1234"), // The unique identifier for the user, usually a database ID
+                         //                       name: "user1234@example.com",             // A unique name or email for the user
+                         //                       displayName: "User 1234"                  // The name to be displayed to the user
+                         //                     },
+                         //                     pubKeyCredParams: [
+                         //                       { type: "public-key", alg: -7 },  // Indicates the use of ES256 (ECDSA with SHA-256) for public key algorithms
+                         //                       { type: "public-key", alg: -257 }, // Indicates the use of RS256 (RSA with SHA-256) for public key algorithms
+                         //                     ],
+                         //                     timeout: 60000,  // The maximum time (in milliseconds) that the user has to complete the registration process
+                         //                     attestation: "direct",  // Attestation type; "direct" means a direct attestation from the authenticator
+                         //                     excludeCredentials: []   // List of credentials to exclude from selection during registration
+                         //                   };
+                         //     console.log(publicKeyCredentialCreationOptions);  
+
+                              
+                                //navigator.credentials.create({ publicKey: publicKeyCredentialCreationOptions })
+                                //  .then(credential => {
+                                  
+                                //    console.log("Credential created successfully", credential);
+                                  
+                                //  })
+                                //  .catch(error => {
+                                   
+                                //    console.error("Error creating credential:", error);
+                                //  });
+
+
+                                 navigator.credentials.create({ publicKey: publicKeyCredentialCreationOptions })
+                                    .then(newCredential =>{
+                                            completeRegistrationFingerPrint(newCredential,userId);
+                                    // fetch('@Url.Action("CompleteRegisterFingerPrint", "Login")', {
+                                    //        method: 'POST',
+                                    //        headers: { 'Content-Type': 'application/json' },
+                                    //        body: JSON.stringify(newCredential)
+                                    //    }).then(response => response.json()).then(data => {
+                                    //            if (data.success) {
+                                    //                alert('Registration successful',newCredential);
+                                    //            } else {
+                                    //                alert('Registration failed');
+                                    //            }
+                                    //        });
+                                    }).catch(error => {
+                                            console.error("WebAuthn Registration failed: ", error);
+                                        });
+
+                        
+                       
+                     },
+                      error: function (response) {
+                         showToast('2', `@_localization.Getkey("Error")`);
+                    }
+              })
+        }
+        function completeRegistrationFingerPrint(credentialoption,userid){
+            console.log(credentialoption,userid);
+             var obj = {};
+                         obj.AttestationResponse=credentialoption;
+                         obj.UserId=userid;
+                         var jdata = JSON.stringify(obj);
+                         $.ajax({ 
+                                 type: 'POST',
+                                 url: '@Url.Action("CompleteRegisterFingerPrint", "Login")',      
+                                 contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                                 data: { credentialRequest : jdata },
+                                 success: function (response){
+                                     console.log(response);
+                                 },
+                                  error: function (response) {
+                                         showToast('2', `@_localization.Getkey("Error")`);
+                                    }
+                         })
+        }
+
+       
+function register(){
+           
+             var usrname = $("#regUserName").val();          
+            $.ajax({
+                type: 'POST',
+                       // url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/WebAuthn/credential-options',
+                        url: '@Url.Action("CreateCredentialOptions", "WebAuthn")',    
+                contentType: 'application/json',
+                data: JSON.stringify(usrname),              
+                success: function (response) {
+                    if (response != null) {    
+                        console.log(response.rp);
+                        const data = response;
+                        const userId =data.userId;
+                        const publicKeyCredentialCreationOptions = {
+                                challenge: Uint8Array.from(atob(data.challenge), c => c.charCodeAt(0)),
+                                rp: data.rp,
+                                 //rp: {
+                                 //       id: data.rp.id,
+                                 //       name: data.rp.name,
+                                 //       origin: "localhost" // This should match the client origin
+                                 //   },
+                                user: {
+                                    id: new TextEncoder().encode(data.user.id),
+                                    name: data.user.name,
+                                    displayName: data.user.displayName
+                                },
+                                pubKeyCredParams: data.pubKeyCredParams,
+                                timeout: data.timeout,
+                                attestation: data.attestation
+                            };
+                            // Create the WebAuthn credential
+                            navigator.credentials.create({ publicKey: publicKeyCredentialCreationOptions })
+                                 .then(newCredential =>{
+                                            completeRegister(newCredential,userId);                                   
+                                    })
+                                .catch(function(error) {
+                                    console.error(error);
+                                });
+                        //var credentialOptionsResponse = response;
+                        // const options = credentialOptionsResponse.options;
+                        // const userId = credentialOptionsResponse.userId;    
+                        // const challenge = new Uint8Array(options.challenge);
+                         
+                        //  const publicKeyCredentialCreationOptions = {
+                        //            challenge: new Uint8Array(options.challenge),
+                        //           // challenge: Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0)),
+                        //            rp: options.rp,                                  
+                        //             user: {
+                        //                        id: new TextEncoder().encode(options.user.id), 
+                        //                        name: options.user.name,       
+                        //                        displayName: options.user.name, 
+                        //                      },
+                        //            pubKeyCredParams: options.pubKeyCredParams,
+                        //            timeout: options.timeout,
+                        //            attestation: options.attestation
+                        //        };
+                        //        navigator.credentials.create({ publicKey: publicKeyCredentialCreationOptions })
+                        //            .then(newCredential =>{
+                        //                    completeRegister(newCredential,userId);                                   
+                        //            }).catch(error => {
+                        //                   // showLoginToast('2', "WebAuthn Registration failed: " + error);
+                        //                   console.log(error)
+                        //                });
+                       
+                    } 
+                    else {                        
+                       showLoginToast('2', `@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {                   
+                  showLoginToast('2', `@_localization.Getkey("Error")`);
+                }
+            });
+        }
+ function completeRegister(credentialoption,userId){   
+                // Prepare the registration response to send to the server
+            //const regResponse = {
+            //    id: credentialoption.id,
+            //    rawId: arrayBufferToBase64(credentialoption.rawId),
+            //    response: {
+            //        attestationObject: arrayBufferToBase64(credentialoption.response.attestationObject),
+            //        clientDataJSON: arrayBufferToBase64(credentialoption.response.clientDataJSON)
+            //    },
+            //    type: credentialoption.type
+            //};
+           
+             var obj = {};
+            obj.AttestationResponse=credentialoption;
+            obj.UserId=userId;
+            var jdata = JSON.stringify(obj);
+           // console.log(jdata);
+            $.ajax({ 
+                    type: 'POST',
+                       // url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/WebAuthn/credential',
+                        url: '@Url.Action("CompleteCredentialRegistration", "WebAuthn")',    
+                    contentType: 'application/json',
+                    data: jdata,
+                    success: function (response){
+                        console.log(response);
+                    },
+                    error: function (response) {
+                            showToast('2', `@_localization.Getkey("Error")`);
+                    }
+            })
+        }
+        function arrayBufferToBase64(buffer) {
+                return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+}
+    </script>
+</body>

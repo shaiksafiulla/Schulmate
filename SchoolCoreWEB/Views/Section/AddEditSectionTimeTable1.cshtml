@@ -1,0 +1,347 @@
+﻿@model SchoolCoreWEB.Models.SectionTimeTableVM
+@using Localization.Services
+@inject LanguageService _localization
+@{
+    string cultur = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string locale = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "ar" : "en";
+}
+
+<style>
+    #external-events .fc-event {
+        cursor: move;
+        margin: 3px 0;
+    }
+
+    .fc .fc-timegrid-slot {
+        height: 5em;
+    }
+</style>
+<div class="row">
+    <div class="row">
+        @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+        @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+        @Html.HiddenFor(m => m.BranchClassId, new { @id = "hfbranchclassid" })
+        @Html.HiddenFor(m => m.ClassId, new { @id = "hfclassid" })
+        @Html.HiddenFor(m => m.SectionId, new { @id = "hfsectionid" })
+
+        <div class="col-2">
+            <div class="card">
+                <div class="card-body">
+                    <div id="external-events">
+                        <p>
+                            <strong>Subjects</strong>
+                        </p>
+                        @for (int i = 0; i < Model.LstCastSubjectTeacherTimeTable.Count; i++)
+                        {
+                            <div class='fc-event fc-h-event fc-daygrid-event fc-daygrid-block-event' style="background-color:@Model.LstCastSubjectTeacherTimeTable[i].SubjectColor">
+                                <div class='fc-event-main' data-color="@Model.LstCastSubjectTeacherTimeTable[i].SubjectColor" data-id="@Model.LstCastSubjectTeacherTimeTable[i].Id"
+                                 data-custom-value1="@Model.LstCastSubjectTeacherTimeTable[i].ClassSubjectId" data-custom-value2="@Model.LstCastSubjectTeacherTimeTable[i].SubjectId" data-custom-value3="@Model.LstCastSubjectTeacherTimeTable[i].TeacherId">
+                                    @Model.LstCastSubjectTeacherTimeTable[i].SubjectName - @Model.LstCastSubjectTeacherTimeTable[i].TeacherName
+                                </div>
+                            </div>
+                            @* data - duration = "00:@Model.SlotDuration:00" *@
+                        }
+                        @*
+                            <p>
+                            <input type='checkbox' id='drop-remove' />
+                            <label for='drop-remove'>remove after drop</label>
+                            </p>*@
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        <div class="col-10">
+            <div class="card">
+                <div class="card-body">
+                    @* <button type="button" class="btn btn-info float-end mt-0" onclick="printDiv('calendar-container')">
+                        <i class="ri-printer-line"></i> @_localization.Getkey("Print")
+                        </button> *@
+                    <div id='calendar-container'>
+
+                        <div id='calendar'></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btnsubmit" onclick="submitTimeTable()">@_localization.Getkey("Update")</button>
+            <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    var eventsData = [];
+    var eventsArray = [];
+    var jsmodel = @Html.Raw(Json.Serialize(Model));
+    if (jsmodel != null) {
+        if (jsmodel.isEdit) {
+            var lst = jsmodel.lstTimeTableResult;
+            lst.forEach(function (event) {
+                var evobj = {};
+                evobj.id = event.id;
+                evobj.title = event.title;
+                evobj.start = event.start;
+                evobj.end = event.end;
+                evobj.backgroundColor = event.backgroundColor;
+                evobj.borderColor = event.borderColor;
+                evobj.classSubjectId = event.classSubjectId;
+                evobj.subjectId = event.subjectId;
+                evobj.teacherId = event.teacherId;
+                eventsArray.push(evobj);
+                // calendar.addEvent(evobj);
+            });
+
+
+        }
+    }
+    var calendar;
+
+    // debugger;
+    function setCalendar() {
+        var tmpArr = [];
+        $("#loaderDiv1").show();
+        var Calendar = FullCalendar.Calendar;
+        var Draggable = FullCalendar.Draggable;
+
+        var containerEl = document.getElementById('external-events');
+        var calendarEl = document.getElementById('calendar');
+        var checkbox = document.getElementById('drop-remove');
+
+        // initialize the external events
+        new Draggable(containerEl, {
+            itemSelector: '.fc-event',
+            eventData: function (eventEl) {
+                return {
+                    id: eventEl.children[0].getAttribute('data-id'),
+                    title: eventEl.innerText,
+                    backgroundColor: eventEl.children[0].getAttribute('data-color'),
+                    borderColor: eventEl.children[0].getAttribute('data-color')
+                };
+            },
+            zIndex: 999,
+            revert: true, // Revert the event back to its original position if dropped outside the calendar
+            revertDuration: 0
+        });
+        //initialize the calendar
+        calendar = new Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            validRange: {
+                start: jsmodel.strStartDate,
+                end: jsmodel.strEndDate
+            },
+
+            // datesSet: function (info) {    // Callback triggered on date changes
+            //     var start = info.start;   // The start date of the current view
+            //     var end = info.end;      // The end date of the current view
+            //     console.log("Start of the week:", start);
+            //     console.log("End of the week:", end);
+            // },
+            slotMinTime: jsmodel.slotMinTime + `:00`,
+            slotMaxTime: jsmodel.slotMaxTime + `:00`,
+            allDaySlot: false,
+            slotDuration: `00:` + jsmodel.slotDuration + `:00`,
+            slotEventOverlap: true,
+            eventOverlap: true,
+            snapDuration: `00:` + jsmodel.slotDuration + `:00`,
+            // slotLabelFormat: 'H.mm',
+            slotLabelInterval: `00:` + jsmodel.slotDuration + `:00`,
+            headerToolbar: {
+                left: '',
+               // center: jsmodel.sectionName,
+             //  center: 'dayGridMonth,timeGridFourDay', // buttons for switching between views
+                right: ''
+            },
+   
+            dayHeaderFormat: { weekday: 'long' },
+            firstDay: 1,
+            hiddenDays: [0],
+            allDaySlot: false,
+            editable: true,
+            droppable: true,
+           
+            events: [],
+            // drop: function (info) {
+            //     //console.log("drop called :");
+            //     // if (checkbox.checked) {
+            //     //     info.draggedEl.parentNode.removeChild(info.draggedEl);
+            //     // }
+            // },
+          
+
+            eventReceive: function (info) {
+                //  console.log("eventReceive called :");
+
+                if (info.event.end == null) {
+                    var slotDuration = getSlotDurationMilliseconds(calendar);
+                    info.event.setEnd(new Date(info.event.start.getTime() + slotDuration));
+                }
+                var infostart = new Date(info.event.start);
+                var infoend = new Date(info.event.end);
+                var foundEvent = tmpArr.find(function (event) {
+                    return event.start.getTime() === infostart.getTime() && event.end.getTime() === infoend.getTime();
+                });
+                if (foundEvent) {
+                    // console.log('duplicate');
+                    info.event.remove();
+                }
+                else {
+                    var clssubid = info.draggedEl.children[0].getAttribute('data-custom-value1');
+                    var subid = info.draggedEl.children[0].getAttribute('data-custom-value2');
+                    var teaid = info.draggedEl.children[0].getAttribute('data-custom-value3');
+
+                    info.event.setExtendedProp('classsubjectid', clssubid);
+                    info.event.setExtendedProp('subjectid', subid);
+                    info.event.setExtendedProp('teacherid', teaid);
+
+                    var tmpobj = {};
+                    tmpobj.start = info.event.start;
+                    tmpobj.end = info.event.end;
+                    tmpArr.push(tmpobj);
+                }
+
+            },
+            eventContent: function (arg) {
+                // console.log("eventContent called :");
+                var titleSpan = document.createElement('span');
+                titleSpan.textContent = arg.timeText + ' ' + arg.event.title;
+                var closeButton = document.createElement('span');
+                closeButton.textContent = '×';
+                closeButton.className = "badge bg-danger";
+                closeButton.addEventListener('click', function (event) {
+                    arg.event.remove();
+                    event.stopPropagation();
+                });
+                var containerDiv = document.createElement('div');
+                containerDiv.appendChild(titleSpan);
+                containerDiv.appendChild(closeButton);
+                return { domNodes: [containerDiv] };
+            },
+            // eventDidMount: function (info) {
+            //     console.log("eventDidMount event called :", info);
+
+            // },
+            // eventDrop: function (info) {
+            //     console.log("eventDrop called :");
+            // }
+        });
+        calendar.render();
+
+        if (jsmodel != null && jsmodel.isEdit && eventsArray.length > 0) {
+            eventsArray.forEach(function (event) {
+                calendar.addEvent(event);
+            });
+            var events = calendar.getEvents();
+            events.forEach(function (event) {
+                var extprop = lst.find(x => x.id == event._def.publicId);
+                if (extprop !== undefined) {
+                    event.setExtendedProp('classsubjectid', extprop.classSubjectId);
+                    event.setExtendedProp('subjectid', extprop.subjectId);
+                    event.setExtendedProp('teacherid', extprop.teacherId);
+                }
+            })
+
+        }
+        $("#loaderDiv1").hide();
+    }
+
+    function getSlotDurationMilliseconds(calendar) {
+        var slotDuration = calendar.getOption('slotDuration');
+        var parts = slotDuration.split(':');
+        return (parseInt(parts[0]) * 60 + parseInt(parts[1])) * 60 * 1000; // Convert hours and minutes to milliseconds
+    }
+    function submitTimeTable() {
+        $("#loaderDiv1").show("slow", function () {
+            var obj = {};
+            obj.SessionYearId = $("#hfsessionyearid").val();
+            obj.BranchId = $("#hfbranchid").val();
+            obj.BranchClassId = $("#hfbranchclassid").val();
+            obj.ClassId = $("#hfclassid").val();
+            obj.SectionId = $("#hfsectionid").val();
+            obj.LstCastSubjectTeacherTimeTable = [];
+            obj.LstTimeTableResult = getAllEvents();
+           // console.log(obj);
+            var jdata = JSON.stringify(obj);
+            $.ajax({
+                type: 'POST',
+                async: false,
+                url: '@Url.Action("UpdateSectionTimeTable", "Section")',
+                data: { model: jdata },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('SectionGrid', serviceresult.recordId, serviceresult.statusId, '5');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        })
+
+    }
+
+    function destroyCalendar() {
+        if (calendar && typeof calendar.destroy === 'function') {
+            calendar.destroy(); // Destroy the calendar instance
+            calendar = null; // Reset the calendar variable
+        } else {
+           // console.log('Calendar instance not found or destroy method not available.');
+        }
+    }
+    function getAllEvents() {
+        eventsData = [];
+        var caldates = getCalendarStartEndDates(calendar);
+
+        var events = calendar.getEvents();
+        events.forEach(function (event) {
+            var params = {};
+            params.Id = event.id;
+            params.ClassSubjectId = event.extendedProps.classsubjectid;
+            params.SubjectId = event.extendedProps.subjectid;
+            params.TeacherId = event.extendedProps.teacherid;
+
+            params.StrStartDate = caldates.start;
+            params.StrEndDate = caldates.end;
+
+            params.StrFromTime = event.start;
+            params.StrToTime = event.end;
+            eventsData.push(params);
+        });
+        return eventsData;
+    }
+    function getCalendarStartEndDates(calendar) {
+        // Access the current view data
+        var currentData = calendar.getCurrentData();
+
+        // Extract the start and end dates from the current view
+        var startDate = currentData.dateProfile.activeRange.start.toISOString().substring(0, 10);;
+        var endDate = currentData.dateProfile.activeRange.end.toISOString().substring(0, 10);;
+
+        //console.log(currentData, startDate, endDate);
+        return { start: startDate, end: endDate };
+    }
+</script>

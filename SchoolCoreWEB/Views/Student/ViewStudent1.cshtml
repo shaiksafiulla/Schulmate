@@ -1,0 +1,593 @@
+﻿@model SchoolCoreWEB.Models.VStudentId
+@using Localization.Services
+@inject LanguageService _localization
+@*<style>
+    .tblclass table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    }
+    </style>*@
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <ul class="list-group list-group-horizontal">
+                <li class="list-group-item active" style="margin:2px"><a href="#" class="nav-link" onclick="GetStudentInfo(@Model.Id)">Profile</a></li>
+                <li class="list-group-item" style="margin:2px"><a href="#" class="nav-link" onclick="GetStudentSchedule(@Model.Id)">Performance</a></li>
+            </ul>
+            <br />
+          
+            <div class="row" id="divstudentinfo" style="display:none">
+                <div class="col-9">
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("RegisterNumber") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblRegisterNo"></label>
+                            @* @Html.DisplayFor(model => model.RegisterNo)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("Name") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblName"></label>
+                            @* @Html.DisplayFor(model => model.FullName)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("FatherName") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblFatherName"></label>
+                            @*@Html.DisplayFor(model => model.FatherName)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("MotherName") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblMotherName"></label>
+                            @*@Html.DisplayFor(model => model.MotherName)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("Age") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblAge"></label>
+                            @*@Html.DisplayFor(model => model.Age)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("Gender") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblGenderName"></label>
+                            @*@Html.DisplayFor(model => model.GenderName)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("MobileNumber") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblMobileNo"></label>
+                            @*@Html.DisplayFor(model => model.MobileNo)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label"> @_localization.Getkey("Class") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblAdmissionClassName"></label>
+                            @*@Html.DisplayFor(model => model.AdmissionClassName)*@
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("Branch") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblBranchName"></label>
+                            @*@Html.DisplayFor(model => model.BranchName)*@
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label">@_localization.Getkey("Section") : </label>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label" id="lblSectionName"></label>
+                            @*@Html.DisplayFor(model => model.SectionName)*@
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <img height="100" width="100" id="imgPhoto" alt="@_localization.Getkey("AltProfileImage")" />
+                </div>
+            </div>
+            <div class="row" id="divstudentschedule" style="display:none">
+                <div class="table-responsive-sm">
+                    <table class="table table-hover table-sm table-bordered table-centered mb-0" id="StdScheduleGrid">
+                        <thead>
+                            <tr>
+                                <th>@_localization.Getkey("Examination")</th>
+                                <th>@_localization.Getkey("TimePeriod")</th>
+                                <th>@_localization.Getkey("Percentage")</th>
+                                <th>@_localization.Getkey("Grade")</th>
+                                @* <th>@_localization.Getkey("Details</th>*@
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+               
+                <div class="row">
+                    <div class="text-center">
+                        <strong>@_localization.Getkey("DataVisualization")</strong>
+                    </div>
+                    <div id="divschedulegraph">
+                        <canvas id="lineScheduleChart" />
+                    </div>
+                    <div id="divmarkgraph" style="display:none">
+                        <a href="#" id="anchorback"><i class=" ri-arrow-left-line"></i>&nbsp; @_localization.Getkey("Back")</a>
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <canvas id="barMarkChart" />
+                            </div>
+                            <div class="col-4">
+                                <table id="tblreport" class="table table-sm table-centered mb-0" style="width :100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>@_localization.Getkey("Subject")</th>
+                                            <th>@_localization.Getkey("Marks")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tblreportbody">
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="font-weight:bold">
+                                            <td>
+                                                <span>@_localization.Getkey("Marks")</span>
+                                            </td>
+                                            <td>
+                                                <span id="spmark"></span>
+                                            </td>
+                                        </tr>
+                                        <tr style="font-weight:bold">
+                                            <td>
+                                                <span>@_localization.Getkey("TotalMarks")</span>
+                                            </td>
+                                            <td>
+                                                <span id="spmaxmark"></span>
+                                            </td>
+                                        </tr>
+                                        <tr style="font-weight:bold">
+                                            <td>
+                                                <span>@_localization.Getkey("Percentage")</span>
+                                            </td>
+                                            <td>
+                                                <span id="sppercent"></span>
+                                            </td>
+                                        </tr>
+                                        <tr style="font-weight:bold">
+                                            <td>
+                                                <span>@_localization.Getkey("Grade")</span>
+                                            </td>
+                                            <td>
+                                                <span id="spgrade"></span>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divsubjectgraph" style="display:none">
+                        <a href="#" id="anchorsubback"><i class=" ri-arrow-left-line"></i>&nbsp; @_localization.Getkey("Back")</a>
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <canvas id="lineSubjectChart" />
+                            </div>
+                            <div class="col-4">
+                                <table id="tblsubject" class="table table-sm table-centered mb-0" style="width :100%;">
+                                    <thead>
+                                        <tr>                                           
+                                            <th>@_localization.Getkey("Topic")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tblsubjectbody">
+                                    </tbody>
+                                   
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        <div class="three-quarters-loadermodel" id="loaderDiv2" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+
+        var studentid= @Model.Id;
+        var scheduleid;
+        $(document).ready(function(){
+            GetStudentInfo(@Model.Id);
+    });
+    $("li").click(function(){
+            // If this isn't already active
+            if (!$(this).hasClass("active")) {
+            // Remove the class from anything that is active
+            $("li.active").removeClass("active");
+            // And make this active
+            $(this).addClass("active");
+            }
+        });
+    $("#anchorback").on("click", function() {
+        $("#loaderDiv2").show();
+          $("#divmarkgraph").hide("slow", function() {
+            $("#divschedulegraph").show();
+            $("#loaderDiv2").hide();
+          });
+
+    });
+    $("#anchorsubback").on("click", function() {
+         $("#loaderDiv2").show();
+          $("#divsubjectgraph").hide("slow", function() {
+            $("#divmarkgraph").show();
+             $("#loaderDiv2").hide();
+          });
+    });
+
+    function GetStudentInfo(id){
+        $("#loaderDiv2").show();
+        $("#divstudentschedule").hide("slow", function(){
+
+
+                    $.ajax({
+                    type: 'GET',
+                    async : false,
+                    url: '@Url.Action("GetStudentInfo", "Student")?Id=' + id,
+                    Accept: 'application/json, text/javascript',
+                    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                    // data: myformdata,
+                    success: function (response) {
+                        if (response != null) {
+
+                            $("#divstudentinfo").show();
+
+                                $("#lblRegisterNo").html(response.registerNo);
+                                $("#lblName").html(response.fullName);
+                                $("#lblFatherName").html(response.fatherName);
+                                $("#lblMotherName").html(response.motherName);
+                                $("#lblAge").html(response.age);
+                                $("#lblGenderName").html(response.genderName);
+                                $("#lblMobileNo").html(response.mobileNo);
+                                $("#lblAdmissionClassName").html(response.admissionClassName);
+                                $("#lblBranchName").html(response.branchName);
+                                $("#lblSectionName").html(response.sectionName);
+                                $("#imgPhoto").attr("src", response.photoPath);
+
+                                $("#loaderDiv2").hide();
+
+                            } else {
+                                    toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                    },
+                    error: function (response) {
+                                toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                })
+         });
+   }
+
+    function GetStudentSchedule(id){
+         $("#loaderDiv2").show();
+         $("#divstudentinfo").hide("slow", function(){
+
+
+                               $.ajax({
+                                type: 'GET',
+                                async : false,
+                                url: '@Url.Action("GetStudentSchedule", "Student")?Id=' + id,
+                                Accept: 'application/json, text/javascript',
+                                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+
+                                success: function (response) {
+
+                                    if (response != null) {
+                                             $("#divstudentschedule").show();
+                                              $("#divschedulegraph").show();
+                                               $("#divmarkgraph").hide();
+                                                $("#divsubjectgraph").hide();
+
+                                             FillDataTable(response.lstStudentScheduleResult);
+                                             FillGraph(response.studentScheduleGraph);
+                                             $("#loaderDiv2").hide();
+
+                                        } else {
+                                             toastr.error(`@_localization.Getkey("Error")`);
+                                        }
+                                },
+                                error: function (response) {
+                                         toastr.error(`@_localization.Getkey("Error")`);
+                                }
+                            })
+           });
+         }
+    function FillDataTable(data){
+
+        var tmpData=[];
+        $.each(data,function(key,value){
+
+            var btndetail="";
+                btndetail = '<a class="dropdown-item" href="#" onclick="GetStudentMarks('+value.studentId+','+value.scheduleId+')"><i class="ri-eye-line"></i>&nbsp; Details</a>'
+
+            tmpData.push([value.examTypeName,value.scheduleMonth,value.mrkPercent,value.gradeName])
+        })
+        var scheduleData = Object.assign([], tmpData)
+        tmpData.reverse()
+
+        $("#StdScheduleGrid").DataTable({
+            "bDestroy": true,
+            "ordering": false,
+             "searching": false,
+                           "bLengthChange": false,
+                           paging: false,
+                           "info": false,
+            data : scheduleData,
+        //    "aoColumnDefs": [
+        //    { "bSortable": false, "aTargets": [ 0, 1, 2, 3, 4 ] },
+        //    { "bSearchable": false, "aTargets": [ 0, 1, 2, 3, 4 ] }
+        //]
+        })
+    }
+    function FillGraph(data){
+        let chartStatus = Chart.getChart("lineScheduleChart"); // <canvas> id
+        if (chartStatus != undefined) {
+          chartStatus.destroy();
+        }
+       // console.log(data);
+        var ctx_linechart = document.getElementById('lineScheduleChart');
+
+                var myLineChart =new Chart(ctx_linechart, {
+                    type : 'line',
+                    data : data,
+                    options: {
+                        parsing: {
+                        xAxisKey: 'strlabel',
+                        yAxisKey: 'percent'
+                    },
+                        maintainAspectRatio: true,
+                        responsive: true,
+                        plugins: {
+
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: Math.round,
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                });
+                document.getElementById("lineScheduleChart").onclick = function(evt) {
+                    const res = myLineChart.getElementsAtEventForMode(evt, 'nearest',
+                    { intersect: true },
+                    true
+                  );
+                  if (res.length === 0) {
+                    return;
+                  }
+                   //var label = myLineChart.data.labels[res[0].index];
+                   //var value = myLineChart.data.datasets[res[0].datasetIndex].data[res[0].index];
+                   scheduleid = myLineChart.data.datasets[res[0].datasetIndex].data[res[0].index].scheduleId;
+                    GetStudentMarks(studentid,scheduleid);
+
+                    };
+    }
+
+    function GetStudentMarks(stdid,schid){
+       $("#loaderDiv2").show();
+             $("#divschedulegraph").hide("slow", function(){
+
+                               $.ajax({
+                                type: 'POST',
+                                async : false,
+                                url: '@Url.Action("GetStudentMark", "Student")?Id=' + stdid +'&ScheduleId=' +schid,
+                                Accept: 'application/json, text/javascript',
+                                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                               // data: myformdata,
+                                success: function (response) {
+
+                                    if (response != null) {
+
+                                              $("#divmarkgraph").show("slow", function(){
+                                                   FillMarkGraph(response.studentMarkGraph);
+                                                   FillProgressReport(response.studentScheduleResult);
+                                                });
+
+                                             $("#loaderDiv2").hide();
+
+                                        } else {
+                                             toastr.error(`@_localization.Getkey("Error")`);
+                                        }
+                                },
+                                error: function (response) {
+                                         toastr.error(`@_localization.Getkey("Error")`);
+                                }
+                            })
+
+            });
+
+
+         }
+    function FillMarkGraph(data){
+        let chartStatus = Chart.getChart("barMarkChart"); // <canvas> id
+        if (chartStatus != undefined) {
+          chartStatus.destroy();
+        }
+        var ctx_barchart = document.getElementById('barMarkChart');
+                var mybarChart =new Chart(ctx_barchart, {
+                    type : 'bar',
+                    data : data,
+                    options: {
+                        maintainAspectRatio: true,
+                        responsive: true,
+                        plugins: {
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: Math.round,
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                })
+                document.getElementById("barMarkChart").onclick = function(evt) {
+                    const res = mybarChart.getElementsAtEventForMode(evt, 'nearest',
+                    { intersect: true },
+                    true
+                  );
+                  if (res.length === 0) {
+                    return;
+                  }
+                   var label = mybarChart.data.labels[res[0].index];
+                   var value = mybarChart.data.datasets[res[0].datasetIndex].data[res[0].index];
+                    //console.log(label + ": " + value);
+                     GetStudentMarkSubject(studentid,label);
+                    };
+    }
+    function FillProgressReport(data){
+
+        $("#tblreportbody").empty();
+        var objresult = data;
+        var lstmark = data.lstStudentMarkResult;
+        var tblbdy = document.getElementById("tblreportbody");
+
+        for (i = 0; i < lstmark.length; i++) {
+            var rowIndex= tblbdy.rows.length;
+            var newRow = tblbdy.insertRow(rowIndex);
+            cell1 = newRow.insertCell(0);
+            cell1.innerHTML = lstmark[i].subjectName;
+
+            cell2 = newRow.insertCell(1);
+            cell2.innerHTML = lstmark[i].marks;
+
+        }
+        $("#spmark").html(objresult.marks);
+        $("#spmaxmark").html(objresult.maxMarks);
+        $("#sppercent").html(objresult.mrkPercent);
+        $("#spgrade").html(objresult.gradeName);
+
+    }
+    function GetStudentMarkSubject(id,subject){
+         $("#loaderDiv2").show();
+        $("#divmarkgraph").hide("slow", function(){
+
+                        $.ajax({
+                        type: 'POST',
+                        async : false,
+                        url: '@Url.Action("GetStudentMarkSubject", "Student")?Id=' + studentid +'&Subject=' +subject,
+                        Accept: 'application/json, text/javascript',
+                        contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                        // data: myformdata,
+                        success: function (response) {
+
+                            if (response != null) {
+
+                                        $("#divsubjectgraph").show("slow", function(){
+                                            FillMarkSubjectGraph(response.studentMarkSubjectGraph);
+                                            FillExamTopics(response.lstStudentMarkResult);
+                                        });
+
+                                        $("#loaderDiv2").hide();
+
+                                } else {
+                                        toastr.error(`@_localization.Getkey("Error")`);
+                                }
+                        },
+                        error: function (response) {
+                                    toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    })
+    });
+    }
+    function FillMarkSubjectGraph(data){
+        let chartStatus = Chart.getChart("lineSubjectChart"); // <canvas> id
+        if (chartStatus != undefined) {
+          chartStatus.destroy();
+        }
+        var ctx_sublinechart = document.getElementById('lineSubjectChart');
+                var mysublineChart =new Chart(ctx_sublinechart, {
+                    type : 'line',
+                    data : data,
+                    options: {
+                        maintainAspectRatio: true,
+                        responsive: true,
+                        plugins: {
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: Math.round,
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                })
+
+    }
+
+    function FillExamTopics(data){
+        $("#tblsubjectbody").empty();
+        var lstmarkresult = data;
+       // console.log(lstmarkresult);
+        var tblbdy = document.getElementById("tblsubjectbody");
+
+        for (i = 0; i < lstmarkresult.length; i++) {
+            var rowIndex= tblbdy.rows.length;
+            var newRow = tblbdy.insertRow(rowIndex);
+            cell1 = newRow.insertCell(0);
+            cell1.innerHTML = lstmarkresult[i].strExamDate;
+           // cell1.style.backgroundColor = "blue";
+            cell1.style.color = "blue";
+
+           for (j = 0; j < lstmarkresult[i].lstExaminationTopic.length; j++) {
+             var rowIndex2=  tblbdy.rows.length;
+            var newRow2 = tblbdy.insertRow(rowIndex2);
+                newcell = newRow2.insertCell(0);
+                newcell.innerHTML = lstmarkresult[i].lstExaminationTopic[j].topicName;
+
+            }
+        }
+
+    }
+</script>

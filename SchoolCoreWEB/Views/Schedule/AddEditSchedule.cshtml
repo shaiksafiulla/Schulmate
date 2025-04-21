@@ -1,0 +1,2846 @@
+﻿@model SchoolCoreWEB.Models.Schedule
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<form id="myForm">
+    @Html.HiddenFor(m=>m.Id, new { @id="hfscheduleid" })
+    @Html.HiddenFor(m=>m.StatusId, new { @id="hfstatusid" })
+        @Html.HiddenFor(m=>m.BranchId, new { @id="hfbranchid" })
+         @Html.HiddenFor(m=>m.SessionYearId, new { @id="hfsessionyearid" })
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-10 col-sm-11">
+            <div class="horizontal-steps mt-2 mb-2 pb-2" id="tooltip-container">
+                <div class="horizontal-steps-content">
+                    @* <div class="step-item current" id="divprogstart">
+                        <span id="spprogstart">@_localization.Getkey("Start")</span>
+                        </div>*@
+                    <div class="step-item current" id="divprogschedule">
+                        <span id="spprogschedule">@_localization.Getkey("Start")</span>
+                    </div>
+                    <div class="step-item" id="divprogsubject">
+                        <span id="spprogsubject">@_localization.Getkey("Subjects")</span>
+                    </div>
+                    <div class="step-item" id="divprogtimetable">
+                        <span id="spprogtimetable">@_localization.Getkey("TimeTable")</span>
+                    </div>
+                    <div class="step-item" id="divprogstudent">
+                        <span id="spprogstudent">@_localization.Getkey("StudentAllocation")</span>
+                    </div>
+                    <div class="step-item" id="divprogteacher">
+                        <span id="spprogteacher">@_localization.Getkey("TeacherAllocation")</span>
+                    </div>
+
+                    @*<div class="step-item" id="divprogfinish">
+                        <span id="spprogfinish">@_localization.Getkey("Complete")</span>
+                        </div>*@
+                </div>
+                <div class="process-line" id="divprocessline" style="width: 0%;"></div>
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="row" id="divschedule">
+        <div class="col-3">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("BasicInfo")</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="form-group mb-3">
+                                <label for="firstName" class="form-label">@_localization.Getkey("Title")</label>
+                                @Html.TextBoxFor(model => model.Title, new { @class = "form-control", @id="title", @required = "required",@maxlength="80",  onkeyup="Validate();"  })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="type" class="form-label">@_localization.Getkey("ExamType")</label>
+                                @Html.DropDownListFor(model => model.ExamTypeId, Model.ExamTypeSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select", @id="ddlexamtype", @required = "required", onChange="selectedExamTypeIndexChanged()"})
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="time" class="form-label">@_localization.Getkey("ExamTime")</label>
+                                <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tbltime">
+                                    <thead>
+                                        <tr>
+                                            <th style="display:none">Id</th>
+                                            <th>@_localization.Getkey("Select")</th>
+                                            <th>@_localization.Getkey("Time")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in @Model.LstExamTime)
+                                        {
+                                            <tr>
+                                                <td style="display:none">
+                                                    <input type="hidden" name="hfexamid" value="@item.Id" />
+
+                                                </td>
+                                                <td>
+                                                    <input type="checkbox" checked="@item.IsSelected" class="form-check-input" onclick="getTimeCount()" />
+
+                                                </td>
+                                                <td>
+                                                    @item.FromTime - @item.ToTime
+                                                </td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="type" class="form-label">@_localization.Getkey("ExamsPerDay")</label>
+                                @Html.TextBoxFor(model => model.ExamCount, new { @class = "form-control", @id="examcount", @maxlength="2", @style="background-Color:smokewhite", @readonly="readonly" })
+
+                            </div>
+
+
+                            <div class="form-group mb-3">
+                                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                                @Html.TextAreaFor(model => model.Description, new { @class = "form-control", @id="description", @rows="2",@maxlength="250" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Dates</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="form-group mb-3">
+                                <label for="startdate">@_localization.Getkey("StartDate")</label>
+                                @Html.EditorFor(model => model.StartDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control datetimepicker", @required = "required", @id="startdate", onChange="getDatelist();" } })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="enddate">@_localization.Getkey("EndDate")</label>
+                                @Html.EditorFor(model => model.EndDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control datetimepicker", @required = "required", @id="enddate", onChange="getDatelist();" } })
+                            </div>
+
+                        </div>
+                        <div class="row" id="divdate" style="display:none">
+                            <div class="text-center">@_localization.Getkey("ChooseDates")</div>
+                            <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tbldate">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <div class="form-check form-check-inline">
+                                                <input type="checkbox" class="form-check-input" id="chkdate">
+                                                <label class="form-check-label" for="chkdate">@_localization.Getkey("SelectAll")</label>
+                                            </div>
+                                        </th>
+                                        <th>@_localization.Getkey("Date")</th>
+                                        <th>@_localization.Getkey("Remarks")</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="datebody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ClassesAndTeachers")</div>
+
+                    <div class="ribbon-content">
+                        <div class="row">
+                            @*  <div class="form-group mb-3">
+                                <label for="type" class="form-label">@_localization.Getkey("Branch")</label>
+                                @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select", @id="ddlbranch", @required = "required", onChange="selectedBranchIndexChanged()"})
+                                </div> *@
+                            <div class="row" id="divclssec" style="display:none;">
+                                <div class="col-6">
+                                    <div class="text-center">@_localization.Getkey("ChooseClasses")</div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" id="tblclass">
+                                        <thead>
+                                            <tr>
+                                                <th style="display:none">Id</th>
+                                                <th style="width:20%; text-align:center">
+                                                    <div class="form-check form-check-inline">
+                                                        <input type="checkbox" class="form-check-input" id="chkcls">
+                                                        <label class="form-check-label" for="chkcls">All</label>
+                                                    </div>
+                                                </th>
+                                                <th style="width:50%">@_localization.Getkey("Class")</th>
+                                                @*  <th style="width:30%">@_localization.Getkey("Marks")</th> *@
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bodyclass">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @*<div class="col-4">
+                                    <div class="text-center"> @_localization.Getkey("ChooseExamSections")</div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" id="tblsection">
+                                    <thead>
+                                    <tr>
+                                    <th style="display:none">Id</th>
+                                    <th>
+                                    <div class="form-check form-check-inline">
+                                    <input type="checkbox" class="form-check-input" id="chksec">
+                                    <label class="form-check-label" for="chksec">@_localization.Getkey("All")</label>
+                                    </div>
+                                    </th>
+                                    <th>@_localization.Getkey("Section")</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="bodysection">
+                                    </tbody>
+                                    </table>
+                                    </div>*@
+                                <div class="col-6">
+                                    <div class="text-center"> @_localization.Getkey("ChooseTeachers")</div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" id="tblteacher">
+                                        <thead>
+                                            <tr>
+                                                <th style="display:none">Id</th>
+                                                <th>
+                                                    <div class="form-check form-check-inline">
+                                                        <input type="checkbox" class="form-check-input" id="chktea">
+                                                        <label class="form-check-label" for="chktea">@_localization.Getkey("All")</label>
+                                                    </div>
+                                                </th>
+                                                <th>@_localization.Getkey("Teacher")</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bodyteacher">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitSchedule()" id="btnsubmit" disabled="disabled">@_localization.Getkey("Save")</button>
+            <button type="button" class="btn btn-info" onclick="navigateDiv(1,2)" id="btnschednxt" style="display:none">@_localization.Getkey("Next")</button>
+        </div>
+    </div>
+    <div class="row" id="divschedulebar" style="display:none">
+        <div class="col-6">
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Title") : </label>
+                </div>
+                <div class="col-7">
+                    <label id="lbltitle" class="form-group-mb3" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("ExamType") : </label>
+                </div>
+                <div class="col-7">
+                    <label id="lblexamtype" class="form-group-mb3" />
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("StartDate") : </label>
+                </div>
+                <div class="col-7">
+                    <label id="lblstartdate" class="form-group-mb3" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("EndDate") : </label>
+                </div>
+                <div class="col-7">
+                    <label id="lblenddate" class="form-group-mb3" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="row" id="divclassubj" style="display:none">
+        <div class="text-center"><h3>@_localization.Getkey("Subjects")</h3></div>
+        <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblschedsubject"></table>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitSubject()" id="btnsubmitsubject">@_localization.Getkey("Save")</button>
+            @*<button type="button" class="btn btn-info" onclick="navigateDiv(2,1)" id="btnsubjprev" style="display:none">@_localization.Getkey("Prev")</button>
+            
+            <button type="button" class="btn btn-info" onclick="navigateDiv(2,3)" id="btnsubjnxt" style="display:none">@_localization.Getkey("Next")</button>*@
+        </div>
+    </div>
+    <div class="row" id="divtimetable" style="display:none">
+        <div class="text-center"><h3>@_localization.Getkey("TimeTable")</h3></div>
+        <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbltimetable">
+            <thead>
+            </thead>
+        </table>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitTimeTable()" id="btnsubmittimetbl">Save</button>
+           @* <button type="button" class="btn btn-info" onclick="navigateDiv(3,2)" id="btntimetblprev" style="display:none">@_localization.Getkey("Prev")</button>
+             <button type="button" class="btn btn-info" onclick="navigateDiv(3,4)" id="btntimetblnxt" style="display:none">@_localization.Getkey("Next")</button>*@
+            @* <button type="button" class="btn btn-primary" onclick="submitScheduleExam()" id="btnsubmittimetbl">@_localization.Getkey("Save")</button>*@
+           
+        </div>
+        <hr />
+
+        <ul id="ulTimeTbl" class="list-group list-group-vertical-sm">
+        </ul>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitScheduleBranchClassExam()" id="btnsubmittimetblprocess">
+                Process
+            </button>
+        </div>
+    </div>
+    <div class="row" id="divstudent" style="display:none">
+        <div class="text-center"><h3>@_localization.Getkey("StudentAllocation")</h3></div>
+        <div class="col-2">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Classes</div>
+                    <div class="ribbon-content">
+                        <table id="tblbranchclassgroup" class="table table-sm table-bordered table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="display:none">Id</th>
+                                    <th style="display:none">BranchId</th>
+                                    <th style="display:none">ClassId</th>
+                                    <th>
+                                        <div class="form-check form-check-inline">
+                                            <input type="checkbox" class="form-check-input" id="chkclassgroup">
+                                            <label class="form-check-label" for="chksec">@_localization.Getkey("All")</label>
+                                        </div>
+                                    </th>
+                                    <th>@_localization.Getkey("Class")</th>
+                                </tr>
+                            </thead>
+                            <tbody id="branchclassgroupbody"></tbody>
+                        </table>
+                        <button type="button" class="btn btn-primary" onclick="getClassStudents()">@_localization.Getkey("Allocate")</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-10">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Seat Arrangement</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="col-3">
+                                <input type="text" id="examHallName" class="form-control form-control-sm" placeholder="Exam Hall Name" onkeyup="ValidateHallButton();">
+                            </div>
+                            <div class="col-3">
+                                <input type="number" class="form-control form-control-sm" id="rowCount" placeholder="Number of Rows" min="1" onchange="ValidateHallButton();">
+                            </div>
+                            <div class="col-3">
+                                <input type="number" class="form-control form-control-sm" id="colCount" placeholder="Number of Columns" min="1" onchange="ValidateHallButton();">
+                            </div>
+                            <div class="col-3">
+                                @* <button type="button" class="btn btn-primary" id="btnHallSubmit" onclick="AddExamHall()" disabled="disabled">Add Hall</button>*@
+                                <button type="button" class="btn btn-primary" id="addExamHallBtn" disabled="disabled">@_localization.Getkey("AddExamHall")</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="exam-halls-container" id="examHallsContainer">
+                                <!-- Exam halls with seats will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            @* <button type="button" class="btn btn-info" onclick="navigateDiv(5,4)" id="btnstudprev" style="display:none">@_localization.Getkey("Prev")</button>
+                <button type="button" class="btn btn-info" onclick="navigateDiv(5,6)" id="btnstudnxt" style="display:none">@_localization.Getkey("Next")</button>*@
+            <button type="button" class="btn btn-primary" id="saveAllocationsBtn">@_localization.Getkey("Save")</button>
+        </div>
+    </div>
+    <div class="row" id="divteacher" style="display:none">
+        <div class="text-center"><h3>@_localization.Getkey("TeacherAllocation")</h3></div>
+        <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblteacherresult">
+            <thead>
+            </thead>
+        </table>
+        <div class="modal-footer">
+            @*<button type="button" class="btn btn-info" onclick="navigateDiv(4,3)" id="btnteachprev" style="display:none">@_localization.Getkey("Prev")</button>
+             <button type="button" class="btn btn-info" onclick="navigateDiv(4,5)" id="btnteachnxt" style="display:none">@_localization.Getkey("Next")</button>*@
+            @*<button type="button" class="btn btn-primary" onclick="submitScheduleTeacher()" id="btnsubmitteacher">@_localization.Getkey("Save")</button>*@
+            <button type="button" class="btn btn-primary" onclick="submitTeacher()" id="btnsubmitteacher">@_localization.Getkey("Save")</button>
+            
+           
+        </div>
+        <hr />
+        @*class="list-group list-group-horizontal-sm"*@
+                <ul id="ulTeacherTbl" class="list-group list-group-vertical-sm">
+            </ul>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitScheduleTeacherExamDate()" id="btnsubmitteacherprocess">
+            Process
+            </button>
+            </div>
+    </div>
+
+    <div class="row" id="divcomplete" style="display:none">
+        <div class="text-center"><h3>@_localization.Getkey("ScheduleCompleted")</h3></div>
+      
+
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+     let examHalls = []; // Array to hold exam hall objects
+     //var clsArray=[];
+     //var secArray=[];
+     var presubjcolumns=[];
+     var lstbrclsExam=[];
+     var lstSchedTeaArray=[];
+     var lstSchedExamIds=[];
+      var lstSchedclssubIds=[];
+     var lstSchedExamDateArray=[];
+     var lstSchedExamTimeArray=[];
+    $(document).ready(function () {
+        if (@Html.Raw(Json.Serialize(Model)) != null) {
+            var objSchedule = @Html.Raw(Json.Serialize(Model));
+            getScheduleClassAndSectionByBranch();
+         if(objSchedule.Id > 0 && objSchedule.StatusId >= 1){
+             $("#hfscheduleid").val(objSchedule.Id);
+             getDatelist();
+            // selectedBranchIndexChanged();
+
+             setProgress(objSchedule.StatusId);
+             getScheduleStatus();
+         }
+        }
+
+        $('#chkcls').change(function () {
+             $('#tblclass tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+             Validate();
+        });
+         $('#chkclassgroup').change(function () {
+                $('#tblbranchclassgroup tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+            });
+         $('#chktea').change(function () {
+            $('#tblteacher tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+            Validate();
+        });
+        $('#chkdate').change(function () {
+            $('#tbldate tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+            Validate();
+        });
+
+
+        //$("#ulTimeTbl").lightSlider();
+       // $("#ulTeacherTbl").lightSlider();
+      // setTimeout(startSlider, 2000);
+           //$('.carousel').slick({
+           //       slide: 'li'
+           //     });
+     });
+     function startSlider(){
+         $('.carousel').slick({
+              slide: 'li'
+            });
+        // $('.carousel').slick({slidesToShow:3, slidesToScroll:3, dots:true});
+     }
+
+
+
+
+
+
+      function getDatelist(){
+          if ($("#startdate").val() !== "" && $("#enddate").val() !== "") {
+              var obj = {};
+              obj.StartDate = $("#startdate").val();
+              obj.EndDate = $("#enddate").val();
+              obj.ScheduleId = $("#hfscheduleid").val();
+                 $("#loaderDiv1").show();
+                 $.ajax({
+                             type: "post",
+                             async : false,
+                             url: '@Url.Action("GetScheduleDate","Schedule")',
+                             data: { model : JSON.stringify(obj)},
+                                 dataType: 'json',
+                             traditional: true,
+                             success: function (response) {
+                                 if (response != null) {
+                                     var result = response;
+
+                                     $("#datebody").empty();
+
+                                     for (var j = 0; j < result.length; j++){
+                                         insertintotbl(result[j]);
+                                         }
+
+                                     $("#divdate").show();
+                                     $("#loaderDiv1").hide();
+                                     Validate();
+                                 }
+                             }
+                         });
+         }
+      }
+
+     function getDateArray(){
+         var chkDateArray=[];
+         $("#tbldate tbody tr").each(function () {
+                 var tr = $(this);
+                     var dtObj = {};
+                     var firstCol = tr.find("input").eq(0).is(':checked');
+                     var secondCol = tr.find("span").eq(0).html();
+                     dtObj.IsSelected = firstCol;
+                     dtObj.ExamDate = secondCol;
+                     chkDateArray.push(dtObj);
+         });
+         return chkDateArray;
+     }
+     function getTimeArray(){
+         var chkTimeArray=[];
+         $("#tbltime tbody tr").each(function () {
+                 var tr = $(this);
+                     var paramcls = {};
+                     var FirstCol = tr.find("td").eq(0).html();
+                     var SecondCol = tr.find("input").eq(1).is(':checked');
+
+                     paramcls.Id = $(FirstCol).val();
+                     paramcls.IsSelected = SecondCol;
+                     chkTimeArray.push(paramcls);
+         });
+
+         return chkTimeArray;
+     }
+     function getClassArray(){
+         var chkClsArray=[];
+         $("#tblclass tbody tr").each(function () {
+             var tr = $(this);
+             var paramcls = {};
+             var FirstCol = tr.find("td").eq(0).html();
+            var SecondCol = tr.find("td").eq(1).html();
+            var ThirdCol = tr.find("td").eq(2).html();
+             var FourthCol = tr.find("input").eq(0).is(':checked');
+            // var FifthCol = tr.find("td:eq(3) input");
+             paramcls.Id = parseInt(FirstCol);
+            paramcls.BranchId = parseInt(SecondCol);
+            paramcls.ClassId = parseInt(ThirdCol);
+            paramcls.IsSelected = FourthCol;
+
+           // paramcls.Marks = $(FifthCol).val();
+             chkClsArray.push(paramcls);
+         });
+         return chkClsArray;
+     }
+     function getTeacherArray(){
+         var chkSecArray=[];
+         $("#tblteacher tbody tr").each(function () {
+         var tr = $(this);
+             var paramsec = {};
+             var FirstCol = tr.find("td").eq(0).html();
+             var SecondCol = tr.find("input").eq(0).is(':checked');
+             paramsec.Id = parseInt(FirstCol);
+             paramsec.IsSelected = SecondCol;
+             chkSecArray.push(paramsec);
+         });
+         return chkSecArray;
+     }
+     function insertintotblcls(data){
+
+             var tblbdy = document.getElementById("bodyclass");
+                 var rowIndex= tblbdy.rows.length;
+                 var newRow = tblbdy.insertRow(rowIndex);
+                 cell1 = newRow.insertCell(0);
+                 cell1.innerHTML = data.Id;
+                 cell1.style.display="none";
+
+                 cell2 = newRow.insertCell(1);
+                 cell2.innerHTML = data.BranchId;
+                 cell2.style.display="none";
+
+                cell3 = newRow.insertCell(2);
+                cell3.innerHTML = data.ClassId;
+                cell3.style.display = "none";
+
+                 var chk = document.createElement("input");
+                 chk.type="checkbox";
+                 chk.id="ClsIsSelected";
+                 chk.className="form-check-input";
+                 chk.checked=data.IsSelected;
+                 chk.onclick=(function() { return function(){ Validate(); }})();
+
+
+                     cell4 = newRow.insertCell(3);
+                 cell4.appendChild(chk);
+
+                     var spcls = document.createElement("span");
+                     spcls.innerText =data.ClassName; //+' (Students : '+data.StudentCount+')';
+                     cell5 = newRow.insertCell(4);
+                     cell5.appendChild(spcls);
+
+                 //     var mrk = document.createElement("input");
+                 //     mrk.type="text";
+                 //     mrk.id="clsmark";
+                 //     mrk.className="form-control form-control-sm";
+                 //     mrk.value = data.Marks;
+
+                 //     cell6 = newRow.insertCell(5);
+
+                 // cell6.appendChild(mrk);
+     }
+
+      function insertintotbltea(data){
+         var tblbdy = document.getElementById("bodyteacher");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+         cell1 = newRow.insertCell(0);
+         cell1.innerHTML = data.Id;
+         cell1.style.display="none";
+
+
+         var chk = document.createElement("input");
+         chk.type="checkbox";
+         chk.id="ClsIsSelected";
+         chk.className="form-check-input";
+         chk.checked=data.IsSelected;
+         chk.onclick=(function() { return function(){ Validate(); }})();
+
+         cell2 = newRow.insertCell(1);
+         cell2.appendChild(chk);
+
+         var spcls = document.createElement("span");
+         spcls.innerText =data.FullName;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(spcls);
+     }
+     function insertintotbl(data){
+         var tblbdy = document.getElementById("datebody");
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+
+         var chk = document.createElement("input");
+         chk.type="checkbox";
+         chk.className="form-check-input";
+         chk.checked = data.isSelected;
+         chk.style.borderColor=data.dateColor;
+         chk.onclick=(function() { return function(){ Validate(); }})();
+
+          cell1 = newRow.insertCell(0);
+         cell1.appendChild(chk);
+
+         var spcls = document.createElement("span");
+         spcls.innerHTML =data.examDate;
+         spcls.style.color = data.dateColor;
+
+         cell2 = newRow.insertCell(1);
+         cell2.appendChild(spcls);
+
+         var sp = document.createElement("span");
+         sp.innerHTML =data.comment;
+         sp.style.color = data.dateColor;
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(sp);
+
+     }
+     function chkFields(){
+         var isvalid=true;
+            if($("#title").val() == ""){
+                isvalid =false;
+         }
+         if($("#ddlexamtype").val() == ""){
+                 isvalid =false;
+         }
+         if($("#examcount").val() == ""){
+                 isvalid =false;
+         }
+         if($("#startdate").val() === ""){
+                 isvalid =false;
+         }
+         if($("#enddate").val() === ""){
+                 isvalid =false;
+         }
+         if($("#experday").val() == "-1"){
+                 isvalid =false;
+         }
+         var lstDate = getDateArray();
+        var found = lstDate.some(el => el.IsSelected == true);
+        if(!found){
+            isvalid =false;
+        }
+        var lstTime = getTimeArray();
+        var found1 = lstTime.some(el => el.IsSelected == true);
+        if(!found1){
+           isvalid =false;
+        }
+        var lstClass = getClassArray();
+        var found2 = lstClass.some(el => el.IsSelected == true);
+        if(!found2){
+            isvalid =false;
+        }
+        //var lstSection = getSectionArray();
+        //var found3 = lstSection.some(el => el.IsSelected == true);
+        //if(!found3){
+        //    isvalid =false;
+        //}
+        var lstTeacher = getTeacherArray();
+        var found4 = lstTeacher.some(el => el.IsSelected == true);
+        if(!found4){
+            isvalid =false;
+        }
+        return isvalid;
+     }
+     function Validate(){
+         if (chkFields()){
+             $('#btnsubmit').prop('disabled', false);
+         }
+         else{
+             $('#btnsubmit').prop('disabled', true);
+         }
+
+     }
+     function getTimeCount(){
+         var lstTime = getTimeArray();
+         var count = lstTime.filter((obj) => obj.IsSelected == true).length;
+         $("#examcount").val(count);
+         Validate();
+     }
+     function selectedExamTypeIndexChanged(){
+         Validate();
+     }
+    
+     function getScheduleClassAndSectionByBranch(){
+         $("#loaderDiv1").show();
+             $.ajax({
+                     type: "post",
+                     async : false,
+                     url: '@Url.Action("GetScheduleClassAndSectionByBranch","Schedule")',
+            data: { scheduleId: $("#hfscheduleid").val() > 0 ? $("#hfscheduleid").val() : 0 },  //Id: $("#ddlbranch").val(),
+            dataType: 'json',
+                     traditional: true,
+                     success: function (response) {
+                         if (response != null) {
+
+                             var result = response;
+                             $("#divclssec").show();
+                        var clsArray=[];
+                             $("#bodysection").empty();
+                             $("#bodyclass").empty();
+                             $("#bodyteacher").empty();
+                             var jsonclsData = JSON.parse(result.strClass);
+                             for (var j = 0; j < jsonclsData.length; j++){
+                             clsArray.push(jsonclsData[j]);
+                         }
+                         if(clsArray.length > 0){
+                                 for (var j = 0; j < clsArray.length; j++){
+                                 insertintotblcls(clsArray[j]);
+
+                             }
+                         }
+
+                        //var secArray=[];
+                        //     var jsonsecData = JSON.parse(result.strSection);
+                        // for (var j = 0; j < jsonsecData.length; j++){
+                        //     secArray.push(jsonsecData[j]);
+                        // }
+
+                         //if(secArray.length > 0){
+                         //        for (var j = 0; j < secArray.length; j++){
+                         //            insertintotblsec(secArray[j]);
+                         //    }
+                         //}
+
+
+                         var teaArray=[];
+                             var jsonteaData = JSON.parse(result.strTeacher);
+                         for (var j = 0; j < jsonteaData.length; j++){
+                             teaArray.push(jsonteaData[j]);
+                         }
+
+                         if(teaArray.length > 0){
+                                 for (var j = 0; j < teaArray.length; j++){
+                                     insertintotbltea(teaArray[j]);
+                             }
+                         }
+                             $("#loaderDiv1").hide();
+                         }else {
+                             toastr.error(`@_localization.Getkey("Error")"`);
+                         }
+                     },
+                     error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 });
+                 Validate();
+     }
+
+     function submitSchedule(){
+          var objdata = getScheduleObject();
+
+         if($("#hfscheduleid").val() == 0 || $("#hfscheduleid").val() == ""){
+             saveSchedule(objdata);
+         }
+         else{
+            // updateSchedule(objdata);
+         }
+
+     }
+     function getScheduleObject(){
+         var lstDate = getDateArray();
+             var lstTime = getTimeArray();
+             var lstClass = getClassArray();
+            // var lstSection = getSectionArray();
+             var lstTeacher = getTeacherArray();
+
+             var obj={};
+             if($("#hfscheduleid").val() == 0 || $("#hfscheduleid").val() == ""){
+                 obj.Id=0;
+             }
+             else{
+                  obj.Id=$('#hfscheduleid').val();
+             }
+
+            obj.BranchId = $('#hfbranchid').val(); //$('#ddlbranch').val();
+            obj.SessionYearId=$('#hfsessionyearid').val();
+             obj.Title=$('#title').val();
+             obj.ExamTypeId=$('#ddlexamtype').val();
+             obj.ExamCount=$('#examcount').val();
+             obj.StartDate=$('#startdate').val();
+             obj.EndDate=$('#enddate').val();
+             obj.Description=$('#description').val();
+
+             obj.LstStrDate = lstDate;
+             obj.LstExamTime = lstTime;
+             obj.LstScheduleClass = lstClass;
+            // obj.LstScheduleSections = lstSection;
+             obj.LstScheduleTeachers = lstTeacher;
+             return obj;
+     }
+     function saveSchedule(objData){
+         $("#loaderDiv1").show();
+         var jdata = JSON.stringify(objData);
+
+                 $.ajax({
+                 type: 'POST',
+                     url: '@Url.Action("Save","Schedule")',
+                     dataType: "JSON",
+                 data: {model :jdata },
+                 success: function (response) {
+                     if (response != null) {
+                         var result = response;
+                             toastr.success(`@_localization.Getkey("Saved")`);
+                                 setProgress(1);
+
+                                 $("#divschedule").hide("slow", function() {
+
+                                     setScheduleData(result);
+                                      getBranchClassSubjectBySchedule();
+                                      getScheduleStatus();
+                                   });
+
+                         } else {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                         }
+                 },
+                 error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+                 }
+             })
+     }
+    
+     function setProgress(val){
+         var prval= val > 4 ? 4 : val
+         var pr = Math.floor((prval/4)*100);
+         var per = pr.toString();
+
+            $("#divprogstudent").removeClass("step-item current");
+             $("#divprogstudent").addClass("step-item");
+
+              $("#divprogteacher").removeClass("step-item current");
+             $("#divprogteacher").addClass("step-item");
+
+              $("#divprogtimetable").removeClass("step-item current");
+             $("#divprogtimetable").addClass("step-item");
+
+             $("#divprogsubject").removeClass("step-item current");
+             $("#divprogsubject").addClass("step-item");
+
+              $("#divprogschedule").removeClass("step-item current");
+             $("#divprogschedule").addClass("step-item");
+
+             // $("#divprogstart").removeClass("step-item current");
+             //$("#divprogstart").addClass("step-item");
+
+         if(val==1){
+
+             // $('#spprogstart').attr("data-bs-container","#tooltip-container");
+             // $('#spprogstart').attr("data-bs-toggle","tooltip");
+             // $('#spprogstart').attr("data-bs-placement","bottom");
+
+             //$("#divprogschedule").removeClass("step-item");
+             //$("#divprogschedule").addClass("step-item current");
+              $('#spprogschedule').attr("data-bs-container","#tooltip-container");
+              $('#spprogschedule').attr("data-bs-toggle","tooltip");
+              $('#spprogschedule').attr("data-bs-placement","bottom");
+
+             $("#divprogsubject").removeClass("step-item");
+             $("#divprogsubject").addClass("step-item current");
+
+         }
+         if(val==2){
+
+             //  $('#spprogschedule').attr("data-bs-container","#tooltip-container");
+             // $('#spprogschedule').attr("data-bs-toggle","tooltip");
+             // $('#spprogschedule').attr("data-bs-placement","bottom");
+
+             //$("#divprogsubject").removeClass("step-item");
+             //$("#divprogsubject").addClass("step-item current");
+              $('#spprogsubject').attr("data-bs-container","#tooltip-container");
+              $('#spprogsubject').attr("data-bs-toggle","tooltip");
+              $('#spprogsubject').attr("data-bs-placement","bottom");
+
+             $("#divprogtimetable").removeClass("step-item");
+             $("#divprogtimetable").addClass("step-item current");
+
+         }
+         if(val==3){
+
+
+             //  $('#spprogsubject').attr("data-bs-container","#tooltip-container");
+             // $('#spprogsubject').attr("data-bs-toggle","tooltip");
+             // $('#spprogsubject').attr("data-bs-placement","bottom");
+
+             //$("#divprogtimetable").removeClass("step-item");
+             //$("#divprogtimetable").addClass("step-item current");
+               $('#spprogtimetable').attr("data-bs-container","#tooltip-container");
+              $('#spprogtimetable').attr("data-bs-toggle","tooltip");
+              $('#spprogtimetable').attr("data-bs-placement","bottom");
+
+
+              $("#divprogstudent").removeClass("step-item");
+             $("#divprogstudent").addClass("step-item current");
+
+         }
+         if(val==4){
+
+
+             //  $('#spprogtimetable').attr("data-bs-container","#tooltip-container");
+             // $('#spprogtimetable').attr("data-bs-toggle","tooltip");
+             // $('#spprogtimetable').attr("data-bs-placement","bottom");
+
+
+             // $("#divprogstudent").removeClass("step-item");
+             //$("#divprogstudent").addClass("step-item current");
+               $('#spprogstudent').attr("data-bs-container","#tooltip-container");
+              $('#spprogstudent').attr("data-bs-toggle","tooltip");
+              $('#spprogstudent').attr("data-bs-placement","bottom");
+
+               $("#divprogteacher").removeClass("step-item");
+             $("#divprogteacher").addClass("step-item current");
+
+         }
+         if(val==5){
+
+             // $('#spprogstudent').attr("data-bs-container","#tooltip-container");
+             // $('#spprogstudent').attr("data-bs-toggle","tooltip");
+             // $('#spprogstudent').attr("data-bs-placement","bottom");
+
+             //  $("#divprogteacher").removeClass("step-item");
+             //$("#divprogteacher").addClass("step-item current");
+
+                 $('#spprogteacher').attr("data-bs-container","#tooltip-container");
+              $('#spprogteacher').attr("data-bs-toggle","tooltip");
+              $('#spprogteacher').attr("data-bs-placement","bottom");
+
+         }
+         if(val==6){
+
+              //   $('#spprogteacher').attr("data-bs-container","#tooltip-container");
+              //$('#spprogteacher').attr("data-bs-toggle","tooltip");
+              //$('#spprogteacher').attr("data-bs-placement","bottom");
+
+             // $("#divprogfinish").removeClass("step-item");
+             //$("#divprogfinish").addClass("step-item current");
+
+         }
+         $("#divprocessline").width(per+'%');
+     }
+     function getScheduleStatus(){
+         $.ajax({
+                 type: "post",
+                 async : false,
+                 url: '@Url.Action("GetScheduleStatus","Schedule")',
+                 data: {scheduleId : $("#hfscheduleid").val() },
+                     dataType: 'json',
+                 traditional: true,
+                 success: function (response) {
+                     if (response != null) {
+
+                         var result = response;
+                         $("#hfstatusid").val(result);
+                         setvisibility(result);
+                     }
+                 },
+                 error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                 }
+             });
+     }
+     function setvisibility(statusId){
+
+                $("#btnsubmit").html(`@_localization.Getkey("Save")`);
+                $("#btnsubmitsubject").html(`@_localization.Getkey("Save")`);
+                 $("#btnsubmittimetbl").html(`@_localization.Getkey("Save")`);
+                  $("#btnsubmitteacher").html(`@_localization.Getkey("Save")`);
+                   $("#btnsubmitstudent").html(`@_localization.Getkey("Save")`);
+
+                $("#btnschednxt").hide();
+                $("#btnsubjprev").hide();
+                $("#btnsubjnxt").hide();
+                $("#btntimetblprev").hide();
+                $("#btntimetblnxt").hide();
+                $("#btnteachprev").hide();
+                $("#btnteachnxt").hide();
+                $("#btnstudprev").hide();
+                $("#btnstudnxt").hide();
+
+         switch(statusId){
+             case 1:
+                $("#btnsubmit").html(`@_localization.Getkey("Update")`);
+                $("#btnsubjprev").show();
+               // $("#btnschednxt").show();
+             break;
+             case 2:
+                $("#btnsubmit").html(`@_localization.Getkey("Update")`);
+                $("#btnsubmitsubject").html(`@_localization.Getkey("Update")`);
+
+                $("#btnschednxt").show();
+                $("#btnsubjprev").show();
+                $("#btntimetblprev").show();
+             break;
+             case 3:
+                $("#btnsubmit").html(`@_localization.Getkey("Update")`);
+                $("#btnsubmitsubject").html(`@_localization.Getkey("Update")`);
+                 $("#btnsubmittimetbl").html(`@_localization.Getkey("Update")`);
+
+                $("#btnschednxt").show();
+                $("#btnsubjprev").show();
+                $("#btnsubjnxt").show();
+                $("#btntimetblprev").show();
+                $("#btnteachprev").show();
+             break;
+              case 4:
+                $("#btnsubmit").html(`@_localization.Getkey("Update")`);
+                $("#btnsubmitsubject").html(`@_localization.Getkey("Update")`);
+                 $("#btnsubmittimetbl").html(`@_localization.Getkey("Update")`);
+                  $("#btnsubmitteacher").html(`@_localization.Getkey("Update")`);
+
+                $("#btnschednxt").show();
+                $("#btnsubjprev").show();
+                $("#btnsubjnxt").show();
+                $("#btntimetblprev").show();
+                $("#btntimetblnxt").show();
+                $("#btnteachprev").show();
+                $("#btnstudprev").show();
+             break;
+             case 5:
+              $("#btnsubmit").html(`@_localization.Getkey("Update")`);
+                $("#btnsubmitsubject").html(`@_localization.Getkey("Update")`);
+                 $("#btnsubmittimetbl").html(`@_localization.Getkey("Update")`);
+                  $("#btnsubmitteacher").html(`@_localization.Getkey("Update")`);
+                   $("#btnsubmitstudent").html(`@_localization.Getkey("Update")`);
+
+                $("#btnschednxt").show();
+                $("#btnsubjprev").show();
+                $("#btnsubjnxt").show();
+                $("#btntimetblprev").show();
+                $("#btntimetblnxt").show();
+                $("#btnteachprev").show();
+                $("#btnteachnxt").show();
+                $("#btnstudprev").show();
+
+
+                $("#divaftercomplete").hide("slow", function() {
+                    $("#btnaftercomprev").hide();
+
+                    $("#divbeforecomplete").show();
+                    $("#btnbeforecomprev").show();
+                });
+
+
+
+             break;
+              case 6:
+               $("#btnsubmit").html(`@_localization.Getkey("Update")`);
+                $("#btnsubmitsubject").html(`@_localization.Getkey("Update")`);
+                 $("#btnsubmittimetbl").html(`@_localization.Getkey("Update")`);
+                  $("#btnsubmitteacher").html(`@_localization.Getkey("Update")`);
+                   $("#btnsubmitstudent").html(`@_localization.Getkey("Update")`);
+
+                $("#btnschednxt").show();
+                $("#btnsubjprev").show();
+                $("#btnsubjnxt").show();
+                $("#btntimetblprev").show();
+                $("#btntimetblnxt").show();
+                $("#btnteachprev").show();
+                $("#btnteachnxt").show();
+                $("#btnstudprev").show();
+                $("#btnstudnxt").show();
+
+
+                 $("#divbeforecomplete").hide("slow", function() {
+                    $("#btnbeforecomprev").hide();
+
+                    $("#divaftercomplete").show();
+                    $("#btnaftercomprev").show();
+                });
+             break;
+         }
+     }
+     function setScheduleData(data){
+         try{
+             $("#divschedulebar").show();
+
+             if($("#hfscheduleid").val()=="" || $("#hfscheduleid").val() ==0){
+                 $("#hfscheduleid").val(data);
+             }
+
+             $("#lbltitle").html($("#title").val());
+             $("#lblexamtype").html($("#ddlexamtype option:selected").text());
+             $("#lblstartdate").html($("#startdate").val());
+             $("#lblenddate").html($("#enddate").val());
+
+         }
+         catch(error){
+
+         }
+
+     }
+      function getBranchClassSubjectBySchedule(){
+             $.ajax({
+                 type: "post",
+                 async : false,
+                 url: '@Url.Action("GetBranchClassSubjectBySchedule","Schedule")',
+                 data: {scheduleId : $("#hfscheduleid").val() },
+                     dataType: 'json',
+                 traditional: true,
+                 success: function (response) {
+                     if (response != null) {
+                         var result = response;
+                         var preResultArray=[];
+                         var postResultArray=[];
+                         $("#divclassubj").show();
+                         if (result.postResult == ""){
+
+                         }
+                         else{
+                             var jsonpostData = JSON.parse(result.postResult);
+                             postResultArray.push(jsonpostData);
+                         }
+                         var jsonpreData = JSON.parse(result.preResult);
+                         preResultArray.push(jsonpreData);
+                         if(preResultArray[0].length > 0){
+                             onLoadSubjectData(preResultArray,postResultArray);
+                         }
+                     }
+                 },
+                 error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                 }
+             });
+      }
+      function onLoadSubjectData(predata,postdata){
+
+                 var subjcolumns=[];
+                 presubjcolumns=[];
+                 var rowData = predata[0];
+                 presubjcolumns=predata[0];
+
+                     if(rowData.length > 0){
+                         Object.keys(rowData[0]).forEach( function (key, index){
+                         if (key == 'Id' || key == 'ClassName') {
+                             subjcolumns.push({data: key,
+                                             title: key,
+                                         });
+
+                         }
+                     })
+                 }
+                 if(postdata[0].length == 0)  {
+                     Object.keys(rowData[0]).forEach( function (key, index){
+                             if (key == 'Id' || key == 'ClassName') {
+
+                             }
+                             else{
+                                 subjcolumns.push( {data: rowData[0][key],
+                                         title: key,
+                                         render: function (data, type, row) {
+                                             if(row[key] == null || row[key] == 0){
+                                                return '';
+                                            }
+                                            else{
+                                                return '<div class="d-flex align-items-center"> '+
+                                                       
+                                                            ' <input class="form-check-input me-2" type="checkbox" name="subjectcheck" checked=checked> '+ 
+                                            ' <input type="text" class="form-control me-2 form-control-sm" name="subjectmark" style="width:60px" maxlength="3" value="40" pattern="\d{1,5}"> '+ 
+                                                           ' <label class="form-label" for="autoSizingCheck">M</label> '+
+                                                        '</div>';
+                                                   
+                                            }
+
+                                             }
+                                     });
+                             }
+                     })
+
+                 }
+                 else if(postdata[0].length > 0){
+
+                    var postrowData = postdata[0];
+                        Object.keys(postrowData[0]).forEach( function (key, index){
+                        if (key == 'Id' || key == 'ClassName') {
+
+                        }
+                        else{
+                            subjcolumns.push( {data: postrowData[0][key],
+                                    title: key,
+                                    render: function (data, type, row) {
+
+                                            if(row[key] == null){
+                                                return '<input type="checkbox"  class="form-check-input" style="width:50px" maxlength="3" pattern="[0-9]{1,5}">';
+                                            }
+                                            else{
+                                                 //return '<input type="checkbox"  class="form-check-input"  checked=checked><input type="text" class="form-control form-control-sm">';
+                                                 return 
+                                                                   ' <div class="d-flex align-items-center"> '+
+                                                                        ' <input class="form-check-input me-2" type="checkbox" name="subjectcheck" checked=checked> '+ 
+                                                        ' <input type="text" class="form-control me-2 form-control-sm" name="subjectmark" style="width:60px" maxlength="3" value="40" pattern="\d{1,5}"> '+ 
+                                                                       ' <label class="form-label" for="autoSizingCheck">M</label> '+
+                                                                    '</div>';
+                                                               
+                                            }
+
+                                        }
+                                });
+                        }
+                    })
+                 }
+                 $("#tblschedsubject").DataTable({
+                 "bDestroy": true,
+                 data : postdata[0].length == 0 ? predata[0] : postdata[0],
+                 "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                 columns: subjcolumns,
+                     "searching": false,
+                 "bLengthChange": false,
+                 paging: false,
+                 "info": false,
+                 "ordering": false
+         })
+         $("#loaderDiv1").hide();
+
+      }
+
+
+
+        function getClassSubjectArray(){
+            var lstschedsub = new Array();
+             var tbldata = $("#tblschedsubject").DataTable();
+             tbldata.rows().every(function(){
+                 var data = this.node();
+                  var tblFirstCol = tbldata.row(data).data();
+                 $(data).find('td').each(function(index){
+                     if(index > 0){
+                            var cell=$(this);
+
+                            if(cell.html() != ''){
+                             var $checkbox =$(cell).find('input[type="checkbox"]');
+                             var $textinput =$(cell).find('input[type="text"]');
+
+                            for(var i=0; i<presubjcolumns.length; i++){
+                                 var brclsid = parseInt(tblFirstCol.Id);
+                                 var brclsid2 = parseInt(presubjcolumns[i].Id);
+                                 if(brclsid == brclsid2){
+                                         Object.keys(presubjcolumns[i]).forEach( function (key, colindex){
+                                             if(colindex > 0){
+                                                 if(index == colindex-1){
+                                                     var schedsub ={};
+                                                     schedsub.IsSelected = $checkbox.is(':checked');
+                                                     schedsub.Marks = $textinput.val();
+                                                     schedsub.ClassSubjectId=presubjcolumns[i][key];
+                                                     lstschedsub.push(schedsub);
+                                                 }
+                                             }
+                                        })
+                                 }
+                                  }
+                     }
+
+                     }
+
+                 })
+
+             })
+            return lstschedsub;
+        }
+        function submitSubject(){
+            if($("#hfstatusid").val() == 1){
+                saveSubject();
+            }
+            else if($("#hfstatusid").val() >= 2){
+               // updateSubject();
+            }
+        }
+
+
+     function saveSubject(){
+             $("#loaderDiv1").show();
+
+             var lstresult = getClassSubjectArray();
+             var obj={};
+             obj.scheduleId=$("#hfscheduleid").val();
+             obj.LstScheduleBranchClassSubject=lstresult;
+             var jdata = JSON.stringify(obj);
+                     $.ajax({
+                     type: 'POST',
+                         url: '@Url.Action("SaveScheduleBranchClassSubject","Schedule")',
+                         dataType: "JSON",
+                     data: {model :jdata },
+                     success: function (response) {
+                         if (response != null) {
+                                 toastr.success('Saved Succesfully');
+                                     setProgress(2);
+                                     $("#divclassubj").hide("slow", function() {
+                                            getScheduleStatus();
+                                             setAlgoTimeTable();
+                                           // getScheduleExamDateTime();
+                                      });
+                             } else {
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                             }
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+
+                     }
+                 })
+     }
+    
+     function setAlgoTimeTable(){
+             $("#loaderDiv1").show();
+             $.ajax({
+                     type: "POST",
+                     async : false,
+                     url: '@Url.Action("SaveScheduleExamAlgo","Schedule")',
+                     data: { scheduleId: $("#hfscheduleid").val() },
+                     dataType: 'json',
+                     traditional: true,
+                     success: function (response) {
+                         if(response != null && response > 0){
+                             getPivotTimeTable();
+                             fillTimeTable();
+                         }
+                         else {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                         }
+                     },
+                     error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 });
+     }
+     function getPivotTimeTable(){
+             $("#loaderDiv1").show();
+             $.ajax({
+                     type: "POST",
+                     async : false,
+                     url: '@Url.Action("GetPivotTimeTable","Schedule")',
+                     data: { scheduleId: $("#hfscheduleid").val() },
+                     dataType: 'json',
+                     traditional: true,
+                     success: function (response) {
+                         if(response != null){
+                             var jsonData = JSON.parse(response.strResult);
+                            //$("#tbltimetable").empty();
+                            fillPivotTimeTable(jsonData);
+                             //$("#divtimetable").show("slow", function() {
+
+
+                             //});
+
+                         }
+                         else {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                         }
+                     },
+                     error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 });
+     }
+
+     function fillPivotTimeTable(data){
+         var columns=[];
+
+             var rowData = data[0];
+                 Object.keys(rowData).forEach( function (key, index){
+                 columns.push({data: key,
+                                     title: key,
+                                 });
+             })
+             $("#tbltimetable").DataTable({
+                 "bDestroy": true,
+                 "searching": false,
+                 "bLengthChange": false,
+                 paging: false,
+                 "info": false,
+                 "ordering": false,
+                 data : data,
+                 "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                 columns: columns
+                 //dom: 'Bfrtip'
+             })
+             $("#loaderDiv1").hide();
+
+    }
+     function fillTimeTable(){
+
+         $("#loaderDiv1").show();
+         $.ajax({
+                 type: "POST",
+                 async : false,
+                 url: '@Url.Action("GetScheduleBranchClassExam","Schedule")',
+                 data: { scheduleId: $("#hfscheduleid").val() },
+                 dataType: 'json',
+                 traditional: true,
+                 success: function (response) {
+
+                     if(response != null){
+                         $("#divtimetable").show();
+                         setlstbrclsExamArray(response);
+                         $("#ulTimeTbl").empty();
+                         var litime=[];
+                         for(var i=0; i< response.length; i++){
+                             var item = setLiBrclsTimeTbl(response[i]);
+                             litime.push(item);
+                             //$("#ulTimeTbl").append(item);
+                         }
+                         $("#ulTimeTbl").html(litime);
+                         $("#loaderDiv1").hide();
+                     }
+                     else {
+
+                        toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 },
+                 error: function (response) {
+                         toastr.error(`@_localization.Getkey("Error")`);
+                 }
+             });
+    }
+    function setLiBrclsTimeTbl(data){
+         var li=document.createElement('li');
+         li.className ="list-group-item";
+
+         var sp=document.createElement('span');
+         sp.innerHTML = data.className;
+
+         var div=document.createElement('div');
+         div.className="bg-info p-2 text-white bg-opacity-75";
+
+         var hidd = document.createElement("input");
+         hidd.type="hidden";
+         hidd.value=data.id;
+
+         div.appendChild(sp);
+         li.appendChild(div);
+         li.appendChild(hidd);
+
+         if(data.lstClassSubject.length > 0){
+             var ul = document.createElement('ul');
+             ul.className="list-group list-group-horizontal";
+             for (let i = 0; i < data.lstClassSubject.length; i++){
+                 var li2=document.createElement('li');
+                 li2.className ="list-group-item";
+
+                 var div=document.createElement('div');
+                 div.className="row row-cols-lg-auto g-1 align-items-center";
+
+                 var hidd = document.createElement("input");
+                 hidd.type="hidden";
+                 hidd.value=data.lstClassSubject[i].id;
+
+                 var sp2=document.createElement('span');
+                 sp2.innerHTML = '&nbsp;' + data.lstClassSubject[i].subjectName;
+
+
+                 //li2.appendChild(sp2);
+                 //li2.appendChild(hidd);
+                 div.appendChild(sp2);
+                 div.appendChild(hidd);
+
+                 //for examdate select element
+                 if(data.lstClassSubject[i].examDateSheet !== null){
+                     if(data.lstClassSubject[i].examDateSheet.length > 0){
+
+                     var selectdt = document.createElement("select");
+                     selectdt.id="exdt"+data.lstClassSubject[i].id;
+                     selectdt.className = "form-select form-select-sm";
+                     selectdt.onchange =  (function(select) { return function(){ SelectedExamDateChanged(select); }})(selectdt);
+                         var optiondt;
+                         optiondt = document.createElement("option");
+                         optiondt.setAttribute("value", "-1");
+                         optiondt.innerHTML = "Please Select Exam Date";
+                         selectdt.appendChild(optiondt);
+
+                         for(var j=0; j<data.lstClassSubject[i].examDateSheet.length; j++){
+                             optiondt = document.createElement("option");
+                                 optiondt.setAttribute("value", data.lstClassSubject[i].examDateSheet[j].value);
+                                 optiondt.innerHTML = data.lstClassSubject[i].examDateSheet[j].text;
+                             selectdt.appendChild(optiondt);
+                         }
+                         selectdt.value=data.lstClassSubject[i].strExamDate;
+                         //li2.appendChild(selectdt);
+                         div.appendChild(selectdt);
+
+                     }
+                 }
+
+                 //for examtime from select element
+                 if(data.lstClassSubject[i].examTimeSheet !== null){
+                     if(data.lstClassSubject[i].examTimeSheet.length > 0){
+
+                     var selectfrm = document.createElement("select");
+                         selectfrm.id="exfrm"+data.lstClassSubject[i].id;
+                     selectfrm.className = "form-select form-select-sm";
+                         selectfrm.onchange =  (function(select) { return function(){ SelectedTimeFromChanged(select); }})(selectfrm);
+                         var optionfrm;
+                         optionfrm = document.createElement("option");
+                         optionfrm.setAttribute("value", "-1");
+                         optionfrm.innerHTML = "Please Select Exam Time";
+                         selectfrm.appendChild(optionfrm);
+
+                         for(var j=0; j<data.lstClassSubject[i].examTimeSheet.length; j++){
+                             optionfrm = document.createElement("option");
+                                 optionfrm.setAttribute("value", data.lstClassSubject[i].examTimeSheet[j].value);
+                                 optionfrm.innerHTML = data.lstClassSubject[i].examTimeSheet[j].text;
+                             selectfrm.appendChild(optionfrm);
+                         }
+                         selectfrm.value=data.lstClassSubject[i].examTimeId;
+                         // li2.appendChild(selectfrm);
+                         div.appendChild(selectfrm);
+                     }
+                 }
+                 li2.appendChild(div);
+                 ul.appendChild(li2);
+             }
+             li.appendChild(ul);
+         }
+         return li;
+     }
+     function setlstbrclsExamArray(data){
+         lstbrclsExam=[];
+         for(var i=0; i<data.length; i++){
+             var brcls={};
+             brcls.Id =data[i].id;
+             brcls.ClassName =data[i].className;
+             brcls.LstClassSubject=[];
+             for(var j=0; j < data[i].lstClassSubject.length; j++){
+                 var clssubj={};
+                 clssubj.Id =data[i].lstClassSubject[j].id;
+                 clssubj.SubjectName =data[i].lstClassSubject[j].subjectName;
+                 clssubj.StrExamDate =data[i].lstClassSubject[j].strExamDate;
+                 clssubj.ExamTimeId =data[i].lstClassSubject[j].examTimeId;
+                 brcls.LstClassSubject.push(clssubj);
+             }
+             lstbrclsExam.push(brcls);
+
+         }
+
+     }
+     function SelectedExamDateChanged(select){
+         setDateTimeExamArray('1', select);
+     }
+     function SelectedTimeFromChanged(select){
+         setDateTimeExamArray('2', select);
+     }
+  
+    function setDateTimeExamArray(type, select){
+
+         var childitem = select.parentElement;
+         var childid = childitem.getElementsByTagName('input')[0].value;
+
+         var grandparentitem = select.parentElement.parentElement.parentElement;
+       
+         var grandparentid = grandparentitem.parentElement.getElementsByTagName('input')[0].value;
+
+         var grandparent =  lstbrclsExam.find(o => o.Id == grandparentid);
+         var child = grandparent.LstClassSubject.find(o => o.Id == childid);
+
+         if(type=="1"){
+             child.StrExamDate = select.value;
+         }
+         if(type=="2"){
+             child.ExamTimeId = select.value;
+         }
+
+     }
+     function submitScheduleBranchClassExam(){
+         $("#loaderDiv1").show();
+         var obj={};
+         obj.ScheduleId=$("#hfscheduleid").val();
+         //obj.BranchId=$("#hfbranchid").val();
+         obj.LstBranchClass=lstbrclsExam;
+         //console.log(obj);
+         var jdata = JSON.stringify(obj);
+                 $.ajax({
+                 type: 'POST',
+                     url: '@Url.Action("SaveScheduleExam","Schedule")',
+                     dataType: "JSON",
+                 data: {model :jdata },
+                 success: function (response) {
+                     if (response != null && response > 0) {
+                                 toastr.success('Saved Succesfully');
+                                 getPivotTimeTable();
+
+                         } else {
+                                toastr.error(`@_localization.Getkey("Error")`);
+                         }
+                 },
+                 error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+                 }
+             })
+     }
+     function submitTimeTable(){
+         console.log($("#hfstatusid").val());
+         if($("#hfstatusid").val() == 2){
+             saveTimeTable();
+         }
+         else if($("#hfstatusid").val() == 3){
+            // updateTimeTable();
+         }
+     }
+     function saveTimeTable(){
+          $("#loaderDiv1").show();
+           $.ajax({
+                 type: "post",
+                 async : false,
+                 url: '@Url.Action("UpdateScheduleTimeTableStatus","Schedule")',
+                 data: {scheduleId : $("#hfscheduleid").val() },
+                 dataType: 'json',
+                 traditional: true,
+                 success: function (response) {
+                     if(response != null){
+                         toastr.success("Saved Successfully");
+                         setProgress(3);
+                         $("#divtimetable").hide("slow", function() {
+                                getScheduleStatus();
+                                    // setAlgoTeacher();
+                                  // getScheduleSection();
+                                  $("#divstudent").show();
+                                    getScheduleBranchClassGroup();
+                                  $("#loaderDiv1").hide();
+                          });
+
+                     }
+                 },
+                 error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                 }
+             });
+     
+    
+     }
+     function submitTeacher(){
+            saveTeacher();
+     }
+      function saveTeacher(){
+          $("#loaderDiv1").show();
+           $.ajax({
+                 type: "post",
+                 async : false,
+                 url: '@Url.Action("UpdateScheduleTeacherStatus","Schedule")',
+                 data: {scheduleId : $("#hfscheduleid").val() },
+                 dataType: 'json',
+                 traditional: true,
+                 success: function (response) {
+                     if(response != null){
+                         toastr.success(`@_localization.Getkey("Saved")`);
+                         setProgress(4);
+                         $("#divteacher").hide("slow", function() {
+                                    getScheduleStatus();
+                                    $("#divcomplete").show();
+                                    $("#loaderDiv1").hide();
+                         });
+                     }
+                 },
+                 error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                 }
+             });
+     }
+    
+    function getPivotTeacher(){
+                    $("#loaderDiv1").show();
+                    $.ajax({
+                            type: "POST",
+                            async : false,
+                            url: '@Url.Action("GetPivotScheduleTeacher","Schedule")',
+                            data: { scheduleId: $("#hfscheduleid").val() },
+                            dataType: 'json',
+                            traditional: true,
+                            success: function (response) {
+
+                                if(response != null){
+                                    var jsonData = JSON.parse(response.strResult);
+
+                                     $("#divteacher").show("slow", function() {
+
+                                         fillPivotTeacher(jsonData);
+                                            fillTeacher();
+                                        });
+
+
+                                }
+                                else {
+                                   toastr.error(`@_localization.Getkey("Error")`);
+                                }
+                            },
+                            error: function (response) {
+
+                                   toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                        });
+    }
+    function fillPivotTeacher(data){
+        var tcolumns=[];
+            //1.Get first row data to build columns from predata.
+            var rowData = data[0];
+                Object.keys(rowData).forEach( function (key, index){
+                tcolumns.push({data: key,
+                                    title: key,
+                                });
+            })
+            $("#tblteacherresult").DataTable({
+                "bDestroy": true,
+                "searching": false,
+                "bLengthChange": false,
+                paging: false,
+                "info": false,
+                data : data,
+                "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                columns: tcolumns
+                //dom: 'Bfrtip'
+            })
+            $("#loaderDiv1").hide();
+    }
+    function fillTeacher(){
+        $("#loaderDiv1").show();
+                    $.ajax({
+                            type: "POST",
+                            async : false,
+                            url: '@Url.Action("GetScheduleTeacherExamDate","Schedule")',
+                            data: { scheduleId: $("#hfscheduleid").val() },
+                            dataType: 'json',
+                            traditional: true,
+                            success: function (response) {
+                                if(response != null){                                    
+                                    setlstTeacherArray(response);
+                                    $("#ulTeacherTbl").empty();
+                                    var liteach=[];
+                                    for(var i=0; i<response.length; i++){
+                                        var item = setLiTeacherTbl(response[i]);
+                                        liteach.push(item);
+                                       // $("#ulTeacherTbl").append(item);
+                                    }
+                                    $("#ulTeacherTbl").html(liteach);
+                                    $("#loaderDiv1").hide();
+                                }
+                                else {
+                                    toastr.error(`@_localization.Getkey("Error")`);
+
+                                }
+                            },
+                            error: function (response) {
+
+                                   toastr.error(`@_localization.Getkey("Error")`);
+
+                            }
+                        });
+    }
+    function setlstTeacherArray(data){
+            lstTeacherExam=[];
+            for(var i=0; i<data.length; i++){
+                 var examhall ={};
+                examhall.Id =data[i].id;
+                examhall.Name =data[i].name;
+                examhall.LstCastExamDate =[];
+                for(var j=0; j < data[i].lstCastExamDate.length; j++){
+                    var examdt = {};
+                    examdt.Id =data[i].lstCastExamDate[j].id;
+                    examdt.TeacherId =data[i].lstCastExamDate[j].teacherId;
+                    examdt.StrExamDate =data[i].lstCastExamDate[j].strExamDate;                    
+                    examhall.LstCastExamDate.push(examdt);
+                }
+                lstTeacherExam.push(examhall);
+
+               //var teaexamhall={};
+               //teaexamhall.Id=data[i].id;
+               //teaexamhall.ScheduleId=data[i].scheduleId;
+               //    teaexamhall.ScheduleExamHallId=data[i].scheduleExamHallId;
+               //    teaexamhall.ScheduleExamDateId=data[i].scheduleExamDateId;
+               //    teaexamhall.TeacherId=data[i].teacherId;
+               //    teaexamhall.HallName=data[i].hallName;
+               //    teaexamhall.StrExamDate=data[i].strExamDate;
+               //    teaexamhall.ExamDay=data[i].examDay;
+               
+            }
+     }
+    function setLiTeacherTbl(data){
+                    var li=document.createElement('li');
+                    li.className ="list-group-item";
+
+                    var sp=document.createElement('span');
+                    sp.innerHTML = data.name;
+
+                    var div=document.createElement('div');
+                    div.className="bg-info p-2 text-white bg-opacity-75";
+
+                    var hidd = document.createElement("input");
+                    hidd.type="hidden";
+                    hidd.value=data.id;
+
+
+                    div.appendChild(sp);
+                    li.appendChild(div);
+                    li.appendChild(hidd);
+
+                    if(data.lstCastExamDate.length > 0){
+                        var ul = document.createElement('ul');
+                        ul.className="list-group list-group-horizontal";
+                        for (let i = 0; i < data.lstCastExamDate.length; i++){
+                            var li2=document.createElement('li');
+                            li2.className ="list-group-item";
+
+                             var div=document.createElement('div');
+                            div.className="row row-cols-lg-auto g-1 align-items-center";
+
+                            var hidd = document.createElement("input");
+                            hidd.type="hidden";
+                            hidd.value=data.lstCastExamDate[i].id;
+
+                            var sp2=document.createElement('span');
+                            sp2.innerHTML = '&nbsp;' + data.lstCastExamDate[i].strExamDate;
+
+                            // li2.appendChild(chk);
+                            //li2.appendChild(sp2);
+                            //li2.appendChild(hidd);
+                             div.appendChild(sp2);
+                            div.appendChild(hidd);
+                            
+                            //for examdate select element
+                            if(data.lstCastExamDate[i].teacherSheet !== null){
+                                if(data.lstCastExamDate[i].teacherSheet.length > 0){
+
+                                var selectdt = document.createElement("select");
+                                selectdt.id="extea"+data.lstCastExamDate[i].teacherId;
+                                selectdt.className = "form-select form-select-sm";
+                                selectdt.onchange =  (function(select) { return function(){ SelectedTeacherExamDateChanged(select); }})(selectdt);
+
+                                var optiondt;
+                                optiondt = document.createElement("option");
+                                optiondt.setAttribute("value", "-1");
+                                optiondt.innerHTML = "Please Select Teacher";
+                                selectdt.appendChild(optiondt);
+
+                                for(var j=0; j<data.lstCastExamDate[i].teacherSheet.length; j++){
+                                    optiondt = document.createElement("option");
+                                    optiondt.setAttribute("value", data.lstCastExamDate[i].teacherSheet[j].value);
+                                    optiondt.innerHTML = data.lstCastExamDate[i].teacherSheet[j].text;
+                                    selectdt.appendChild(optiondt);
+                                }
+                                selectdt.value = data.lstCastExamDate[i].teacherId;
+                                //li2.appendChild(selectdt);
+                                div.appendChild(selectdt);
+                                }
+                            }
+                            li2.appendChild(div);
+                            ul.appendChild(li2);
+                        }
+                        li.appendChild(ul);
+                    }
+                    return li;
+    }
+    function submitScheduleTeacherExamDate(){
+                      $("#loaderDiv1").show();
+                      var obj={};
+                      obj.ScheduleId=$("#hfscheduleid").val();
+                      obj.LstCastExamHall=lstTeacherExam;
+                      var jdata = JSON.stringify(obj);
+                              $.ajax({
+                              type: 'POST',
+                                  url: '@Url.Action("SaveScheduleTeacherExamDate","Schedule")',
+                                  dataType: "JSON",
+                              data: {model :jdata },
+                              success: function (response) {
+                                  if (response != null && response > 0) {
+                                              toastr.success('Saved Succesfully');
+                                              getPivotTeacher();
+
+                                      } else {
+                                             toastr.error(`@_localization.Getkey("Error")`);
+                                      }
+                              },
+                              error: function (response) {
+                                        toastr.error(`@_localization.Getkey("Error")`);
+
+                              }
+                          })
+     }
+     function SelectedTeacherExamDateChanged(select){
+        var childitem = select.parentElement;
+        var childid = childitem.getElementsByTagName('input')[0].value;
+
+        var grandparentitem = select.parentElement.parentElement.parentElement;
+        var grandparentid = grandparentitem.parentElement.getElementsByTagName('input')[0].value;
+
+        var grandparent =  lstTeacherExam.find(o => o.Id == grandparentid);
+        var child = grandparent.LstCastExamDate.find(o => o.Id == childid);
+
+        child.TeacherId = select.value;
+      }
+
+
+
+
+    
+   
+   
+    function getScheTeacherArray(){
+        var lststdMark = new Array();
+
+        var tbldata = $("#tblteacherresult").DataTable();
+        jQuery(tbldata.rows().nodes()).each(function (item) {
+            var tr =this;
+            var tblFirstCol = tbldata.row(tr).data();
+
+            $(this).find('select').each (function(cellindex) {
+               //var objcol = precolumns[cellindex +3];
+                var stdMark ={};
+                stdMark.ScheduleId = $("#hfscheduleid").val();
+                 stdMark.TeacherId = parseInt(tblFirstCol.TeacherId);
+                  stdMark.ScheduleSectionId = $(this).val();
+                 stdMark.ScheduleExamDateId =lstSchedExamIds[cellindex];
+                 lststdMark.push(stdMark);
+
+
+            });
+        });
+        return lststdMark;
+    }
+
+   
+    function setScheduleTeacherArray(data){
+        lstSchedTeaArray=[];
+        if(data !=null && data.length > 0){
+           for(var i=0; i<data.length; i++){
+               var objsec={};
+               objsec.SectionId=data[i].sectionId;
+               objsec.SectionName=data[i].sectionName;
+               lstSchedTeaArray.push(objsec);
+           }
+        }
+        return lstSchedTeaArray;
+
+    }
+   
+
+
+    //Schedule Examination
+     function getScheduleExamDateTime(){
+                $.ajax({
+                        type: "post",
+                        async : false,
+                        url: '@Url.Action("GetScheduleExamDateTime","Schedule")',
+                        data: { scheduleId : $("#hfscheduleid").val() },
+                        dataType: 'json',
+                        traditional: true,
+                        success: function (response) {
+                            if (response != null) {
+
+                                var result = response;
+                                setScheduleExamDateArray(JSON.parse(result.strDate));
+                                setScheduleExamTimeArray(JSON.parse(result.strTime));
+                                getSpScheduleExam();
+                               //setScheduleTeacherArray(response);
+                               // getSpScheduleTeacher();
+                            }
+                        },
+                        error: function (response) {
+
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    });
+    }
+     function setScheduleExamDateArray(data){
+        lstSchedExamDateArray=[];
+        if(data !=null && data.length > 0){
+           for(var i=0; i<data.length; i++){
+               var objsec={};
+               objsec.Id=data[i].Id;
+               objsec.StrExamDate=data[i].StrExamDate;
+               lstSchedExamDateArray.push(objsec);
+           }
+        }
+        return lstSchedExamDateArray;
+    }
+    function setScheduleExamTimeArray(data){
+
+        lstSchedExamTimeArray=[];
+        if(data !=null && data.length > 0){
+           for(var i=0; i<data.length; i++){
+               var objsec={};
+               objsec.ExamTimeId=data[i].ExamTimeId;
+               objsec.ExamTime=data[i].ExamTime;
+               lstSchedExamTimeArray.push(objsec);
+           }
+        }
+        return lstSchedExamTimeArray;
+    }
+    function getSpScheduleExam(){
+                $.ajax({
+                        type: "post",
+                        async : false,
+                        url: '@Url.Action("GetSpScheduleExam","Schedule")',
+                        data: { scheduleId : $("#hfscheduleid").val() },
+                            dataType: 'json',
+                        traditional: true,
+                        success: function (response) {
+                            var preResultArray=[];
+                            var postResultArray=[];
+                            if(response != null){
+
+                                var result = response;
+                                 $("#divtimetable").show("slow", function() {
+                                     if (result.postResult ==""){
+                                        }
+                                        else{
+                                         var jsonpostData = JSON.parse(result.postResult);
+                                            postResultArray.push(jsonpostData);
+                                        }
+                                     var jsonpreData = JSON.parse(result.preResult);
+                                        preResultArray.push(jsonpreData);
+
+                                        if(preResultArray[0].length > 0){
+                                            onLoadScheduleExamData(preResultArray,postResultArray);
+                                        }
+                                  });
+
+
+                            }
+                        },
+                        error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    });
+    }
+    function onLoadScheduleExamData(predata,postdata){
+
+            columns = [];
+            precolumns = [];
+            //1.Get first row data to build columns from predata.
+            var rowData = predata[0];
+            if(rowData.length > 0){
+                Object.keys(rowData[0]).forEach( function (key, index){
+                if (key == 'ScheduleId' || key == 'BranchClassId' || key == 'ClassName') {
+
+                    columns.push({data: key,
+                                    title: key,
+                                });
+                                precolumns.push({data: key,
+                                    title: key,
+                                });
+
+                }
+                else{
+                    var tmparray = key.split(',');
+                    precolumns.push({data: rowData[0][key],
+                                    title: tmparray[0],
+                                });
+                }
+            })
+            if(postdata[0].length == 0)  {
+            Object.keys(rowData[0]).forEach( function (key, index){
+                if (key == 'ScheduleId' || key == 'BranchClassId' || key == 'ClassName') {
+
+                }
+                else{
+                    //var tmparray1 = key.split(',');
+                    //lstSchedclssubIds.push(tmparray1[1]);
+                    columns.push( {data: rowData[0][key],
+                            title: key,
+                            render: function (data, type, row) {
+                                return setScheduleExamDateTimeDropdown('', 0);
+                                //return '<input type="text"  class="form-control" required = "required" value="">';
+                                }
+                        });
+                }
+            })
+            }
+            else if(postdata[0].length > 0){
+                var postrowData = postdata[0];
+                Object.keys(postrowData[0]).forEach( function (key, index){
+                if (key == 'ScheduleId' || key == 'BranchClassId' || key == 'ClassName') {
+
+                }
+                else{
+                    //var tmparray2 = key.split(',');
+                    //lstSchedclssubIds.push(tmparray2[1]);
+                    columns.push( {data: postrowData[0][key],
+                            title: key,
+                            render: function (data, type, row) {
+
+                                if(row[key]==0 || row[key]==""){
+                                   // return  '<input type="text"  class="form-control" required = "required" value="">';
+                                    return setScheduleExamDateTimeDropdown('',0);
+                                }
+                                else{
+                                    var tmp = row[key].split(',');
+                                     return setScheduleExamDateTimeDropdown(tmp[0],tmp[1]);
+                                   // return '<input type="text"  class="form-control" required = "required" value="'+row[key]+'">';
+                                }
+
+                                }
+                        });
+                }
+            })
+            }
+
+                $("#tbltimetable").DataTable({
+                "bDestroy": true,
+                data : postdata[0].length == 0 ? predata[0] : postdata[0],
+                "aoColumnDefs": [{ "bVisible": false, "aTargets": [0,1] }],
+                columns: columns,
+                // dom: 'Bfrtip'
+            })
+            $("#loaderDiv1").hide();
+            }
+    }
+
+    function setScheduleExamDateTimeDropdown(examdate, examtimeid){
+
+         var toptions ="";
+           for(var j= 0; j < lstSchedExamTimeArray.length; j++){
+               if(lstSchedExamTimeArray[j].ExamTimeId == examtimeid){
+
+                   toptions += '<option value='+lstSchedExamTimeArray[j].ExamTimeId+' selected>'+lstSchedExamTimeArray[j].ExamTime+'</option>'
+               }
+               else{
+
+                   toptions += '<option value='+lstSchedExamTimeArray[j].ExamTimeId+'>'+lstSchedExamTimeArray[j].ExamTime+'</option>'
+               }
+            }
+
+         var thtml='<select class="form-select form-select-sm"> '+
+                       '<option value="-1"></option>'+
+                                toptions +
+                        '</select>';
+
+
+         var doptions ="";
+           for(var j= 0; j < lstSchedExamDateArray.length; j++){
+               if(lstSchedExamDateArray[j].StrExamDate == examdate){
+
+                   doptions += '<option value='+lstSchedExamDateArray[j].Id+' selected>'+lstSchedExamDateArray[j].StrExamDate+'</option>'
+               }
+               else{
+
+                   doptions += '<option value='+lstSchedExamDateArray[j].Id+'>'+lstSchedExamDateArray[j].StrExamDate+'</option>'
+               }
+            }
+
+          var dhtml='<select class="form-select form-select-sm"> '+
+                       '<option value="-1"></option>'+
+                                doptions +
+                        '</select>';
+
+        var html = '<div class="row gy-2 gx-2 align-items-center">'+
+                        dhtml +
+                        thtml +
+                    '</div>'
+            return html;
+    }
+
+     function submitScheduleExam(){
+        var lstresult = getScheExamDateTimeArray();
+                var obj={};
+                obj.ScheduleId=$("#hfscheduleid").val();
+                obj.LstScheduleExamination=lstresult;
+                 var jdata = JSON.stringify(obj);
+                 $.ajax({
+                    type: 'POST',
+                     url: '@Url.Action("SaveScheduleExamination","Schedule")',
+                     dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+                        if (response != null) {
+
+                             setProgress(3);
+                            toastr.success('Saved Succesfully');
+                            $("#divtimetable").hide("slow", function() {
+                                    getScheduleStatus();
+                                   // getScheduleSection();
+                                });
+
+                            } else {
+
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                    },
+                    error: function (response) {
+
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+    }
+     function getScheExamDateTimeArray(){
+        var lststdMark = new Array();
+
+        var tbldata = $("#tbltimetable").DataTable();
+        jQuery(tbldata.rows().nodes()).each(function (item) {
+            var tr =this;
+            var tblFirstCol = tbldata.row(tr).data();
+
+            $(this).find('div').each(function(cellindex) {
+
+                var stdMark ={};
+                stdMark.ScheduleId = $("#hfscheduleid").val();
+                 stdMark.BranchClassId = parseInt(tblFirstCol.BranchClassId);
+                // stdMark.ClassSubjectId =lstSchedclssubIds[cellindex];
+                var objSub = precolumns[cellindex+3];
+                 stdMark.ClassSubjectId =objSub.data;
+
+                // stdMark.ScheduleSectionId = $(this).val();
+                 var objdt = $(this).children()[0];
+                 var strdt = $(objdt).find("option:selected").text();
+                stdMark.StrExamDate = strdt;
+
+                 var objtt = $(this).children()[1];
+                stdMark.ExamTimeId = $(objtt).find("option:selected").val();
+
+                lststdMark.push(stdMark);
+
+            });
+        });
+
+        return lststdMark;
+    }
+
+  
+    
+     function createDropDown(data,secid) {
+             var html = '<select class="form-select form-select-sm" required = "required"><option value="">Select a Section...</option>';
+             for (var item of data) {
+                 if(item.value == secid){
+                     html += '<option value="' + item.value + '" selected="selected">' + item.text + '</option>';
+                 }
+                 else{
+                         html += '<option value="' + item.value + '">' + item.text + '</option>';
+                 }
+             }
+             html += '</select>';
+             return html;
+     }
+
+      function submitFinish(){
+          $("#loaderDiv1").show();
+           $.ajax({
+                 type: "post",
+                 async : false,
+                 url: '@Url.Action("UpdateScheduleFinishStatus","Schedule")',
+                 data: {scheduleId : $("#hfscheduleid").val() },
+                 dataType: 'json',
+                 traditional: true,
+                 success: function (response) {
+                     if(response != null){
+                         toastr.success("Saved Successfully");
+                         setProgress(6);
+                          getScheduleStatus();
+                        $("#loaderDiv1").hide();
+                     }
+                 },
+                 error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                 }
+             });
+     }
+    
+
+      function getScheduleBranchClassGroup(){
+                 $.ajax({
+                     type: "post",
+                     async : false,
+                     url: '@Url.Action("GetScheduleBranchClassGroup","Schedule")',
+                     data: {scheduleId : $("#hfscheduleid").val() },
+                         dataType: 'json',
+                     traditional: true,
+                     success: function (response) {
+                         if (response != null) {
+                             var lstArr = JSON.parse(response);
+                                $("#branchclassgroupbody").empty();
+                                for (var j = 0; j < lstArr.length; j++){
+                                    insertintobranchclassgrouptbl(lstArr[j]);
+                                }
+                         }
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 });
+         }
+          function insertintobranchclassgrouptbl(data){
+
+                 var tblbdy = document.getElementById("branchclassgroupbody");
+                     var rowIndex= tblbdy.rows.length;
+                     var newRow = tblbdy.insertRow(rowIndex);
+                     cell1 = newRow.insertCell(0);
+                     cell1.innerHTML = data.id;
+                     cell1.style.display="none";
+
+                     cell2 = newRow.insertCell(1);
+                     cell2.innerHTML = data.branchId;
+                     cell2.style.display="none";
+
+                    cell3 = newRow.insertCell(2);
+                    cell3.innerHTML = data.classId;
+                    cell3.style.display = "none";
+
+                     var chk = document.createElement("input");
+                     chk.type="checkbox";
+                     chk.id="ClsIsSelected";
+                     chk.className="form-check-input";
+                     chk.checked=false;
+                     //chk.onclick=(function() { return function(){ Validate(); }})();
+
+                     cell4 = newRow.insertCell(3);
+                     cell4.appendChild(chk);
+
+                    var spcls = document.createElement("span");
+                    spcls.innerText = data.className +' (Count : '+data.studentCount+')'; //+' (Students : '+data.StudentCount+')';
+                    cell5 = newRow.insertCell(4);
+                    cell5.appendChild(spcls);
+         }
+     function chkHallFields(){
+              var isvalid=true;
+              if($('#examHallName').val()==''){
+                  isvalid =false;
+              }
+              if($('#rowCount').val()==''){
+                  isvalid =false;
+              }
+               if($('#colCount').val()==''){
+                  isvalid =false;
+              }
+              return isvalid;
+        }
+         function ValidateHallButton(){
+              if (chkHallFields()){
+                  $('#addExamHallBtn').prop('disabled', false);
+              }
+              else{
+                   $('#addExamHallBtn').prop('disabled', true);
+              }
+          }
+
+           // Utility Functions
+        function getSeatNumber(row, col) {
+            return String.fromCharCode(65 + row - 1) + col;
+        }
+
+        function createSeatElement(seat) {
+            const seatDiv = document.createElement('div');
+            seatDiv.classList.add('seat');
+            if (seat.allocated) seatDiv.classList.add('allocated');
+            seatDiv.setAttribute('data-seat-id', seat.id);
+            seatDiv.setAttribute('data-exam-hall-id', seat.examHallId);
+            seatDiv.innerHTML = seat.seatNumber;
+
+            if (seat.allocated && seat.student) {
+                const studentNameDiv = document.createElement('div');
+                studentNameDiv.classList.add('student-name');
+                studentNameDiv.textContent = seat.student.fullName;
+                seatDiv.appendChild(studentNameDiv);
+            }
+
+            return seatDiv;
+        }
+
+     function renderExamHalls() {
+         const container = document.getElementById('examHallsContainer');
+         container.innerHTML = ''; // Clear existing halls
+
+         examHalls.forEach(hall => {
+             const hallDiv = document.createElement('div');
+             hallDiv.classList.add('exam-hall');
+             hallDiv.setAttribute('data-hall-id', hall.id);
+
+             // Hall Header
+             const hallHeader = document.createElement('h5');
+             hallHeader.textContent = hall.name;
+             hallDiv.appendChild(hallHeader);
+
+             // Hall Actions (Rename & Remove)
+             const actionsDiv = document.createElement('div');
+             actionsDiv.classList.add('actions');
+
+             // Rename Icon
+             const renameIcon = document.createElement('i');
+             renameIcon.className="ri-pencil-line";
+            // renameIcon.classList.add('bi', 'bi-pencil-square', 'rename-icon');
+             renameIcon.setAttribute('title', 'Rename Exam Hall');
+             actionsDiv.appendChild(renameIcon);
+
+             // Remove Icon
+             const removeIcon = document.createElement('i');
+             removeIcon.className="ri-delete-bin-line";
+            // removeIcon.classList.add('bi', 'bi-trash', 'remove-icon');
+             removeIcon.setAttribute('title', 'Remove Exam Hall');
+             actionsDiv.appendChild(removeIcon);
+
+             hallDiv.appendChild(actionsDiv);
+
+             // Rename Input (Hidden by Default)
+             const renameInput = document.createElement('input');
+             renameInput.type = 'text';
+             renameInput.classList.add('form-control', 'rename-input');
+             renameInput.value = hall.name;
+             hallDiv.appendChild(renameInput);
+
+             // Save Rename Button
+             const saveRenameBtn = document.createElement('button');
+             saveRenameBtn.classList.add('btn', 'btn-sm', 'btn-success', 'save-rename-btn');
+             saveRenameBtn.innerHTML = '<i class="ri-save-line"></i>';
+             hallDiv.appendChild(saveRenameBtn);
+
+             // Cancel Rename Button
+             const cancelRenameBtn = document.createElement('button');
+             cancelRenameBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'cancel-rename-btn');
+             cancelRenameBtn.innerHTML = '<i class="ri-delete-back-2-line"></i>';
+             hallDiv.appendChild(cancelRenameBtn);
+
+             // Seats Container
+             const seatsContainer = document.createElement('div');
+             seatsContainer.classList.add('seats-container');
+             seatsContainer.style.gridTemplateColumns = `repeat(${hall.columns}, 30px)`;
+
+             hall.seats.forEach(seat => {
+                 const seatElement = createSeatElement(seat);
+                 seatsContainer.appendChild(seatElement);
+             });
+
+             hallDiv.appendChild(seatsContainer);
+             container.appendChild(hallDiv);
+
+             // Event Listeners for Rename and Remove
+             renameIcon.addEventListener('click', () => {
+                 hallDiv.classList.add('editing');
+             });
+
+             cancelRenameBtn.addEventListener('click', () => {
+                 hallDiv.classList.remove('editing');
+                 renameInput.value = hall.name; // Reset to original name
+             });
+
+             saveRenameBtn.addEventListener('click', () => {
+                 const newName = renameInput.value.trim();
+                 if (!newName) {
+                     alert('Exam Hall name cannot be empty.');
+                     return;
+                 }
+
+                 // Check for duplicate hall names
+                 const duplicate = examHalls.some(h => h.name.toLowerCase() === newName.toLowerCase() && h.id !== hall.id);
+                 if (duplicate) {
+                     alert('Duplicate Exam Hall names are not allowed.');
+                     return;
+                 }
+
+                 hall.name = newName;
+                 hallDiv.classList.remove('editing');
+                 renderExamHalls();
+             });
+
+             removeIcon.addEventListener('click', () => {
+                 const hasAllocations = hall.seats.some(seat => seat.allocated);
+                 if (hasAllocations) {
+                     // Do not allow removal if any seat is allocated
+                     return;
+                 }
+
+                 // Remove the hall from examHalls array
+                 examHalls = examHalls.filter(h => h.id !== hall.id);
+                 renderExamHalls();
+             });
+
+             // Hide Remove Icon if allocations exist
+             const hasAllocations = hall.seats.some(seat => seat.allocated);
+             if (hasAllocations) {
+                 removeIcon.style.display = 'none';
+             } else {
+                 removeIcon.style.display = 'inline';
+             }
+         });
+
+         initializeDragAndDrop(); // Re-initialize drag-and-drop after rendering
+     }
+       // Add Exam Hall
+     document.getElementById('addExamHallBtn').addEventListener('click', function () {
+         const name = document.getElementById('examHallName').value.trim();
+         const rows = parseInt(document.getElementById('rowCount').value);
+         const cols = parseInt(document.getElementById('colCount').value);
+
+         if (!name || rows < 1 || cols < 1) {
+             toastr.error('Please enter valid Exam Hall details');
+             return;
+         }
+
+         // Check for duplicate hall names
+         const duplicate = examHalls.some(hall => hall.name.toLowerCase() === name.toLowerCase());
+         if (duplicate) {
+             toastr.error('Duplicate Exam Hall names are not allowed');
+             return;
+         }
+
+         // Create Exam Hall Object
+         const hallId = examHalls.length > 0 ? Math.max(...examHalls.map(h => h.id)) + 1 : 1;
+         const seats = [];
+         let seatId = 1;
+         for (let row = 1; row <= rows; row++) {
+             for (let col = 1; col <= cols; col++) {
+                 seats.push({
+                     id: seatId,
+                     examHallId: hallId,
+                     seatNumber: getSeatNumber(row, col),
+                     allocated: false,
+                     student: null
+                 });
+                 seatId++;
+             }
+         }
+
+         const newHall = {
+             id: hallId,
+             name: name,
+             rows: rows,
+             columns: cols,
+             seats: seats
+         };
+
+         examHalls.push(newHall);
+         renderExamHalls();
+
+         // Clear form inputs
+         document.getElementById('examHallName').value = '';
+         document.getElementById('rowCount').value = '';
+         document.getElementById('colCount').value = '';
+     });
+     // Get Class Students
+      function getCheckedClassIds(){
+             var selectedArr =[];
+             $("#tblbranchclassgroup tbody tr").each(function () {
+                     var tr = $(this);
+                         var clsObj = {};
+                         var firstCol = tr.find("td").eq(0).html();
+                         var secondCol = tr.find("input").eq(0).is(':checked');
+                         clsObj.Id = firstCol;
+                         clsObj.IsSelected = secondCol;
+                         selectedArr.push(clsObj);
+             });
+             return selectedArr;
+         }
+
+        function getClassStudents(){
+             var lstchk = getCheckedClassIds();
+            const filteredchks = lstchk.filter(el => el.IsSelected == true);
+
+             if (filteredchks.length === 0) {
+                // If no class selected, clear all allocations
+                toastr.warning('Please select the classes');
+                clearAllAllocations();
+                renderExamHalls();
+                return;
+            }
+            // Check if there are exam halls created
+             if (examHalls.length === 0) {
+                toastr.warning('Please create at least one exam hall before allocating seats');
+                return;
+            }
+            let resultids = filteredchks.map(a => a.Id);
+
+             var obj={};
+             obj.ScheduleId=$("#hfscheduleid").val();
+             obj.ScheduleBranchClassIds=resultids;
+
+             var jdata = JSON.stringify(obj);
+                     $.ajax({
+                     type: 'POST',
+                         url: '@Url.Action("GetScheduleBranchClassStudent","Schedule")',
+                         dataType: "JSON",
+                     data: {model :jdata },
+                     success: function (response) {
+                         var selectedStudents = JSON.parse(response);
+                      
+                         // Calculate total available seats
+                        const totalSeats = examHalls.reduce((sum, hall) => sum + hall.seats.length, 0);
+                        const totalStudents = selectedStudents.length;
+
+                        if (totalStudents > totalSeats) {
+                            toastr.warning(`Not enough seats. Total Seats: ${totalSeats}, Total Students: ${totalStudents}`);
+                            return;
+                        }
+
+                        // Clear previous allocations
+                        clearAllAllocations();
+
+                        // Allocate seats
+                        allocateSeats(selectedStudents, examHalls);
+                        renderExamHalls();
+
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+
+                     }
+                 })
+        }
+
+      // Clear All Allocations
+        function clearAllAllocations() {
+            examHalls.forEach(hall => {
+                hall.seats.forEach(seat => {
+                    seat.allocated = false;
+                    seat.student = null;
+                });
+            });
+        }
+         // Allocate Seats Function
+        function allocateSeats(students, examHalls) {
+            const totalSeats = examHalls.reduce((sum, hall) => sum + hall.seats.length, 0);
+            const totalStudents = students.length;
+
+            let studentIndex = 0;
+
+            // Calculate number of seats per hall based on proportion
+            const seatsPerHall = examHalls.map(hall => hall.seats.length);
+            const proportion = seatsPerHall.map(seats => seats / totalSeats);
+
+            // Allocate students proportionally
+            examHalls.forEach((hall, index) => {
+                const hallSeatCount = Math.floor(proportion[index] * totalStudents);
+                let allocatedSeats = 0;
+
+                for (let seat of hall.seats) {
+                    if (allocatedSeats >= hallSeatCount || studentIndex >= totalStudents) break;
+                    if (!seat.allocated) {
+                        seat.allocated = true;
+                        seat.student = students[studentIndex];
+                        allocatedSeats++;
+                        studentIndex++;
+                    }
+                }
+            });
+
+            // Allocate remaining students if any
+            if (studentIndex < totalStudents) {
+                examHalls.forEach(hall => {
+                    for (let seat of hall.seats) {
+                        if (studentIndex >= totalStudents) break;
+                        if (!seat.allocated) {
+                            seat.allocated = true;
+                            seat.student = students[studentIndex];
+                            studentIndex++;
+                        }
+                    }
+                });
+            }
+        }
+
+      // Initialize Drag-and-Drop
+        function initializeDragAndDrop() {
+            const seats = document.querySelectorAll('.seat.allocated');
+
+            seats.forEach(seat => {
+                seat.setAttribute('draggable', 'true');
+
+                // Drag Start
+                seat.addEventListener('dragstart', function (e) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        seatId: seat.getAttribute('data-seat-id'),
+                        examHallId: seat.getAttribute('data-exam-hall-id')
+                    }));
+                    setTimeout(() => {
+                        seat.classList.add('dragging');
+                    }, 0);
+                });
+
+                // Drag End
+                seat.addEventListener('dragend', function () {
+                    seat.classList.remove('dragging');
+                });
+            });
+
+            const allSeats = document.querySelectorAll('.seat');
+
+            allSeats.forEach(targetSeat => {
+                // Prevent default to allow drop
+                targetSeat.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                });
+
+                // Highlight on hover
+                targetSeat.addEventListener('dragenter', function (e) {
+                    e.preventDefault();
+                    targetSeat.classList.add('hovered');
+                });
+
+                targetSeat.addEventListener('dragleave', function () {
+                    targetSeat.classList.remove('hovered');
+                });
+
+                // Handle Drop
+                targetSeat.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    targetSeat.classList.remove('hovered');
+
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (!data) return;
+                    const draggedData = JSON.parse(data);
+
+                    const draggedSeatId = parseInt(draggedData.seatId);
+                    const draggedHallId = parseInt(draggedData.examHallId);
+
+                    const targetSeatId = parseInt(targetSeat.getAttribute('data-seat-id'));
+                    const targetHallId = parseInt(targetSeat.getAttribute('data-exam-hall-id'));
+
+                    if (draggedSeatId === targetSeatId && draggedHallId === targetHallId) {
+                        return; // Dropped on the same seat
+                    }
+
+                    // Find the dragged and target seats
+                    const draggedHall = examHalls.find(hall => hall.id === draggedHallId);
+                    const targetHall = examHalls.find(hall => hall.id === targetHallId);
+
+                    if (!draggedHall || !targetHall) return;
+
+                    const draggedSeat = draggedHall.seats.find(seat => seat.id === draggedSeatId);
+                    const targetSeatObj = targetHall.seats.find(seat => seat.id === targetSeatId);
+
+                    if (!draggedSeat || !targetSeatObj) return;
+
+                    // Swap allocations
+                    if (draggedSeat.allocated && targetSeatObj.allocated) {
+                        const tempStudent = draggedSeat.student;
+                        draggedSeat.student = targetSeatObj.student;
+                        targetSeatObj.student = tempStudent;
+                    } else if (draggedSeat.allocated && !targetSeatObj.allocated) {
+                        targetSeatObj.allocated = true;
+                        targetSeatObj.student = draggedSeat.student;
+
+                        draggedSeat.allocated = false;
+                        draggedSeat.student = null;
+                    } else if (!draggedSeat.allocated && targetSeatObj.allocated) {
+                        draggedSeat.allocated = true;
+                        draggedSeat.student = targetSeatObj.student;
+
+                        targetSeatObj.allocated = false;
+                        targetSeatObj.student = null;
+                    }
+
+                    renderExamHalls();
+                });
+            });
+        }
+         document.getElementById('saveAllocationsBtn').addEventListener('click', function () {
+            $("#loaderDiv1").show();
+            const dataToSave = examHalls.map(hall => ({
+                Id: hall.id,
+                ScheduleId : $("#hfscheduleid").val(),
+                RowCount : hall.rows,
+                ColumnCount : hall.columns,
+                Name: hall.name,
+                Seats: hall.seats.map(seat => ({
+                    Id: seat.id,
+                    SeatNumber: seat.seatNumber,
+                    IsAllocated: seat.allocated,
+                    ScheduleBranchClassStudent: seat.student ? { StudentId: seat.student.studentId, ScheduleId: seat.student.scheduleId,BranchClassId: seat.student.branchClassId,
+                    BranchId: seat.student.branchId,ClassId: seat.student.classId,SectionId: seat.student.sectionId} : null
+                }))
+            }));
+            
+            var jdata = JSON.stringify(dataToSave);
+                     $.ajax({
+                     type: 'POST',
+                         url: '@Url.Action("SaveExamHallAllocation","Schedule")',
+                         dataType: "JSON",
+                     data: {model :jdata },
+                     success: function (response) {                        
+                         var result = JSON.parse(response);
+                         if(result != null && result > 0){
+                             $("#divstudent").hide("slow", function() {
+                                   getScheduleStatus();
+                                
+                                  $("#divteacher").show();       
+                                  setAlgoTeacher();
+                                  $("#loaderDiv1").hide();
+                          });
+                         }
+                         else{
+                             toastr.error(`@_localization.Getkey("Error")`);
+                         }
+                         
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 })
+        });
+         function setAlgoTeacher(){
+                $("#loaderDiv1").show();
+                $.ajax({
+                        type: "POST",
+                        async : false,
+                        url: '@Url.Action("SaveScheduleTeacherExamDateAlgo","Schedule")',
+                        data: { scheduleId: $("#hfscheduleid").val()},
+                        dataType: 'json',
+                        traditional: true,
+                        success: function (response) {
+                            if(response != null && response > 0){
+                                getPivotTeacher();
+                            }
+                            else {
+                               toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                        },
+                        error: function (response) {
+
+                               toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    });
+     }
+</script>

@@ -1,0 +1,201 @@
+﻿@model IEnumerable<VPersonnelAttendenceBenchmark>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Examinations</h2>
+</div>
+<input type="hidden" id="hfscheduletitledetailid"/>
+<div class="content mb-0">
+    <div class="input-style has-borders input-style-always-active no-icon mb-4">
+        <select id="schedules-dropdown">
+            <option value="default" disabled>Select Examination</option>
+        </select>
+        <span><i class="fa fa-chevron-down"></i></span>
+        <i class="fa fa-check disabled valid color-green-dark"></i>
+        <i class="fa fa-check disabled invalid color-red-dark"></i>
+        <em></em>
+    </div>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+   
+    <div class="content">
+         <h5 class="mb-n1">Examination Details</h5>   
+         <hr />
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Title : <strong id="spschedTitle"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Start Date :<strong id="spschedStartDate"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>End Date :<strong id="spschedEndDate"></strong>
+        </div>
+        @*  <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Status : <strong id="spschedStatus"></strong>
+            </div>
+            <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Exam Halls : <strong id="spschedexamHall"></strong>
+            </div>
+            <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Classes : <strong id="spschedclassCount"></strong>
+            </div>
+            <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Students : <strong id="spschedStudentCount"></strong>
+            </div>*@
+    </div>
+</div>
+<div id="proctoring-container">
+</div>
+<div class="row text-center mb-0">
+    <a href="#" id="anchorTimeTable" class="col-6 pe-2">
+        <div class="card card-style me-0 mb-3 custom-card rounded-2">
+            <h1 class="center-text pt-4 mt-2">
+                <i data-feather="box"
+                   data-feather-line="1"
+                   data-feather-size="50"
+                   data-feather-color="blue-dark"
+                   data-feather-bg="blue-fade-light">
+                </i>
+            </h1>
+            <h4 class="color-theme font-600">Time Table</h4>
+            <p class="mt-n2 font-11 color-highlight">
+                View Time Table
+            </p>
+
+        </div>
+    </a>
+    <a href="#" id="anchorResult" class="col-6 ps-2">
+        <div class="card card-style ms-0 mb-3 custom-card rounded-2">
+            <h1 class="center-text pt-4 mt-2">
+                <i data-feather="shopping-bag"
+                   data-feather-line="1"
+                   data-feather-size="50"
+                   data-feather-color="blue-dark"
+                   data-feather-bg="blue-fade-light">
+                </i>
+            </h1>
+            <h4 class="color-theme font-600">Results</h4>
+            <p class="mt-n2 font-11 color-highlight">
+                View Results
+            </p>
+
+        </div>
+    </a>
+</div>
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+    let scheduleArr=[];
+    $(document).ready(function () {
+        // setActiveNav('/Home');
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/PersonnelSchedule`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                .then(response => {
+                    scheduleArr = response;
+                    // setBindingValues(response);
+                    setScheduleBinding(response);
+                    hideLoading();
+                })
+                .catch(error => {
+                        showToast('2', `@_localization.Getkey("Error")`);
+                });
+
+            $("#anchorTimeTable").on("click", function(event) {
+                event.preventDefault();
+                setNewChildNavigation(`/Schedule/ExamTimeTable?scheduleId=`+$("#hfscheduletitledetailid").val()+``);
+            });
+              $("#anchorResult").on("click", function(event) {
+                         event.preventDefault();
+                         setNewChildNavigation(`/Schedule/ExamResult?scheduleId=`+$("#hfscheduletitledetailid").val()+``);
+             });
+    });
+
+    function setScheduleBinding(data) {
+        const dropdown = $('#schedules-dropdown');
+        dropdown.empty();
+        dropdown.append('<option value="">Select Examination</option>');
+        data.forEach(card => {
+            const option = $('<option></option>')
+                .val(card.id)
+                .text(card.title);
+            dropdown.append(option);
+        });
+         var defaultValue = data[0].id;
+         $("#hfscheduletitledetailid").val(defaultValue);
+        dropdown.val(defaultValue);
+        viewScheduleInfo(data[0]);
+        getProctoringValues(data[0].id);
+        //getSectionTransTimeTableById(defaultValue);
+
+        dropdown.on('change', function() {
+            const selectedId = $(this).val();
+            if (selectedId) {
+                var objsched = scheduleArr.find(item=> item.id == selectedId);
+                if(objsched !== null && objsched !==undefined){
+                    $("#hfscheduletitledetailid").val(objsched.id);
+                    viewScheduleInfo(objsched);
+                    getProctoringValues(objsched.id);
+                }
+            }
+            else{
+
+            }
+        });
+    }
+    function viewScheduleInfo(item){
+        if(item !== null && item !== undefined){
+            $("#spschedTitle").html(item.title || '&nbsp;');
+            $("#spschedStartDate").html(item.strStartDate || '&nbsp;');
+            $("#spschedEndDate").html(item.strEndDate || '&nbsp;');
+            //$("#spschedStatus").html(item.status || '&nbsp;');
+            //$("#spschedexamHall").html(data.examHallCount || '&nbsp;');
+            //$("#spschedclassCount").html(data.classCount || '&nbsp;');
+            //$("#spschedStudentCount").html(data.studentCount || '&nbsp;');
+        }
+    }
+    function getProctoringValues(id){
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/teacher/TeacherInvigilation/`+id+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                                    .then(childresponse => {
+                                         setProctoringBindingValues(childresponse);
+                                         hideLoading();
+                                    })
+                                    .catch(error => {
+                                         showToast('2', `@_localization.Getkey("Error")`);
+                                    });
+    }
+    function setProctoringBindingValues(data) {
+        const container = document.getElementById('proctoring-container');
+        let htmlContent = '';  // Build the HTML content here
+        data.forEach((result, index) => {
+            const sectionHTML = `
+                <div class="card card-style mb-2 custom-card rounded-2">
+                    <div class="content">
+                        <h5 class="mb-n1">Invigilations</h5>   
+                        <hr />
+                        <div class="list-group list-custom-small">
+                            ${
+                                ` <a href="#"><i class="far fa-clock font-14 color-brown-dark"></i><span>Date : ${result.strExamDate}</span> <span class="badge bg-green-dark font-11">Exam Hall : ${result.examHallName}</span></a>`
+                            }
+                        </div>
+                        </div>
+                </div>
+            `;
+            htmlContent += sectionHTML;
+        });
+        container.innerHTML = htmlContent;
+    }
+
+    
+
+
+
+</script>

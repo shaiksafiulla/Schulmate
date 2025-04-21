@@ -1,0 +1,447 @@
+﻿@model VStudentScheduleResult
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+@Html.HiddenFor(m => m.Id, new{ @id="hfstudentperformanceid"})
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>@_localization.Getkey("Performance")</h2>
+</div>
+@*<div style="text-align:center">
+    <h4 class="header-title">@_localization.Getkey("Examinations")</h4>
+    </div>*@
+
+<div style="display: flex; justify-content: flex-end; align-items: center; width: 100%;">
+     <div id="viewToggleLabel">Switch to Subjects</div>
+    <label class="switch">
+        <input type="checkbox" id="viewToggle">
+        <span class="slider round"></span>
+    </label>
+   
+</div>
+
+
+@*<div id="viewToggleLabel" style="align-content:end">Switch to Subjects</div>
+<label class="switch">
+    <input type="checkbox" id="viewToggle">
+    <span class="slider round"></span>
+</label>*@
+
+<!-- View 1 (Chart View) -->
+<div class="content">
+    <input type="hidden" id="hfstudentinfoid" />
+    <div id="divschedulegraph" class="chart-container" style="width:100%; height:350px;">
+        <canvas id="lineScheduleChart" class="graph" />
+    </div>
+    <!-- View 2 (Dropdown View) -->
+    <div id="divsubjectgraph" class="chart-container" style="display: none; width:100%; height:350px;">
+
+        <div class="input-style has-borders input-style-always-active no-icon mb-4">
+            <select id="dropdown">
+                <option value="default" disabled>Select Subject</option>
+            </select>
+            <span><i class="fa fa-chevron-down"></i></span>
+            <i class="fa fa-check disabled valid color-green-dark"></i>
+            <i class="fa fa-check disabled invalid color-red-dark"></i>
+            <em></em>
+        </div>
+
+        <canvas id="lineSubjectChart" class="graph" />
+    </div>
+</div>
+
+
+@*<div class="card card-style">
+    <div class="content mt-0 mb-0">
+    <div class="list-group list-custom-large check-visited" id="studschedule-container">
+    </div>
+    </div>
+    </div>
+    <a href="#" data-menu="divmarkgraph" id="ancgraphtrigger" style="display:none">test graph</a>*@
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+@*<script type="text/javascript" src="~/scripts/custom.js"></script>
+    <script type="text/javascript" src="~/scripts/action.js"></script>*@
+<script src="~/scripts/chart.min.js"></script>
+
+
+<script>
+
+           $(document).ready(function() {
+            // Track whether the data is loaded for each view
+            var dataLoadedView1 = false;
+            var dataLoadedView2 = false;
+
+            // Initialize chart variables
+            //var chart1, chart2;
+
+            // Handle toggle switch change
+            $('#viewToggle').change(function() {
+                if ($(this).prop('checked')) {
+                    // Switch to View 2 (Dropdown View)
+                    $('#divschedulegraph').hide();
+                    $('#divsubjectgraph').show();
+
+                    // Update the toggle label text
+                    $('#viewToggleLabel').text('Switch to OverAll');
+
+                    // Load data for View 2 if not loaded
+                    if (!dataLoadedView2) {
+                        loadDropdownData();
+                    }
+                } else {
+                    // Switch to View 1 (Chart View)
+                    $('#divsubjectgraph').hide();
+                    $('#divschedulegraph').show();
+
+                    // Update the toggle label text
+                    $('#viewToggleLabel').text('Switch to Subjects');
+
+                    // Load data for View 1 if not loaded
+                    if (!dataLoadedView1) {
+                        loadChart1Data();
+                    }
+                }
+            });
+
+            // Initial chart load for View 1
+            if (!dataLoadedView1) {
+                loadChart1Data();
+            }
+
+            // Function to load data for the first chart (View 1)
+            function loadChart1Data() {
+                showLoading();
+                      getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/schedule/`+$("#hfstudentperformanceid").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                                    .then(response => {
+                                       // console.log(response)
+                                        if(response !==null && response.lstStudentScheduleResult.length > 0){
+                                             $("#hfstudentinfoid").val(response.lstStudentScheduleResult[0].studentId);
+                                            FillGraph(response.studentScheduleGraph);
+                                        }                                         
+                                          hideLoading();
+                                    })
+                                    .catch(error => {
+                                         showToast('2', `@_localization.Getkey("Error")`);
+                                    });
+            }
+
+            // Function to load dropdown data for View 2
+            function loadDropdownData() {
+                 showLoading();
+                      getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/Subjects/`+$("#hfstudentperformanceid").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                                    .then(response => {
+                                                  // Fill the dropdown with the data
+                                            //console.log(response)
+                                            if(response !==null && response.length > 0){
+                                                 var dropdown = $('#dropdown');
+                                                    dropdown.empty();
+                                                    dropdown.append('<option value="">Select Option</option>');
+                                                    $.each(response, function(i, item) {
+                                                        dropdown.append('<option value="' + item.value + '">' + item.text + '</option>');
+                                                    });
+
+                                                    // Set default selection and load chart
+                                                    var defaultValue = response[0].value; // Assuming the first item is the default
+                                                    dropdown.val(defaultValue);
+                                                    loadChart2Data(defaultValue);
+                                                    dataLoadedView2 = true; // Mark that dropdown data has been loaded
+                                            }
+                                            hideLoading();
+                                    })
+                                    .catch(error => {
+                                         showToast('2', `@_localization.Getkey("Error")`);
+                                    });
+            }
+
+            // Function to load chart data for View 2 based on dropdown selection
+            function loadChart2Data(selectedValue) {
+                showLoading();
+                getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/SubjectGraph/`+$("#hfstudentperformanceid").val()+`,`+selectedValue+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                                    .then(response => {
+                                         FillSubjectGraph(response);
+                                         hideLoading();
+                                    })
+                                    .catch(error => {
+                                         showToast('2', `@_localization.Getkey("Error")`);
+                                    });
+            }
+
+            // Event listener for dropdown change to load new chart data
+            $('#dropdown').change(function() {
+                var selectedValue = $(this).val();
+                if (selectedValue) {
+                    loadChart2Data(selectedValue);
+                }
+            });
+        });
+
+        function FillGraph(data) {
+            let chartStatus = Chart.getChart("lineScheduleChart");
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            }
+            var ctx_linechart = document.getElementById('lineScheduleChart');
+            var myLineChart = new Chart(ctx_linechart, {
+                type: 'line',
+                data: data,
+                options: {
+                    parsing: {
+                        xAxisKey: 'strlabel',
+                        yAxisKey: 'percent'
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                                display: false
+                            }
+                    },
+                    scales: {
+                            x: {
+                                ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 30,
+                                    font: {
+                                        size: 10
+                                    },
+                                        // Custom function to truncate long labels
+                                    //callback: function(value) {
+                                    //    var screenWidth = window.innerWidth;
+                                    //    if (screenWidth < 768) {
+                                    //        console.log(value);
+                                    //        return value.length > 5 ? value.substring(0, 5) + '...' : value;
+                                    //    } else {
+                                    //        return value.length > 10 ? value.substring(0, 10) + '...' : value;
+                                    //    }
+                                    //}
+                                }
+                            }
+                        }
+                }
+            });
+                dataLoadedView1 = true;
+        }
+
+        function FillSubjectGraph(data) {
+            let chartStatus = Chart.getChart("lineSubjectChart"); // <canvas> id
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            }
+            var ctx_sublinechart = document.getElementById('lineSubjectChart');
+            var mysublineChart = new Chart(ctx_sublinechart, {
+                type: 'line',
+                data: data,
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                                display: false
+                            }
+                    },
+                    scales: {
+                            x: {
+                                ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 30,
+                                    font: {
+                                        size: 10
+                                    },
+                                }
+                            }
+                        }
+                }
+            })
+        }
+
+        function getStudentMarkSubject(id, subject) {
+            showLoading();
+            getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/SubjectMark/`+id+`,`+subject+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {
+                                    FillMarkSubjectGraph(response.studentMarkSubjectGraph);
+                                setBindingExamLessonValues(response.lstStudentMarkResult);
+                                    $("#ancsubjectgraphtrigger")[0].click();
+                                    hideLoading();
+
+                            })
+                            .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                            });
+        }
+        function FillMarkSubjectGraph(data) {
+            let chartStatus = Chart.getChart("lineSubjectChart"); // <canvas> id
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            }
+            var ctx_sublinechart = document.getElementById('lineSubjectChart');
+            var mysublineChart = new Chart(ctx_sublinechart, {
+                type: 'line',
+                data: data,
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: Math.round,
+                            font: {
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            })
+        }
+
+        function GetStudentMarks(stdid, schid) {
+            showLoading();
+            getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/ScheduleMark/`+stdid+`,`+schid+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {
+                                    FillMarkGraph(response.studentScheduleResult.studentMarkGraph);
+                                    setBindingstudmarkValues(response.studentScheduleResult);
+                                    $("#ancgraphtrigger")[0].click();
+                                    hideLoading();
+
+                            })
+                            .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                            });
+        }
+        function FillMarkGraph(data) {
+        let chartStatus = Chart.getChart("barMarkChart"); // <canvas> id
+        if (chartStatus != undefined) {
+            chartStatus.destroy();
+        }
+        var ctx_barchart = document.getElementById('barMarkChart');
+        var mybarChart = new Chart(ctx_barchart, {
+            type: 'bar',
+            data: data,
+            options: {
+                indexAxis: 'y',
+                elements: {
+                    bar: {
+                        borderWidth: 2
+                    }
+                },
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false,
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Results'
+                    }
+                }
+            }
+        })
+        document.getElementById("barMarkChart").onclick = function (evt) {
+            const res = mybarChart.getElementsAtEventForMode(evt, 'nearest',
+                { intersect: true },
+                true
+            );
+            if (res.length === 0) {
+                return;
+            }
+            var label = mybarChart.data.labels[res[0].index];
+            var value = mybarChart.data.datasets[res[0].datasetIndex].data[res[0].index];
+
+            getStudentMarkSubject($("#hfstudentinfoid").val(), label);
+        };
+    }
+                function setBindingstudmarkValues(data){
+                      var objresult = data;
+                      $("#spmark").html(objresult.marks);
+                    $("#spmaxmark").html(objresult.maxMarks);
+                    $("#sppercent").html(objresult.mrkPercent);
+                    $("#spgrade").html(objresult.gradeName);
+
+                     $("#studmark-container").empty();
+                      var lstmark = data.lstStudentMarkResult;
+                     var anchors = "";
+                    for (var i = 0; i < lstmark.length; i++) {
+
+                        var strSubject = lstmark[i].subjectName.trim();
+                        var studid = $("#hfstudentinfoid").val();
+                            anchors+=`<a href="#" onclick="getStudentMarkSubject(`+studid+`,'`+strSubject+`')">
+                                    <i class="far fa-clock font-20 color-brown-dark"></i>
+                                    <span>`+lstmark[i].subjectName+`</span>
+                                    <strong>`+lstmark[i].strExamDate+`</strong>
+                                    <span class="badge" style="background-color:`+lstmark[i].gradeColor+`">`+lstmark[i].marks+`</span>
+                                </a>`;
+                    }
+                   $('#studmark-container').append(anchors);
+                }
+                  function setBindingstudscheduleValues(data){
+                      $("#studschedule-container").empty();
+                     var anchors = "";
+                    for (var i = 0; i < data.length; i++) {
+
+                            anchors+=`<a href="#" onclick="GetStudentMarks(`+data[i].studentId+','+data[i].scheduleId+`)">
+                                    <i class="far fa-clock font-20 color-brown-dark"></i>
+                                    <span>`+data[i].scheduleMonth+`</span>
+                                    <strong>`+data[i].examTypeName+`</strong>
+                                    <span class="badge" style="background-color:`+data[i].gradeColor+`">`+data[i].gradeName+`</span>
+                                </a>`;
+                    }
+                   $('#studschedule-container').append(anchors);
+                }
+                function setBindingExamLessonValues(data) {
+                        const container = document.getElementById('examlesson-container');
+
+                        let htmlContent = '';  // Build the HTML content here
+
+                        data.forEach((result, index) => {
+                            // Generate unique IDs for each section
+                            const collapseId = `collapse-${index}`;
+                            const headerId = `header-${index}`;
+
+                            // Create the accordion HTML dynamically
+                            const sectionHTML = `
+                                <div class="card card-style mb-3">
+                                    <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+                                        <a data-bs-toggle="collapse" class="no-effect" href="#${collapseId}" id="${headerId}">
+                                            <i class="fa font-14 fa-phone color-white"></i>
+                                            <span class="font-14 color-white">${result.strExamMonth}</span>
+                                            <i class="fa fa-angle-down color-white"></i>
+                                        </a>
+                                    </div>
+                                    <div class="collapse ps-2 pe-4" id="${collapseId}">
+                                        <div class="list-group list-custom-small">
+                                            ${
+                                                // Check if there are lessons, otherwise show a fallback message
+                                                result.lstExaminationLesson && Object.keys(result.lstExaminationLesson).length > 0
+                                                ? Object.entries(result.lstExaminationLesson).map(([key, value]) =>
+                                                    `<a href="#"><span>${value.lessonName}</span></a>`
+                                                ).join('')
+                                                : '<p>No lessons available</p>'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                            // Append the generated HTML to the container
+                            htmlContent += sectionHTML;
+                        });
+
+                        // Once the HTML is fully built, append it all at once
+                        container.innerHTML = htmlContent;
+
+                        // Optionally, you can initialize any Bootstrap components if needed (like tooltips, collapse, etc.):
+                        // new bootstrap.Collapse('[data-bs-toggle="collapse"]');  // If necessary
+                   // });
+            }
+
+
+</script>

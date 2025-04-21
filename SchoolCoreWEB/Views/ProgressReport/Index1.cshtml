@@ -1,0 +1,662 @@
+﻿@using SchoolCoreWEB.Models
+@model ProgressReport
+@using Localization.Services
+@inject LanguageService _localization
+
+<link href="~/assets/css/reportprintstyle.css" rel="stylesheet" type="text/css" />
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script src="~/assets/vendor/chart.js/chart.min.js"></script>
+
+<div class="container-fluid" style="padding:0">
+    @Html.HiddenFor(m => m.StudentId, new { @id = "hfstudentid" })
+    @Html.HiddenFor(m => m.ReportCardId, new { @id = "hfreportcardid" })
+    <div class="row" id="a4headdiv">
+        @if (Model.ReportSettings.AFourHeaderType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+    <div class="row" id="a5headdiv" style="display:none">
+        @if (Model.ReportSettings.AFiveHeaderType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFiveHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFiveHeaderSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFiveHeaderSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+    <br />
+    <div class="row" style="padding:3%">
+        <table style="margin-left: auto; margin-right: auto; width: 100%;" border="0" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <td style="word-break: break-all;">
+
+                        <div class="text-center">
+                            <strong>@_localization.Getkey("ReportCard")</strong>
+                            <hr />
+                            <div class="row">
+
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("ReportFor"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>@Model.ReportCard.Name</strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("Branch"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>@Model.ReportCard.BranchName</strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("Examinations"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>@Model.ReportCard.ScheduleCount</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("PrintDate"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>@DateTime.Now.ToShortDateString()</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <hr />
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-12 text-center">
+                                            <img id="imgPhoto" class="rounded-circle avatar-lg img-thumbnail" alt="profile-image">
+                                            <h4 class="mb-0 mt-2" id="lblName"></h4>
+                                        </div>
+                                    </div>
+                                    <br />
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("FatherName"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblFatherName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("MotherName"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblMotherName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Age"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblAge"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Gender"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblGenderName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("MobileNumber"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblMobileNo"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Branch"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblBranchName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Class"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblAdmissionClassName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Section"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblSectionName"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div id="divschedulegraph">
+                                        <canvas id="rptlineScheduleChart" height="500" width="600" />
+                                    </div>
+
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h4 class="mb-0 mt-2">@_localization.Getkey("FinalResult")</h4>
+                                </div>
+                                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblrccpstudent">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:center">@_localization.Getkey("RollNo")</th>
+                                            <th style="text-align:center">@_localization.Getkey("MaxMarks")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Marks")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Percentage")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Grade")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Rank")</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                            <div class="row" id="divscheduleresult">
+                                <div class="col-12 text-center">
+                                    <h4 class="mb-0 mt-2">@_localization.Getkey("ResultDetails")</h4>
+                                </div>
+                                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbldetail">
+                                    @*<thead>
+                                        <tr>
+                                        <th style="text-align:center; width:33%">@_localization.Getkey("ExamInfo")</th>
+                                        <th style="text-align:center; width:33%">@_localization.Getkey("Marks")</th>
+                                        <th style="text-align:center; width:33%">@_localization.Getkey("Performance")</th>
+                                        </tr>
+                                        </thead>*@
+                                    <tbody id="tbldetailbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+            @* <tfoot>
+                <tr>
+                <td>
+                <div class="text-center">
+                <strong>*** @_localization.Getkey("EndOfReport") ***</strong>
+                </div>
+                </td>
+                </tr>
+                </tfoot>*@
+        </table>
+    </div>
+    <div class="row" id="a4footdiv" style="display:none">
+        @if (Model.ReportSettings.AFourFooterType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFourFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFourFooterSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFourFooterSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+    <div class="row" id="a5footdiv" style="display:none">
+        @if (Model.ReportSettings.AFiveFooterType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFiveFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFiveFooterSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFiveFooterSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+</div>
+
+
+<script>
+
+        $(document).ready(function () {
+            $('#a5headdiv').hide();
+            $('#a5footdiv').hide();
+
+            $('#a4headdiv').show();
+            $('#a4footdiv').show();
+
+                var studid= $("#hfstudentid").val();
+                getStudentInfo($("#hfstudentid").val());
+                getRCCP_Student();
+                getStudentSchedule($("#hfstudentid").val());
+
+
+           });
+
+               function getStudentInfo(id){
+                 $("#loaderDiv").show();
+
+                     $.ajax({
+                     type: 'GET',
+                     async : false,
+                     url: '@Url.Action("GetStudent", "Student")?Id=' + id,
+                     Accept: 'application/json, text/javascript',
+                     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                     // data: myformdata,
+                     success: function (response) {
+                         if (response != null) {
+
+                             var result = response;
+                             $("#divprofile").show();
+                             $("#divmarkgraph").hide();
+                              $("#divsubjectgraph").hide();
+
+                             $("#lblRegisterNo").html(result.rollNo);
+                             $("#lblName").html(result.fullName);
+                             $("#lblFatherName").html(result.fatherName);
+                             $("#lblMotherName").html(result.motherName);
+                             $("#lblAge").html(result.age);
+                             $("#lblGenderName").html(result.genderName);
+                             $("#lblMobileNo").html(result.defaultMobileNo);
+                             $("#lblAdmissionClassName").html(result.className);
+                             $("#lblBranchName").html(result.branchName);
+                             $("#lblSectionName").html(result.sectionName);
+                             $("#imgPhoto").attr("src", result.filePath);
+
+                                 $("#loaderDiv").hide();
+
+                             } else {
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                             }
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 })
+
+            }
+               function getStudentSchedule(id){
+                 $("#loaderDiv").show();
+                            $.ajax({
+                            type: 'GET',
+                            async : false,
+                            url: '@Url.Action("GetStudentScheduleResult", "Student")?Id=' + id +'&ReportCardId=' + $("#hfreportcardid").val(),
+                            Accept: 'application/json, text/javascript',
+                            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+
+                            success: function (response) {
+                                var result =response;
+                                if (response != null) {
+
+                                    if (result.lstStudentScheduleResult.length > 0){
+                                        for (var i = 0; i < result.lstStudentScheduleResult.length; i++){
+                                            fillTable(result.lstStudentScheduleResult[i]);
+                                        }
+                                         setGraph(result.lstStudentScheduleResult);
+                                     }
+                                     FillGraph(result.studentScheduleGraph);
+                                     $("#loaderDiv").hide();
+                                    } else {
+                                            toastr.error(`@_localization.Getkey("Error")`);
+                                    }
+                            },
+                            error: function (response) {
+                                        toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                        });
+
+               }
+               function fillTable(data){
+
+                     var tblbdy = document.getElementById("tbldetailbody");
+                var rowIndex = tblbdy.rows.length > 0 ? (tblbdy.rows.length)-(tblbdy.rows.length) : tblbdy.rows.length;
+                var newRow = tblbdy.insertRow(rowIndex);
+
+                   var parenttbl = createTable(data);
+                   cell1 = newRow.insertCell(0);
+                   cell1.appendChild(parenttbl);
+                   cell1.colSpan = 2;
+
+
+                    var newRow2 = tblbdy.insertRow(rowIndex+1);
+                    var childtbl = createSubTableMarkList(data.lstStudentMarkResult);
+                    cell1 = newRow2.insertCell(0);
+                    cell1.appendChild(childtbl);
+
+
+                    var childtbl2 = createSubTableGraph(data.studentMarkGraph, data.id);
+                    cell2 = newRow2.insertCell(1);
+                    cell2.appendChild(childtbl2);
+                }
+
+             function createTable(data){
+                var tbl = document.createElement('table');
+                tbl.className ="table table-sm table-bordered table-centered mb-0";
+
+                var tblhead = document.createElement('thead');
+                var trhead = document.createElement('tr');
+
+                var th1 = document.createElement('th');
+                th1.innerText ='Exam Type';
+                th1.style.textAlign = 'center';
+                trhead.appendChild(th1);
+
+                var th2 = document.createElement('th');
+                th2.innerText ='Exam Month';
+                th2.style.textAlign = 'center';
+                trhead.appendChild(th2);
+
+                var th3 = document.createElement('th');
+                th3.innerText ='Max Marks';
+                th3.style.textAlign = 'center';
+                trhead.appendChild(th3);
+
+                var th4 = document.createElement('th');
+                th4.innerText ='Marks Obtained';
+                th4.style.textAlign = 'center';
+                trhead.appendChild(th4);
+
+               var th5 = document.createElement('th');
+                th5.innerText ='Percentage';
+                th5.style.textAlign = 'center';
+                trhead.appendChild(th5);
+
+                var th6 = document.createElement('th');
+                th6.innerText ='Grade';
+                th6.style.textAlign = 'center';
+                trhead.appendChild(th6);
+
+                tblhead.appendChild(trhead);
+
+                var tblbody = document.createElement('tbody');
+                var rowIndex= tblbody.rows.length;
+                var newRow = tblbody.insertRow(rowIndex);
+                cell1 = newRow.insertCell(0);
+                cell1.innerHTML = data.examTypeName;
+                    cell1.style.textAlign = 'center';
+
+                cell2 = newRow.insertCell(1);
+                cell2.innerHTML = data.scheduleMonth;
+                    cell2.style.textAlign = 'center';
+
+                    cell3 = newRow.insertCell(2);
+                cell3.innerHTML = data.maxMarks;
+                    cell3.style.textAlign = 'center';
+
+                    cell4 = newRow.insertCell(3);
+                cell4.innerHTML = data.marks;
+                    cell4.style.textAlign = 'center';
+
+                        cell5 = newRow.insertCell(4);
+                cell5.innerHTML = data.mrkPercent;
+                    cell5.style.textAlign = 'center';
+
+                    cell6 = newRow.insertCell(5);
+                cell6.innerHTML = data.gradeName;
+                    cell6.style.textAlign = 'center';
+
+                tbl.appendChild(tblhead);
+                    tbl.appendChild(tblbody);
+                    return tbl;
+                }
+
+            function createSubTableMarkList(data){
+
+
+                var tbl = document.createElement('table');
+                tbl.className ="table table-sm table-bordered table-centered mb-0";
+                var tblhead = document.createElement('thead');
+                var trhead = document.createElement('tr');
+                var th1 = document.createElement('th');
+                th1.innerText ='Subject';
+                th1.style.textAlign = 'center';
+                trhead.appendChild(th1);
+
+                var th2 = document.createElement('th');
+                th2.innerText ='Marks';
+                th2.style.textAlign = 'center';
+                trhead.appendChild(th2);
+
+                var th3 = document.createElement('th');
+                th3.innerText ='Max Marks';
+                th3.style.textAlign = 'center';
+                trhead.appendChild(th3);
+
+                tblhead.appendChild(trhead);
+
+                var tblbody = document.createElement('tbody');
+                 for (i = 0; i < data.length; i++) {
+                    var rowIndex= tblbody.rows.length;
+                    var newRow = tblbody.insertRow(rowIndex);
+                    cell1 = newRow.insertCell(0);
+                    cell1.innerHTML = data[i].subjectName;
+                    cell1.style.textAlign = 'center';
+
+                    cell2 = newRow.insertCell(1);
+                    cell2.innerHTML = data[i].marks;
+                    cell2.style.textAlign = 'center';
+
+                    cell3 = newRow.insertCell(2);
+                    cell3.innerHTML = data[i].maxMarks;
+                    cell3.style.textAlign = 'center';
+                }
+                tbl.appendChild(tblhead)
+                tbl.appendChild(tblbody);
+                return tbl;
+
+            }
+            function createSubTableGraph(data, uniqueid){
+
+                var tbl = document.createElement('table');
+                 var tblbody = document.createElement('tbody');
+                 var rowIndex= tblbody.rows.length;
+                  var newRow = tblbody.insertRow(rowIndex);
+
+                   var canvas = document.createElement("canvas");
+                   canvas.setAttribute("id", "myChart"+uniqueid);
+                   canvas.width="500";
+                   canvas.height="300";
+
+                    cell1 = newRow.insertCell(0);
+                    cell1.appendChild(canvas);
+
+                     tbl.appendChild(tblbody);
+                        return tbl;
+
+            }
+        function setGraph(data) {
+
+                var tableArr = data;
+            tableArr.forEach(function (e) {
+
+                    var chartID = "myChart"+e.id;
+                     let mychartStatus = Chart.getChart(chartID);
+                if (mychartStatus != undefined) {
+                  mychartStatus.destroy();
+                }
+
+
+                       var ctx_barchart = document.getElementById(chartID);
+                        var mybarChart =new Chart(ctx_barchart, {
+                            type : 'bar',
+                            data : e.studentMarkGraph,
+                            options: {
+                                indexAxis : 'y',
+                                elements : {
+                                    bar : {
+                                        borderWidth : 2
+                                    }
+                                },
+                                maintainAspectRatio: true,
+                                responsive: true,
+                                plugins: {
+                                    legend : {
+                                        position : 'bottom',
+                                    },
+                                    title : {
+                                        display : true,
+                                        text : 'Results'
+                                    }
+                                }
+                            }
+                        })
+                })
+            }
+            function FillGraph(data){                
+                let chartStatus = Chart.getChart("rptlineScheduleChart");
+                if (chartStatus != undefined) {
+                  chartStatus.destroy();
+                }
+
+                var ctx_linechart = document.getElementById('rptlineScheduleChart');
+
+                        var myLineChart =new Chart(ctx_linechart, {
+                            type : 'line',
+                            data : data,
+                            options: {
+                                parsing: {
+                                xAxisKey: 'strlabel',
+                                yAxisKey: 'percent'
+                            },
+                                maintainAspectRatio: true,
+                                responsive: true,
+                                plugins: {
+
+                                    datalabels: {
+                                        anchor: 'end',
+                                        align: 'top',
+                                        formatter: Math.round,
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        //document.getElementById("rptlineScheduleChart").onclick = function(evt) {
+                        //    const res = myLineChart.getElementsAtEventForMode(evt, 'nearest',
+                        //    { intersect: true },
+                        //    true
+                        //  );
+                        //  if (res.length === 0) {
+                        //    return;
+                        //  }
+
+                        //   scheduleid = myLineChart.data.datasets[res[0].datasetIndex].data[res[0].index].scheduleId;
+                        //    GetStudentMarks($("#hfstudentid").val(),scheduleid);
+
+                        //    };
+            }
+            function getRCCP_Student(){
+
+                          $.ajax({
+                                      type: "post",
+                                      async : false,
+                                      url: '@Url.Action("GetRCCP_Student","ReportCard")',
+                                      data: { reportCardId: $("#hfreportcardid").val(), StudentId : $("#hfstudentid").val() },
+                                          dataType: 'json',
+                                      traditional: true,
+                                      success: function (response) {
+                                          if(response != null){
+                                             // console.log(response.strResult);
+                                              var strResponse =JSON.parse(response.strResult);
+
+                                                var cardData=[];
+                                                     $.each(strResponse,function(key,value){
+
+                                                         cardData.push([value.RollNo,value.MaxMarks,value.Marks,value.MrkPercent,value.Grade, value.PRank])
+                                                     })
+
+                                                     $("#tblrccpstudent").DataTable({
+                                                         "bDestroy": true,
+                                                          data : cardData,
+                                                           "aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+                                                          //columnDefs: [
+                                                          //  {
+                                                          //      targets:'_all',
+                                                          //      className: 'dt-center'
+                                                          //  }
+                                                          //],
+                                                           "searching": false,
+                                                            "bLengthChange": false,
+                                                            paging: false,
+                                                            "info": false,
+                                                            "ordering": false
+                                                     })
+                                          }
+                                          else{
+                                               $("#loaderDiv").hide();
+
+                                          }
+                                      },
+                                 error: function (response) {
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                                 }
+                                  });
+               }
+       function generate_uuidv4() {
+                   var id_str = [];
+                   var hxDigits = "0123456789abcdef";
+                   for (var i = 0; i < 36; i++) {
+                      id_str[i] = hxDigits.substr(Math.floor(Math.random() * 0x10), 1);
+                   }
+                   id_str[14] = "4"; // bits 12-15 is for time_hi_and_version field, set to to 0010
+
+                   id_str[19] = hxDigits.substr((id_str[19] & 0x3) | 0x8, 1); // bits 6-7 for the clock_seq_hi_and_reserved to 01
+
+                   id_str[8] = id_str[13] = id_str[18] = id_str[23] = "-";
+
+                   var guid = id_str.join("");
+                   return guid;
+    }
+
+</script>
+
+
+
+
+
+
+
+
+
+

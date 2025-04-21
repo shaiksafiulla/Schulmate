@@ -1,0 +1,55 @@
+﻿@model ScheduleTitle
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{    
+    string strtoken= @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam"); 
+    
+}
+@Html.HiddenFor(m => m.Id, new{ @id="hfteacherinvigilationid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+<div class="card card-style">
+            <div class="content mt-0 mb-0">
+                <p>
+                   Examination Invigilations
+                </p>
+
+                <div class="divider mb-0"></div>
+
+                <div class="list-group list-custom-small check-visited" id="invig-container">                  
+                </div>
+
+            </div>
+        </div>
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+     $(document).ready(function () {     
+         setActiveNav("@Url.Action("Index", "Home")");       
+         showLoading();
+         getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/teacher/TeacherInvigilation/`+$("#hfteacherinvigilationid").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                              setBindingValues(response);                            
+                             hideLoading();                        
+                        })
+                        .catch(error => {                          
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });            
+     });
+     
+    function setBindingValues(data){
+         var anchors = "";      
+        for (var i = 0; i < data.length; i++) {
+            anchors += `<a href="#"><i class="fa fa-calendar-alt color-blue-dark"></i>`+
+            ` <span> ` + data[i].strExamDate +`</span>`+           
+            ` <span class="badge bg-green-dark font-11"> ` + data[i].examHallName +`</span>`+
+            
+            `</a>`;
+        }
+       $('#invig-container').append(anchors);        
+    }
+
+</script>

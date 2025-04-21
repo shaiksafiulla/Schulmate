@@ -1,0 +1,190 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<CalendarEvent>
+@using Localization.Services
+@inject LanguageService _localization
+@{
+    string cultur = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string locale = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "ar" : "en";
+}
+<div class="card ribbon-box">
+    <div class="card-body">
+        <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("CalendarEventInfo")</div>
+        @* <button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('45','0')"><i class="ri-add-line"></i></button> *@
+        <div class="ribbon-content">
+            <div id="calendar"></div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+    <div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header modal-colored-header bg-info">
+                    <h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="myModalBodyDiv1">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Styles {
+    <link href="~/assets/vendor/fullcalendar/main.min.css" rel="stylesheet" type="text/css" />
+}
+@section Scripts {
+    <script src="~/assets/vendor/fullcalendar/main.min.js"></script>
+    <script>
+          document.addEventListener('DOMContentLoaded', function() {
+                  var calendarEl = document.getElementById('calendar');
+                  var calendar = new FullCalendar.Calendar(calendarEl, {
+                      // Configuration options
+                    headerToolbar: {
+                          left: 'prev,next today',
+                          center: 'title',
+                          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                      },
+                      height: 600, // Set the height of the whole calendar
+                      initialView: 'dayGridMonth', // Initial view when the calendar is first rendered
+                      initialDate: new Date(), // Initial date when the calendar is first rendered
+                          nextDayThreshold: '00:00:00',
+                          editable: true,
+                           dateClick: function(info) {
+                                // Open modal dialog to create new event
+                                openCreateEventModal(info.dateStr);
+                            },
+                            locale:  `@locale`,
+                            direction: `@cultur`,
+                      events: {
+                      url: '@Url.Action("GetAll", "CalendarEvent")',
+                      error: function() {
+                          alert('error');
+                      },
+                      success: function(){
+                         // console.log('success loading');
+                         // alert("successful: You can now do your stuff here. You dont need ajax. Full Calendar will do the ajax call OK? ");
+                      }
+                  },
+                  eventClick: function(info) {
+                       var eventId = info.event._def.publicId;
+                      openEditEventModal(eventId);
+                  }
+                  });
+                  calendar.render();
+              });
+              function openEditEventModal(eventId) {
+                      addEditAction('45',eventId);
+              }
+              function openCreateEventModal(date) {
+                    // console.log('Creating new event on date:', date);
+                  addEvent(date);
+              }
+        var addEvent = function (date) {
+            $("#primary-header-modalLabel").html(`@_localization.Getkey("EditCalendarEvent")`);
+            var url = '@Url.Action("AddEvent", "CalendarEvent")?jsdate=' + date;
+            $("#myModalBodyDiv1").load(url, function () {
+                $("#primary-header-modal").modal("show");
+            })
+        }
+          $(document).ready(function(){
+              var resObj = setResourceObj();
+                  getResourceObj(JSON.stringify(resObj));
+
+          });
+          function setResourceObj() {
+              var msgobj = {};
+              msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+              msgobj.yes = `@_localization.Getkey("Yes")`;
+              msgobj.no = `@_localization.Getkey("No")`;
+              msgobj.error = `@_localization.Getkey("Error")`;
+              msgobj.added = `@_localization.Getkey("Added")`;
+              msgobj.updated = `@_localization.Getkey("Updated")`;
+
+              msgobj.deleted = `@_localization.Getkey("Deleted")`;
+              msgobj.delete = `@_localization.Getkey("Delete")`;
+              msgobj.view = `@_localization.Getkey("View")`;
+              msgobj.edit = `@_localization.Getkey("Edit")`;
+              msgobj.calendarevent = `@_localization.Getkey("CalendarEvent")`;
+              msgobj.viewcalendarevent = `@_localization.Getkey("ViewCalendarEvent")`;
+              msgobj.editcalendarevent = `@_localization.Getkey("EditCalendarEvent")`;
+              msgobj.addcalendarevent = `@_localization.Getkey("AddCalendarEvent")`;
+
+              return msgobj;
+          }
+          function getExamType(){
+                                  $("#loaderDiv").show();
+                                     $.ajax({
+                                      type: 'POST',
+                                      async : false,
+                                      url: '@Url.Action("GetAll", "ExamType")',
+                                      Accept: 'application/json, text/javascript',
+                                      contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                                      success: function (response) {
+                                          if (response != null) {
+
+                                                  var examTypeData=[];
+                                              $.each(JSON.parse(response),function(key,value){
+                                                      var btndelete="";
+                                                      if (value.isDelete == "1"){
+                                  btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`7`,`ExamTypeGrid`, ' + value.id + ')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+                                                      }
+                                                      var btnaction ='<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,ExamTypeGrid);"> '+
+                                                          '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>'+
+                                                          '<div class="dropdown-menu dropdown-menu-end">'+
+                                  '<a class="dropdown-item" href="#" onclick="viewAction(`7`, ' + value.id + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("View")</a>' +
+                                  '<a class="dropdown-item" href="#" onclick="addEditAction(`7`, ' + value.id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' + btndelete +
+                                                          '</div>'+
+                                                      '</div>'
+
+                                                      examTypeData.push([value.id,value.name,value.description,btnaction])
+                                                  })
+
+                                                  $("#ExamTypeGrid").DataTable({
+                                                      "bDestroy": true,
+                                                      data: examTypeData,
+                                                      order: [[0, "desc"]],
+                                                      "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                                                      dom: 'lBfrtip',
+                                                      buttons: [
+                                                          {
+                                                              extend: 'csvHtml5',
+                                                              text: '<i class="ri-file-excel-line"></i>',
+                                                              titleAttr: 'csv',
+                                      filename: `@_localization.Getkey("ExamTypes")`,
+                                                              className: 'btn btn-outline-light btn-sm',
+                                                              exportOptions: {
+                                                                  columns: [1, 2]
+                                                              }
+                                                          }
+                                                      ]
+                                                  })
+                                                  $("#loaderDiv").hide();
+
+                                              } else {
+                          toastr.error(`@_localization.Getkey("Error")`);
+                                              }
+                                      },
+                                      error: function (response) {
+                      toastr.error(`@_localization.Getkey("Error")`);
+                                      }
+                                  })
+               }
+
+    </script>
+}
+
+
+
+
+
+

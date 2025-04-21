@@ -1,0 +1,102 @@
+﻿@model VPersonnelAttendenceBenchmark
+@using Localization.Services
+@using Newtonsoft.Json
+@using SchoolCoreMOB.Models
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    VUserInfo struser = new VUserInfo();
+    var userInfokey = @Context.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        struser = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+    }
+    string strtoken = @Context.Session.GetString("strtoken");
+    string userParamkey = @Context.Session.GetString("UserParam");
+}
+<link rel="stylesheet" type="text/css" href="~/styles/attendance.css">
+@Html.HiddenFor(m => m.Id, new{ @id="hfstudentattendenceid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content mb-0">
+        <div id="grandAttendanceSummary" class="attendance-summary"></div>
+        <hr />
+        <div class="calendar-header">
+            <button class="prev-month">&#60;</button>
+            <span id="monthYear" class="cal-title text-center text-uppercase font-700 font-15 bg-theme color-theme">August 2024</span>
+            <button class="next-month">&#62;</button>
+        </div>
+        <div class="calendar-days">
+            <div class="day">Sun</div>
+            <div class="day">Mon</div>
+            <div class="day">Tue</div>
+            <div class="day">Wed</div>
+            <div class="day">Thu</div>
+            <div class="day">Fri</div>
+            <div class="day">Sat</div>
+        </div>
+        <div class="calendar-dates" id="dates"></div>
+        <hr />
+
+        <div id="attendanceDetails">
+            <div id="attendanceSummary" class="attendance-summary"></div>
+        </div>
+    </div>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content mt-0 mb-2">
+        <h5>Leave Requests</h5>
+        <hr />
+        <div id="leaveRequests" class="list-group list-custom-large list-icon-0"></div>
+    </div>
+</div>
+@*<div class="card card-style">
+
+    <div class="content mb-0">
+    <h3 class="text-center bottom-0">Attendance</h3>
+    <div id="totals-container" style="text-align:center; font-size: 11px" class="color-highlight"></div>
+    <div class="chart-container mb-2" id="charts-container" style="width:100%;"></div>
+    </div>
+    </div>*@
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script src="~/scripts/attendance.js"></script>
+<script>
+     //$(document).ready(function () {
+     //     setActiveNav("@Url.Action("Index", "Home")");
+     //     showLoading();
+     //     getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/Personnel/`+$("#hfstudentattendenceid").val()+`,4`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+     //                   .then(response => {
+     //                        setBindingValues(response);
+     //                         hideLoading();
+     //                   })
+     //                   .catch(error => {
+     //                        showToast('2', `@_localization.Getkey("Error")`);
+     //                   });
+     //});
+
+    const attendUrl = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/MbPersonnel/`+ $("#hfstudentattendenceid").val()+`,4`;
+     const leaveUrl = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/leaverequest/Personnel/`+ $("#hfstudentattendenceid").val()+`,4`;
+    const atttoken = `@strtoken`;
+    const struserparam = `@Html.Raw(@userParamkey)`;
+    fetchAttendanceData(new Date().getMonth(), new Date().getFullYear(), attendUrl, leaveUrl, atttoken,struserparam);
+
+    document.querySelector(".next-month").addEventListener("click", function () {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear);
+    });
+    document.querySelector(".prev-month").addEventListener("click", function () {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar(currentMonth, currentYear);
+    });
+</script>

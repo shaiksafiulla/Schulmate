@@ -1,0 +1,143 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<LicenseKey>
+@using Localization.Services
+@inject LanguageService _localization
+
+@{
+    ViewData["Title"] = "Labs";
+}
+@using (Html.BeginForm())
+{
+
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Licenses")</div>
+            <button type="button" class="btn btn-outline-light btn-sm float-end" onclick="addEditAction('22','0')"><i class="ri-add-line"></i></button>
+
+           
+            <div class="ribbon-content">
+                <div class="table-responsive-sm">
+                    <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="LicenseGrid">
+                        <thead >
+                            <tr>
+                                <th>Id</th>
+                                <th>@_localization.Getkey("Months")</th>
+                                <th>@_localization.Getkey("StartDate")</th>
+                                <th>@_localization.Getkey("ExpiryDate")</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>                           
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            
+        </div>
+        <div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header modal-colored-header bg-info">
+                        <h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="myModalBodyDiv1">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>
+    </div>
+}
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script>
+     $(document).ready(function(){
+         $("#loaderDiv").show("slow", function() {
+             getLicenses();
+             var resObj = setResourceObj();
+             getResourceObj(JSON.stringify(resObj));
+            })
+     });
+    function setResourceObj() {
+        var msgobj = {};
+        msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+        msgobj.yes = `@_localization.Getkey("Yes")`;
+        msgobj.no = `@_localization.Getkey("No")`;
+        msgobj.error = `@_localization.Getkey("Error")`;
+        msgobj.added = `@_localization.Getkey("Added")`;
+        msgobj.updated = `@_localization.Getkey("Updated")`;
+
+        msgobj.deleted = `@_localization.Getkey("Deleted")`;
+        msgobj.delete = `@_localization.Getkey("Delete")`;
+        msgobj.view = `@_localization.Getkey("View")`;
+        msgobj.edit = `@_localization.Getkey("Edit")`;
+        msgobj.classes = `@_localization.Getkey("Classes")`;
+        msgobj.viewlicense = `@_localization.Getkey("ViewLicense")`;
+        msgobj.editlicense = `@_localization.Getkey("EditLicense")`;
+        msgobj.addlicense = `@_localization.Getkey("AddLicense")`;
+
+        return msgobj;
+    }
+     function getLicenses(){
+                               $.ajax({
+                                type: 'GET',
+                                url: '@Url.Action("GetAll", "License")',
+                                async : false,
+                                Accept: 'application/json, text/javascript',
+                                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+
+                                success: function (response) {
+                                    if (response != null) {
+                                            var licenseData=[];
+                                        $.each(JSON.parse(response), function (key, value) {
+                                            licenseData.push([value.id,value.noOfMonths, value.createdDate, value.expirationDate])
+                                            })
+
+                                            $("#LicenseGrid").DataTable({
+                                                "bDestroy": true,
+                                                data : licenseData,
+                                                order: [[0, "desc"]],
+                                                "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                                                  dom: 'lBfrtip',
+                                                   buttons: [
+                                                         {
+                                                            extend:    'csvHtml5',
+                                                            text:      '<i class="ri-file-excel-line"></i>',
+                                                            titleAttr: 'csv',
+                                filename: `@_localization.Getkey("Licenses")`,
+                                                            className: 'btn btn-outline-light btn-sm',
+                                                             exportOptions: {
+                                                                    columns: [ 1,2,3 ]
+                                                                }
+                                                        }
+                                                    ]
+                                            })
+                                            $("#loaderDiv").hide();
+
+
+                                        } else {
+                    toastr.error(`@_localization.Getkey("error")`);
+                                        }
+                                },
+                                error: function (response) {
+                toastr.error(`@_localization.Getkey("error")`);
+                                }
+                            })
+         }
+
+</script>
+
+
+

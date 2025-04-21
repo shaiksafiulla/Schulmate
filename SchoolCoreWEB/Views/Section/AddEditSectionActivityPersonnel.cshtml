@@ -1,0 +1,181 @@
+﻿@model SchoolCoreWEB.Models.SectionActivityVM
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+<form id="sectionTeacherForm" class="forms-sample">
+    @Html.HiddenFor(m => m.SectionId, new { @id = "hfsectionid" })    
+    @Html.HiddenFor(m => m.LstSectionActivityPersonnel, new { @id = "hflstsectionactivitypersonnel" })
+    <div class="row">     
+
+
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ActivityTeacher")</div>
+                <div class="ribbon-content">
+                    <table class="table table-sm table-bordered table-centered mb-0" id="tblcastActivityteacher">
+                        <thead>
+                            <tr>
+                                <th style="display:none">ClassSubjectId</th>
+                                <th>@_localization.Getkey("Activity")</th>
+                                <th>@_localization.Getkey("Teacher")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < @Model.LstSectionActivityPersonnel.Count(); i++)
+                            { 
+                                   
+                                <tr>
+                                    <td style="display:none">@Html.DisplayFor(m => @Model.LstSectionActivityPersonnel[i].ActivityId)</td>
+                                    <td>
+                                        @Model.LstSectionActivityPersonnel[i].ActivityName                                                                 
+                                    </td>
+                                    <td>
+                                        @Html.ListBoxFor(m => @Model.LstSectionActivityPersonnel[i].SectionActivityPersonnelIds, @Model.LstSectionActivityPersonnel[i].SectionActivityPersonnelSheet, new
+                                            {
+                                                @class = "myclass",
+                                                @style = "width:100%", @multiple = "multiple" })
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary mr-2" onclick="submitActivityPersonnel()">@_localization.Getkey("Update")</button>
+
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+   
+    $(document).ready(function () {       
+       
+        var allElements = document.querySelectorAll('.myclass');
+        allElements.forEach(function (element) {
+            $(element).select2({
+                dropdownParent: $('#myModalBodyDiv1'),
+                placeholder: "select teacher",
+                tags: true
+            });
+            var jsmodel = @Html.Raw(Json.Serialize(Model));
+            if (jsmodel != null && jsmodel.lstSectionActivityPersonnel.length > 0) {
+                var dbElements = document.querySelectorAll('.select2-selection__choice');
+                dbElements.forEach(function (dbElement) {
+                    dbElement.style.backgroundColor = '#32a852';// '#0d6efd';
+                });
+            }
+            $(element).on('select2:select', function (e) {
+                var selectElements = document.querySelectorAll('.select2-selection__choice');
+                selectElements.forEach(function (selectElement) {
+                    selectElement.style.backgroundColor = '#32a852';// '#0d6efd';
+                });
+            });
+            $(element).on('select2:unselect', function (e) {
+                var unselectElements = document.querySelectorAll('.select2-selection__choice');
+                unselectElements.forEach(function (unselectElement) {
+                    unselectElement.style.backgroundColor = '#32a852';// '#0d6efd';
+                });
+            });
+        });
+        
+        
+       
+        // $('#ddlsectionteacher').select2({
+        //      dropdownParent: $('#myModalBodyDiv1'),
+        //         placeholder: "select sections"
+        //     });
+
+        // $('#ddlsectionteacher').on('select2:select', function (e) {
+        //     var selectElements = document.querySelectorAll('.select2-selection__choice');
+        //              selectElements.forEach(function(selectElement) {
+        //             selectElement.style.backgroundColor = '#0d6efd';
+        //     });
+
+        // });
+        // $('#ddlsectionteacher').on('select2:unselect', function (e) {
+        //         var unselectElements = document.querySelectorAll('.select2-selection__choice');
+        //         unselectElements.forEach(function (unselectElement) {
+        //             unselectElement.style.backgroundColor = '#0d6efd';
+        //         });
+        // });
+
+    });
+    function getSectionActivityPersonnel() {
+        var chkClsArray = [];
+        $("#tblcastActivityteacher tbody tr").each(function () {
+            var tr = $(this);
+
+            var paramcls = {};
+
+            var FirstCol = tr.find("td").eq(0).html();    
+            
+            var element = tr.find("select").eq(0);
+            var selectedIds = element.val();
+            var serializedids = JSON.stringify(selectedIds);
+           
+
+            paramcls.ActivityId = FirstCol;
+            paramcls.SectionActivityPersonnelIds = element.val();
+            chkClsArray.push(paramcls);
+
+        });
+        return chkClsArray;
+    }
+    function submitActivityPersonnel() {
+
+        $("#loaderDiv1").show("slow", function () {
+
+
+            var obj = {};
+            obj.SectionId = $('#hfsectionid').val();
+            //obj.SectionTeacherIds = $('#ddlsectionteacher').val();
+            //obj.SectionTeacherSheet = [];
+
+            var lstsubjectTeacher = getSectionActivityPersonnel();
+            obj.LstSectionActivityPersonnel = lstsubjectTeacher;         
+             var jdata = JSON.stringify(obj);
+           
+            $.ajax({
+                type: 'POST',
+                async: false,
+                url: '@Url.Action("UpdateSectionActivityPersonnel", "Section")',
+                data: { model : jdata },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('SectionGrid', serviceresult.recordId, serviceresult.statusId, '5');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        })
+
+    }
+</script>

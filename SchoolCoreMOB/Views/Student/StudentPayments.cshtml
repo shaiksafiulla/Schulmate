@@ -1,0 +1,113 @@
+﻿@model VStudentPay
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{    
+    string strtoken= @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam"); 
+   
+}
+@Html.HiddenFor(m => m.Id, new{ @id="hfstudentpayid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Payments</h2>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+   
+    <div class="content">
+         <h5 class="mb-n1">Fee Details</h5>   
+         <hr />
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Total Amount : <strong id="spfeetotal"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Paid Amount :<strong id="spfeepaid"></strong>
+        </div>
+        <div class="mb-0">
+            <i class="fa fa-star color-yellow-dark me-2"></i>Due Amount :<strong id="spfeedue"></strong>
+        </div>       
+    </div>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content">    
+        <h5 class="mb-n1">Payment Details</h5>   
+        <hr />
+        <div class="list-group list-custom-large list-icon-0" id="payment-container">
+        </div> 
+        <a href="#" data-menu="menu-payments" id="ancmenupaymenttrigger" style="display:none">Payments</a>
+    </div>
+</div>
+
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+
+<script>
+     $(document).ready(function () {
+           setActiveNav("@Url.Action("Index", "Home")");
+        // var lstpayments = @Html.Raw(Json.Serialize(Model));
+        // console.log(lstpayments)
+        //if(lstpayments !=null && lstpayments.length > 0){
+        //    setBindingPaymentValues(lstpayments);
+        //  }
+        showLoading();         
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/Payments/`+$("#hfstudentpayid").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+
+                             $("#spfeetotal").html(response.finalAmount || '&nbsp;');
+                            $("#spfeepaid").html(response.paidAmount || '&nbsp;');
+                            $("#spfeedue").html(response.dueAmount || '&nbsp;');
+
+                             setBindingPaymentValues(response.lstStudentPay);                       
+                              hideLoading();                       
+                        })
+                        .catch(error => {                          
+                             showToast('2', `@_localization.Getkey("Error")` + error);
+                        });
+    });
+
+      function setBindingPaymentValues(data){          
+
+         $('#payment-container').empty();         
+          var anchors = "";
+         for (var i = 0; i < data.length; i++) {
+             var statusName =  `<span class="badge bg-blue-dark font-11">${data[i].amount}</span>`;     
+          
+            const date = new Date(data[i].createdDate);
+            const formattedDate = date.toISOString().split('T')[0];
+            const formattedTime = date.toISOString().split('T')[1].split('.')[0];
+          
+             let itemString = JSON.stringify(data[i]);
+            // Escape double quotes within the JSON string
+            itemString = itemString.replace(/"/g, '&quot;');
+
+            anchors += `<a href="#" onclick="viewPaymentInfo(${itemString})"><i class="fa fa-wallet font-16 color-brown-dark"></i>
+            <span>Ref No : ${data[i].referenceNo}</span>
+            <strong> Date : ${formattedDate}  Time : ${formattedTime}</strong>
+            ${statusName}
+            <i class="fa fa-angle-right"></i>
+            </a>`;
+         }
+        $('#payment-container').append(anchors);
+     }
+      function viewPaymentInfo(item){
+        if(item !== null && item !== undefined){
+
+            const itemdate = new Date(item.createdDate);
+            const formatteditemDate = itemdate.toISOString().split('T')[0];
+            const formatteditemTime = itemdate.toISOString().split('T')[1].split('.')[0];
+
+             $("#sp_paymentrefno").html(item.referenceNo || '&nbsp;');
+             $("#sp_paymentdate").html(formatteditemDate + '-' + formatteditemTime || '&nbsp;');
+             $("#sp_paymentamount").html(item.amount || '&nbsp;');
+             $("#sp_paymentmode").html(item.payModeName || '&nbsp;');
+             $("#sp_paymentremarks").html(item.remarks || '&nbsp;');                 
+
+             $("#ancmenupaymenttrigger")[0].click();
+        }
+    }
+    
+   
+</script>

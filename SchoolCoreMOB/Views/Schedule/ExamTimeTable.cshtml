@@ -1,0 +1,177 @@
+﻿@model ScheduleTitle
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+@Html.HiddenFor(m => m.Id, new{ @id="hfscheduletimetableid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Classes</h2>
+</div>
+<div class="content">
+    <div class="input-style has-borders input-style-always-active no-icon mb-4">
+        <select id="branchclass-dropdown">
+            <option value="default" disabled>Select Class</option>
+        </select>
+        <span><i class="fa fa-chevron-down"></i></span>
+        <i class="fa fa-check disabled valid color-green-dark"></i>
+        <i class="fa fa-check disabled invalid color-red-dark"></i>
+        <em></em>
+    </div>  
+   
+     @*<div id="classtimetablepersonnel-container" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+        </div>*@
+    @* <div id="examtimetable-container" style="margin-top:10px">
+        </div>*@
+</div>
+ <div id="examtimetable-container">
+    </div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+               $(document).ready(function () {
+                   setActiveNav("@Url.Action("Index", "Home")");                 
+                    showLoading();
+                    getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/MbBranchClass/` + $("#hfscheduletimetableid").val() +``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {                              
+                                 var dropdown = $('#branchclass-dropdown');
+                                            dropdown.empty();
+                                            dropdown.append('<option value="">Select Option</option>');
+                                            $.each(response, function(i, item) {
+                                                dropdown.append('<option value="' + item.id + '">' + item.className + '</option>');
+                                            });
+                                            var defaultValue = response[0].id;
+                                            dropdown.val(defaultValue);
+                                            getExaminationTimeTable(defaultValue);
+                                  hideLoading();
+                            })
+                            .catch(error => {
+                                 showToast('2', `@_localization.Getkey("Error")`);
+                            });                                
+                                    $('#branchclass-dropdown').change(function() {
+                                        var selectedValue = $(this).val();
+                                        if (selectedValue) {
+                                             getExaminationTimeTable(selectedValue);
+                                        }
+                                        else{
+                                            $('#examtimetable-container').empty();
+                                        }
+                                    });
+
+               });
+
+
+          function getExaminationTimeTable(branchclassid) {
+
+            showLoading();
+            getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/ExamTimeTable/`+$("#hfscheduletimetableid").val()+`,`+branchclassid+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {
+                                 setExamAndSyllabusBindingValues(response);
+                                  hideLoading();
+                            })
+                            .catch(error => {
+                                 showToast('2', `@_localization.Getkey("Error")`);
+                            });
+
+
+        }
+          function setExamAndSyllabusBindingValues(data) {
+                const container = document.getElementById('examtimetable-container');
+                let htmlContent = ''; 
+                data.forEach((result, index) => {                   
+                  const lessonNames = result.lstExaminationLesson.map(lesson => lesson.lessonName).join(', ');                 
+                  const sectionHTML=`<a href="#" class="card card-style mb-2 custom-card rounded-2">
+                                            <div class="d-flex pt-2 pb-0">
+                                                    <div class="d-flex flex-column justify-content-center ms-3">
+                                                        <h5 class="color-theme font-600 text-start">${result.subjectName}</h5>
+                                                        <p class="mt-n1 font-10 color-highlight mb-1 text-start">Date : ${result.strExamDate}  Time : ${result.strExamTime}</p>
+                                                        ${lessonNames ? `<div class="font-12 text-start color-dark">
+                                                            <i class="far fa-clock font-14 color-brown-dark"></i>
+                                                            <span class="ms-2">syllabus : ${lessonNames}</span>
+                                                        </div>` : ''}
+                                                    </div> 
+                                                     
+                                            </div> 
+                                         </a>`;
+                  
+
+                    htmlContent += sectionHTML;
+                });
+                container.innerHTML = htmlContent;
+    }
+       //function setClassPersonnelBinding(data){
+        //      $('#classtimetablepersonnel-container').empty();
+
+        //     const container = document.getElementById('classtimetablepersonnel-container');
+        //      data.forEach(card => {
+        //          const div = document.createElement('div');
+        //          div.className = 'weekdaycard';
+        //          div.setAttribute('data-value', card.id);
+        //          div.textContent = card.className;
+
+        //         // Add click event listener
+        //          div.addEventListener('click', () => {
+        //                  const selectedCard = container.querySelector('.weekdaycard.selected');
+        //                  if (selectedCard) {
+        //                      selectedCard.classList.remove('selected');
+        //                  }
+        //                  div.classList.add('selected');
+
+        //                  getExaminationTimeTable(card.id);
+        //          });
+        //          container.appendChild(div);
+        //      });
+
+        //  }
+    //    function setBindingExamTimeTableValues(data) {
+    //        $('#examtimetable-container').empty();
+    //        var anchors = "";
+    //        for (var i = 0; i < data.length; i++) {
+    //            // Create a unique ID for each accordion
+    //            var accordionId = "accordion-" + i;
+    //            anchors += `
+    //                <a href="#" class="card card-style mb-2 custom-card rounded-2">
+    //                    <div class="accordion" id="${accordionId}">
+    //                        <!-- Accordion Item Start -->
+    //                        <div class="accordion-item">
+    //                            <h2 class="accordion-header" id="heading-${i}">
+    //                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${i}" aria-expanded="true" aria-controls="collapse-${i}">
+    //                                    <div class="d-flex pt-2 pb-2 justify-content-between">
+    //                                        <!-- Content Section: Left-aligned content -->
+    //                                        <div class="d-flex flex-column ms-3">
+    //                                            <h5 class="color-theme font-600 text-start">${data[i].subjectName}</h5>
+    //                                            <p class="mt-n1 font-10 color-highlight mb-1 text-start">${data[i].strExamDate}</p>
+    //                                        </div>
+
+
+    //                                    </div>
+    //                                </button>
+    //                            </h2>
+    //                            <!-- Accordion Body Start -->
+    //                            <div id="collapse-${i}" class="accordion-collapse collapse" aria-labelledby="heading-${i}" data-bs-parent="#${accordionId}">
+    //                                <div class="accordion-body">
+    //                                    <!-- List of Items Start -->
+    //                                    <ul class="list-unstyled">
+    //                                        ${data[i].lstExaminationLesson.map((lesson, index) => {
+    //                                            return `<li class="mb-1">${lesson.lessonName}</li>`; // Assuming lesson is a simple string
+    //                                        }).join('')}
+    //                                    </ul>
+    //                                    <!-- List of Items End -->
+    //                                </div>
+    //                            </div>
+    //                            <!-- Accordion Body End -->
+    //                        </div>
+    //                        <!-- Accordion Item End -->
+    //                    </div>
+    //                </a>`;
+    //        }
+    //        $('#examtimetable-container').append(anchors);
+    //}
+
+
+
+
+</script>

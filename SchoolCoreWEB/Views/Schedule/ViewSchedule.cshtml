@@ -1,0 +1,1194 @@
+﻿@using SchoolCoreWEB.Models
+@model ScheduleDetail
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="container-fluid">
+    @Html.HiddenFor(m => m.Id, new { @id = "hfscheduledetailid" })
+    <div class="row">
+        <div class="col-2">
+            <div class="row">
+                <div class="list-group list-group-vertical">
+                    <a href="#" class="list-group-item list-group-item-action active" onclick="getSubjectInfo()"><i class="ri-pencil-line"></i> @_localization.Getkey("Subjects")</a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="getTimeTableInfo()"><i class="ri-pencil-line"></i> @_localization.Getkey("ExamTimeTable")</a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="getSeatAllocationInfo()"><i class="ri-pencil-line"></i> @_localization.Getkey("SeatAllocation")</a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="getTeacherInfo()"><i class="ri-pencil-line"></i> @_localization.Getkey("TeacherInvigilation")</a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="getBranchClassBySchedule()"><i class="ri-pencil-line"></i> @_localization.Getkey("HallTickets")</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-10">
+            <div class="row" id="divsubjectinfo">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("ScheduleInfo")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div>
+                                <div style="text-align:center">
+                                    <h4 class="header-title">@_localization.Getkey("SubjectsInfo")</h4>
+                                </div>
+                                <div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblschedsubjectinfo"></table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="divtimetableinfo">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("ScheduleInfo")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div>
+                                <div style="text-align:center">
+                                    <h4 class="header-title">@_localization.Getkey("TimeTableInfo")</h4>
+                                </div>
+                                <div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbltimetableinfo"></table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="divseatallocationinfo">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("ScheduleInfo")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div>
+                                <div style="text-align:center">
+                                    <h4 class="header-title">@_localization.Getkey("SeatAllocation")</h4>
+                                </div>
+                                <div id="divexamhallseat">
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="divteacherinfo">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("ScheduleInfo")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div>
+                                <div style="text-align:center">
+                                    <h4 class="header-title">@_localization.Getkey("TeachersInfo")</h4>
+                                </div>
+                                <div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblteacherresultinfo"></table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="divstudentinfo">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("ScheduleInfo")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="header-title">@_localization.Getkey("Classes")</h4>
+                        </div>
+                        <ul class="list-group list-group-horizontal" id="ulbrcls">
+                        </ul>
+                        <hr />
+                        <div class="row">
+                            <div>
+                                <div style="text-align:center">
+                                    <h4 class="header-title">@_localization.Getkey("StudentsInfo")</h4>
+                                </div>
+                                <div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblstudentresultinfo">
+                                        <thead>
+                                            <tr>
+                                                <th style="display:none;">@_localization.Getkey("Id")</th>
+                                                <th>@_localization.Getkey("SerialNo")</th>
+                                                <th>@_localization.Getkey("RollNo")</th>
+                                                <th>@_localization.Getkey("Name")</th>
+                                                <th>@_localization.Getkey("Class")</th>
+                                                <th>@_localization.Getkey("ExamHall")</th>
+                                                <th>@_localization.Getkey("SeatNumber")</th>
+                                                <th>@_localization.Getkey("Print")</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="a4footdiv" style="display:none">
+                @if (Model.ReportSettings.AFourFooterType == "1")
+                {
+                    <img src="@(Model.ReportSettings.AFourFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                }
+                else if (@Model.ReportSettings.AFourFooterSpace > 0)
+                {
+                    var percent = @Model.ReportSettings.AFourFooterSpace + "px";
+                    <div style="height:@percent"></div>
+                }
+            </div>
+            <div class="modal-footer" id="a5footer">
+                <button type="button" class="btn btn-info" onclick="onPrint()">
+                    <i class="ri-printer-line"></i> @_localization.Getkey("Print")
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+    <div id="primary-header-modal3" class="modal fade" tabindex="-1" data-bs-keyboard="false" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header modal-colored-header bg-secondary">
+                    <h4 class="modal-title" id="primary-header-modalLabel3">Modal Heading</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="myModalBodyDiv3">
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var printtype= '1';
+
+    $(document).ready(function () {
+        $('#a4headdiv').show();
+        $('#a4footdiv').show();
+
+         $("#divsubjectinfo").show();
+        $("#divtimetableinfo").hide();
+        $("#divteacherinfo").hide();
+        $("#divstudentinfo").hide();
+        $("#divseatallocationinfo").hide();
+
+      $('.list-group-item').click(function () {
+            $('.list-group-item').removeClass('active');
+            $(this).addClass('active');
+        });
+        getSubjectInfo();
+    });
+     function getSubjectInfo(){
+         onHideAndShow('1');
+        $("#loaderDiv1").show();
+
+              $.ajax({
+                  type: "post",
+                  async : false,
+                  url: '@Url.Action("GetBranchClassSubjectBySchedule","Schedule")',
+                  data: {scheduleId : $("#hfscheduledetailid").val() },
+                      dataType: 'json',
+                  traditional: true,
+                  success: function (response) {
+
+                      if (response != null) {
+                          var result = response;
+                          var preResultArray=[];
+                          var postResultArray=[];
+
+                           //$("#divsubjectinfo").show("slow", function() {
+                           //       $("#divtimetableinfo").hide();
+                           //        $("#divteacherinfo").hide();
+                           //        $("#divstudentinfo").hide();
+                           //  });
+
+
+                          if (result.postResult ==""){
+
+                          }
+                          else{
+                              var jsonpostData = JSON.parse(result.postResult);
+                              postResultArray.push(jsonpostData);
+                          }
+                          var jsonpreData = JSON.parse(result.preResult);
+                          preResultArray.push(jsonpreData);
+                          if(preResultArray[0].length > 0){
+                              onLoadSubjectData(preResultArray,postResultArray);
+                          }
+                      }
+                  },
+                  error: function (response) {
+                              toastr.error(`@_localization.Getkey("Error")`);
+                  }
+              });
+       }
+     function onLoadSubjectData(predata,postdata){
+                  var subjcolumns=[];
+                  presubjcolumns=[];
+                  var rowData = predata[0];
+                  presubjcolumns=predata[0];
+
+                      if(rowData.length > 0){
+                          Object.keys(rowData[0]).forEach( function (key, index){
+                          if (key == 'Id' || key == 'ClassName') {
+                              subjcolumns.push({data: key,
+                                              title: key,
+                                          });
+
+                          }
+                      })
+                  }
+                  if(postdata[0].length == 0)  {
+                      Object.keys(rowData[0]).forEach( function (key, index){
+                              if (key == 'Id' || key == 'ClassName') {
+
+                              }
+                              else{
+                                  subjcolumns.push( {data: rowData[0][key],
+                                          title: key,
+                                          render: function (data, type, row) {
+                                             if(row[key]!= null && row[key]!=""){
+                                                   return '<span class="badge bg-success"><i class="ri-check-line"></i></span>';
+                                               }
+                                               return '';
+                                              }
+                                      });
+                              }
+                      })
+
+                  }
+                  else if(postdata[0].length > 0){
+
+                     var postrowData = postdata[0];
+                         Object.keys(postrowData[0]).forEach( function (key, index){
+                         if (key == 'Id' || key == 'ClassName') {
+
+                         }
+                         else{
+                             subjcolumns.push( {data: postrowData[0][key],
+                                     title: key,
+                                     render: function (data, type, row) {
+                                            if(row[key]!= null && row[key]!=""){
+                                                   return '<i class="ri-check-line"></i>';
+                                               }
+                                               return '';
+
+                                         }
+                                 });
+                         }
+                     })
+                  }
+                  $("#tblschedsubjectinfo").DataTable({
+                  "bDestroy": true,
+                  data : postdata[0].length == 0 ? predata[0] : postdata[0],
+                  "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                  columns: subjcolumns,
+                      "searching": false,
+                  "bLengthChange": false,
+                  paging: false,
+                  "info": false,
+                  "ordering": false
+        })
+        $("#loaderDiv1").hide();
+     }
+      function getTimeTableInfo(){
+               onHideAndShow('2');
+              $("#loaderDiv1").show();
+              $.ajax({
+                      type: "POST",
+                      async : false,
+                      url: '@Url.Action("GetPivotTimeTable","Schedule")',
+                      data: { scheduleId: $("#hfscheduledetailid").val() },
+                      dataType: 'json',
+                      traditional: true,
+                      success: function (response) {
+                          if (response != null) {
+                              var result = response;
+
+                             // $("#divtimetableinfo").show("slow", function() {
+                             //     $("#divsubjectinfo").hide();
+                             //      $("#divteacherinfo").hide();
+                             //      $("#divstudentinfo").hide();
+                             //});
+                              var jsonData = JSON.parse(result.strResult);
+                              fillPivotTimeTable(jsonData);
+                          }
+                          else {
+                              toastr.error(`@_localization.Getkey("Error")`);
+                          }
+                      },
+                      error: function (response) {
+                              toastr.error(`@_localization.Getkey("Error")`);
+                      }
+                  });
+      }
+
+    function fillPivotTimeTable(data) {
+          var columns=[];
+              var rowData = data[0];
+                  Object.keys(rowData).forEach( function (key, index){
+                  columns.push({data: key,
+                                      title: key,
+                                  });
+              })
+              $("#tbltimetableinfo").DataTable({
+                  "bDestroy": true,
+                  "searching": false,
+                  "bLengthChange": false,
+                  paging: false,
+                  "info": false,
+                  "ordering": false,
+                  data : data,
+                  "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                  columns: columns
+                  //dom: 'Bfrtip'
+              })
+              $("#loaderDiv1").hide();
+
+     }
+      function getTeacherInfo(){
+          onHideAndShow('3');
+                     $("#loaderDiv1").show();
+                     $.ajax({
+                             type: "POST",
+                             async : false,
+                             url: '@Url.Action("GetPivotScheduleTeacher","Schedule")',
+                             data: { scheduleId: $("#hfscheduledetailid").val() },
+                             dataType: 'json',
+                             traditional: true,
+                         success: function (response) {
+
+                             if (response != null) {
+                                 var result = response;
+                                 var jsonData = JSON.parse(result.strResult);
+
+                                     //$("#divteacherinfo").show("slow", function() {
+                                     //     $("#divsubjectinfo").hide();
+                                     //      $("#divtimetableinfo").hide();
+                                     //      $("#divstudentinfo").hide();
+                                     //});
+                                      fillPivotTeacher(jsonData);
+                                 }
+                                 else {
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                                 }
+                             },
+                             error: function (response) {
+
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                             }
+                         });
+     }
+     function fillPivotTeacher(data){
+         var tcolumns=[];
+             var rowData = data[0];
+                 Object.keys(rowData).forEach( function (key, index){
+                 tcolumns.push({data: key,
+                                     title: key,
+                                 });
+             })
+             $("#tblteacherresultinfo").DataTable({
+                 "bDestroy": true,
+                 "searching": false,
+                 "bLengthChange": false,
+                 paging: false,
+                 "info": false,
+                  "ordering": false,
+                 data : data,
+                 "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                 columns: tcolumns
+                 //dom: 'Bfrtip'
+             })
+             $("#loaderDiv1").hide();
+     }
+         function getBranchClassBySchedule(){
+            onHideAndShow('4');
+           $("#loaderDiv1").show();
+               $.ajax({
+               type: 'GET',
+               async : false,
+               url: '@Url.Action("GetBranchClassBySchedule", "Schedule")?Id=' + $("#hfscheduledetailid").val(),
+               Accept: 'application/json, text/javascript',
+               contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+               success: function (response) {
+
+                   if (response != null) {
+                       var result = response;
+                       //$("#divstudentinfo").show("slow", function() {
+                       //                   $("#divsubjectinfo").hide();
+                       //                    $("#divtimetableinfo").hide();
+                       //                    $("#divteacherinfo").hide();
+                       //              });
+
+                          $("#ulbrcls").empty();
+                                 var liexam=[];
+                       for (var i = 0; i < result.length; i++){
+                           var item = setLiBrcls(result[i]);
+                                      liexam.push(item);
+                                   }
+                                 $("#ulbrcls").html(liexam);
+                                 $("#loaderDiv1").hide();
+
+                       } else {
+                               toastr.error(`@_localization.Getkey("Error")`);
+                       }
+               },
+               error: function (response) {
+                           toastr.error(`@_localization.Getkey("Error")`);
+               }
+           })
+      }
+       function setLiBrcls(data){
+          var li=document.createElement('li');
+          li.className ="list-group-item";
+          li.onclick =  (function(branchClassId,name,li) { return function(){ SelectedClassChanged(branchClassId,name,li); }})(data.branchClassId,data.className,li);
+          var anchor = document.createElement('a');
+          anchor.href="#";
+          anchor.className="nav-link";
+          anchor.innerText =data.className + ' ('+data.studentCount+')';
+          //anchor.onclick =  (function(branchClassId,name) { return function(){ SelectedClassChanged(branchClassId,name); }})(data.branchClassId,data.className);
+          li.appendChild(anchor);
+          return li;
+     }
+     function SelectedClassChanged(branchClassId,name,li){
+
+         $("#hfbranchclassid").val(branchClassId);
+          $("#lblclassName").html(name);
+            getStudentInfo();
+
+            if (!$(li).hasClass("active")) {
+                    // Remove the class from anything that is active
+                    $("#ulbrcls li").removeClass("active");
+                    // And make this active
+                    $(li).addClass("active");
+             }
+     }
+
+      function getStudentInfo(){
+
+         $("#loaderDiv1").show();
+                     $.ajax({
+                             type: "POST",
+                             async : false,
+                             url: '@Url.Action("GetScheduleStudentInfo","Schedule")',
+                             data: { scheduleId: $("#hfscheduledetailid").val(), branchClassId: $("#hfbranchclassid").val() },
+                             dataType: 'json',
+                             traditional: true,
+                             success: function (response) {
+
+                                 if (response != null) {
+
+                                    // setSeatArrange(response);
+                                     if (response.length > 0) {
+                                         var studentData = [];
+                                         $.each(response, function (key, value) {
+                                             var rpt = createReportButton(value.scheduleId, value.studentId);
+                                             studentData.push([value.id, value.serialNo, value.rollNo, value.fullName, value.classSectionName,value.examHallName, value.seatNumber,  rpt])
+                                         })
+                                         $("#tblstudentresultinfo").DataTable({
+                                             "bDestroy": true,
+                                             data: studentData,
+                                             "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                                             "bLengthChange": false,
+                                             paging: false,
+                                             "info": false,
+                                             "ordering": false
+                                         })
+
+                                     }
+                                     $("#loaderDiv1").hide();
+
+
+                                 }
+                                 else {
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                                 }
+                             },
+                             error: function (response) {
+                                     toastr.error(`@_localization.Getkey("Error")`);
+                             }
+                         });
+     }
+
+
+      function createReportButton(schid,studid) {
+              var html = '<button type="button" class="btn btn-sm btn-info" onclick="onReportClick('+schid+','+studid+')"><i class="ri-printer-line"></i></button>';
+              return html;
+      }
+
+    var onReportClick=function(schid,studid){
+        onHallTicketClick(schid,studid);
+         // if(schid > 0 && studid > 0){
+         //     document.getElementById('primary-header-modalLabel3').innerHTML=`@_localization.Getkey("HallTicket")`;
+         // }
+         //  var url = '@Url.Action("GetHallTicket", "Schedule")?scheduleId=' + schid +'&studentId=' +studid;
+         // $("#myModalBodyDiv3").load(url,function(){
+         //     $("#primary-header-modal3").modal("show");
+         // })
+     }
+
+
+      function getSeatAllocationInfo(){
+          onHideAndShow('5');
+        $("#loaderDiv1").show();
+                    $.ajax({
+                            type: "POST",
+                            async : false,
+                            url: '@Url.Action("GetCastScheduleExamHall","Schedule")',
+                            data: { scheduleId: $("#hfscheduledetailid").val() },
+                            dataType: 'json',
+                            traditional: true,
+                            success: function (response) {
+                                if(response != null){
+
+                                   var lst = setlstExamHallArray(response);
+                                   $("#divexamhallseat").empty();
+
+                                   for (var j = 0; j < lst.length; j++){
+                                     var rowdiv =  createRowForExamHallAndStudents(lst[j]);
+                                      var divbreak =document.createElement('br');
+                                     $("#divexamhallseat").append(rowdiv);
+                                     $("#divexamhallseat").append(divbreak);
+
+                                     $("#tbody"+ lst[j].Id).empty();
+                                       for (var k = 0; k < lst[j].LstCastStudentAllocation.length; k++){
+
+                                           insertintostudenttbl(lst[j].LstCastStudentAllocation[k]);
+
+                                       }
+
+
+                                         }
+                                    $("#loaderDiv1").hide();
+                                }
+                                else {
+                                    toastr.error(`@_localization.Getkey("Error")`);
+
+                                }
+                            },
+                            error: function (response) {
+
+                                   toastr.error(`@_localization.Getkey("Error")`);
+
+                            }
+                        });
+    }
+    function setlstExamHallArray(data){
+           var examHallArray=[];
+            for(var i=0; i<data.length; i++){
+                 var examhall ={};
+                examhall.Id =data[i].id;
+                examhall.Name =data[i].name;
+                 examhall.RowCount =data[i].rowCount;
+                  examhall.ColumnCount =data[i].columnCount;
+
+
+                examhall.LstCastExamHallSeat =[];
+                 examhall.LstCastStudentAllocation =[];
+                for(var j=0; j < data[i].lstCastExamHallSeat.length; j++){
+                    var examseat = {};
+                    examseat.Id =data[i].lstCastExamHallSeat[j].id;
+                    examseat.IsAllocated =data[i].lstCastExamHallSeat[j].isAllocated;
+                    examseat.ExamHallId =data[i].lstCastExamHallSeat[j].examHallId;
+                    examseat.SeatNumber =data[i].lstCastExamHallSeat[j].seatNumber;
+                    examhall.LstCastExamHallSeat.push(examseat);
+                }
+                for(var k=0; k < data[i].lstCastStudentAllocation.length; k++){
+                    var studentseat = {};
+
+                    studentseat.StudentId =data[i].lstCastStudentAllocation[k].studentId;
+                    studentseat.ExamHallId =data[i].lstCastStudentAllocation[k].examHallId;
+                    studentseat.SeatId =data[i].lstCastStudentAllocation[k].seatId;
+                    studentseat.SeatNumber =data[i].lstCastStudentAllocation[k].seatNumber;
+                    studentseat.Name =data[i].lstCastStudentAllocation[k].name;
+                    studentseat.RollNo =data[i].lstCastStudentAllocation[k].rollNo;
+                    examhall.LstCastStudentAllocation.push(studentseat);
+                }
+                examHallArray.push(examhall);
+
+            }
+            return examHallArray;
+     }
+
+     function createRowForExamHallAndStudents(hall){
+         var divrow=document.createElement('div');
+          divrow.className ="row";
+          var headertitle = document.createElement('h3');
+          headertitle.style.textAlign = 'center';
+          headertitle.innerHTML=hall.Name;
+
+           var divcol1=document.createElement('div');
+          divcol1.className ="col-4";
+         // divcol1.innerHTML="col-4";
+         var halldiv = createDivForExamHallDivColumn(hall);
+
+         divcol1.appendChild(halldiv);
+
+          var divcol2=document.createElement('div');
+          divcol2.className ="col-8";
+          //divcol2.innerHTML="col-8";
+          var stdtbl = createTableForStudentDivColumn(hall.Id);
+
+          divcol2.appendChild(stdtbl);
+
+          divrow.appendChild(headertitle);
+          divrow.appendChild(divcol1);
+          divrow.appendChild(divcol2);
+          return divrow;
+     }
+     function createTableForStudentDivColumn(examHallId){
+                    var tbl = document.createElement('table');
+                    tbl.className ="table table-sm table-bordered table-centered mb-0";
+
+                    var tblhead = document.createElement('thead');
+                var trhead = document.createElement('tr');
+                var th1 = document.createElement('th');
+                th1.innerText ='RollNo';
+                th1.style.textAlign = 'center';
+                trhead.appendChild(th1);
+
+                var th2 = document.createElement('th');
+                th2.innerText ='StudentName';
+                th2.style.textAlign = 'center';
+                trhead.appendChild(th2);
+
+                 var th3 = document.createElement('th');
+                th3.innerText ='SeatNo';
+                th3.style.textAlign = 'center';
+                trhead.appendChild(th3);
+
+                tblhead.appendChild(trhead);
+
+                var tblbody = document.createElement('tbody');
+               tblbody.id='tbody' + examHallId;
+                tbl.appendChild(tblhead);
+                tbl.appendChild(tblbody);
+
+
+                  return tbl;
+                }
+
+     function insertintostudenttbl(data){
+
+         var tblbdy = document.getElementById('tbody' + data.ExamHallId);
+         var rowIndex= tblbdy.rows.length;
+         var newRow = tblbdy.insertRow(rowIndex);
+
+         var sprollno = document.createElement("span");
+         sprollno.innerHTML =data.RollNo;
+
+         cell1 = newRow.insertCell(0);
+         cell1.appendChild(sprollno);
+
+         var spname = document.createElement("span");
+         spname.innerHTML =data.Name;
+
+         cell2 = newRow.insertCell(1);
+         cell2.appendChild(spname);
+
+         var spseat = document.createElement("span");
+         spseat.innerHTML =data.SeatNumber;
+
+         cell3 = newRow.insertCell(2);
+         cell3.appendChild(spseat);
+     }
+     function createDivForExamHallDivColumn(hall){
+          const hallDiv = document.createElement('div');
+             hallDiv.classList.add('exam-hall');
+             hallDiv.setAttribute('data-hall-id', hall.Id);
+
+              // Seats Container
+             const seatsContainer = document.createElement('div');
+             seatsContainer.classList.add('seats-container');
+             seatsContainer.style.gridTemplateColumns = `repeat(${hall.ColumnCount}, 30px)`;
+
+             hall.LstCastExamHallSeat.forEach(seat => {
+                 const seatElement = createSeatElement(seat);
+                 seatsContainer.appendChild(seatElement);
+             });
+
+             hallDiv.appendChild(seatsContainer);
+             return hallDiv;
+     }
+      function createSeatElement(seat) {
+            const seatDiv = document.createElement('div');
+            seatDiv.classList.add('seat');
+            if (seat.IsAllocated) seatDiv.classList.add('allocated');
+            seatDiv.setAttribute('data-seat-id', seat.Id);
+            seatDiv.setAttribute('data-exam-hall-id', seat.ExamHallId);
+            seatDiv.innerHTML = seat.SeatNumber;
+
+            return seatDiv;
+        }
+     function onPrint(){
+         if(printtype=='1'){
+             printDiv('divsubjectinfo');
+         }
+         else if(printtype=='2'){
+             printDiv('divtimetableinfo');
+         }
+         else if(printtype=='3'){
+             printDiv('divteacherinfo');
+         }
+         else if(printtype=='4'){
+             printDiv('divstudentinfo');
+         }
+         else if(printtype=='5'){
+             printDiv('divseatallocationinfo');
+         }
+     }
+     function onHideAndShow(type){
+         if(type=='1'){
+             printtype='1';
+             $("#divseatallocationinfo").hide();
+             $("#divtimetableinfo").hide();
+            $("#divteacherinfo").hide();
+            $("#divstudentinfo").hide();
+            $("#divsubjectinfo").show();
+         }
+          else if(type=='2'){
+              printtype='2';
+              $("#divseatallocationinfo").hide();
+               $("#divsubjectinfo").hide();
+                $("#divteacherinfo").hide();
+                $("#divstudentinfo").hide();
+                $("#divtimetableinfo").show();
+         }
+          else if(type=='3'){
+              printtype='3';
+              $("#divseatallocationinfo").hide();
+              $("#divsubjectinfo").hide();
+            $("#divtimetableinfo").hide();
+            $("#divstudentinfo").hide();
+            $("#divteacherinfo").show();
+         }
+         else if(type=='4'){
+              printtype='4';
+              $("#divseatallocationinfo").hide();
+               $("#divsubjectinfo").hide();
+                $("#divtimetableinfo").hide();
+                $("#divteacherinfo").hide();
+                $("#divstudentinfo").show();
+         }
+         else if(type=='5'){
+              printtype='5';
+               $("#divsubjectinfo").hide();
+                $("#divtimetableinfo").hide();
+                $("#divteacherinfo").hide();
+                $("#divstudentinfo").hide();
+                $("#divseatallocationinfo").show();
+         }
+     }
+
+    function generatePDF(regNo) {
+        var htmlWidth = $("#a4reportbody").width();
+        var htmlHeight = $("#a4reportbody").height();
+        var pdfWidth = htmlWidth + (15 * 2);
+        var pdfHeight = (pdfWidth * 1.5) + (15 * 2);
+
+        var doc = new jsPDF('p', 'pt', [pdfWidth, pdfHeight]);
+        var pageCount = Math.ceil(htmlHeight / pdfHeight) - 1;
+
+        html2canvas(document.getElementById("a4reportbody"), {
+            scale: "5",
+            allowTaint: true, useCORS: true
+        }).then(canvas => {
+            var image = canvas.toDataURL("image/jpeg", 1.0);
+            doc.addImage(image, "JPEG", 15, 15, htmlWidth, htmlHeight);
+            for (var i = 1; i <= pageCount; i++) {
+                doc.addPage(pdfWidth, pdfHeight);
+                doc.addImage(image, 'JPEG', 15, -(pdfHeight * i) + 15, htmlWidth, htmlHeight);
+            }
+            doc.save(regNo + ".pdf");
+        });
+    }
+
+</script>
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,413 @@
+﻿@model SchoolCoreWEB.Models.ReportCardDetail
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="container-fluid">
+    @Html.HiddenFor(m => m.Id, new { @id = "hfreportcarddetailid" })
+    <input type="hidden" id="hfreportcarddetailbranchclassid" />
+
+
+    <div class="row">
+        <div class="row">
+            <div class="list-group list-group-horizontal">
+                @foreach (var item in Model.LstBranchClass)
+                {
+                    @*onclick="onSelectedClass(@item.BranchClassId,'@item.ClassName')"*@
+                    <a href="#" class="list-group-item list-group-item-action" data-id=@item.Id data-classname='@item.ClassName'>@item.ClassName</a>
+                }
+            </div>
+        </div>
+        <div class="row">
+            <div class="row" id="divreportcarddetail">
+                <div class="card">
+                    <div class="card-body">
+
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("Report Card Details")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Name") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Name</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("ExamCount") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ScheduleCount</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StrFromDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StrToDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div>
+                                <div style="text-align:center">
+                                    <h4 class="header-title" id="headertitle"></h4>
+                                </div>
+                                <div>
+                                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblreportcardresult">
+                                        <thead id="tblrcphead">
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" onclick="printDiv('divreportcarddetail')">
+                    <i class="ri-printer-line"></i> @_localization.Getkey("Print")
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+    
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        $('.list-group-item').click(function () {
+                $('.list-group-item').removeClass('active');
+                $(this).addClass('active');
+            });
+            var rpTable = $("#tblreportcardresult").DataTable({
+            data:[],
+            columns :[],
+             "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                   "bLengthChange": false,
+                   paging: false,
+                   "info": false,
+                    "ordering": false
+        });
+
+
+        $('.list-group-item').on('click', function(e){
+            e.preventDefault();
+             var columns=[];
+          var subcolumns=[];
+            var selectedvalue = $(this).data('id');
+            var selectedclassname = $(this).data('classname');
+            $("#hfreportcarddetailbranchclassid").val(selectedvalue);
+            $("#headertitle").html(selectedclassname);
+            $("#loaderDiv1").show("slow", function() {
+               //getSPReportCard();
+                         $.ajax({
+                           type: "post",
+                           async : false,
+                           url: '@Url.Action("GetSPReportCard","ReportCard")',
+                           data: { reportCardId: $("#hfreportcarddetailid").val(), branchClassId : $("#hfreportcarddetailbranchclassid").val() },
+                               dataType: 'json',
+                           traditional: true,
+                           success: function (response) {
+                               rpTable.clear();
+                             
+                               var result = JSON.parse(response.preResult);
+                                
+                               if(JSON.parse(response.preResult).length > 0){
+                                   var tblcolumns= Object.keys(result[0]).map(function(key){
+                                             if (key == 'TotalMarks'
+                                       || key == 'TotalMaxMarks'
+                                       || key == 'MrkPercent'
+                                       || key == 'Grade'
+                                       || key == 'GradeColor'
+                                       || key == 'PRank') {
+                                           if(key == 'TotalMarks'){
+                                                subcolumns.push({data: key,
+                                                        title: 'Mrk',
+                                                    });
+                                            }
+                                           else if(key == 'TotalMaxMarks'){
+                                                subcolumns.push({data: key,
+                                                        title: 'Total',
+                                                    });
+                                            }
+                                           else if(key == 'MrkPercent'){
+                                                subcolumns.push({data: key,
+                                                        title: '%',
+                                                    });
+                                            }
+                                            else if(key !== 'GradeColor'){
+                                                subcolumns.push({data: key,
+                                                        title: key,
+                                                    });
+                                            }
+                                       }
+                                       else{
+                                            return {title:key, data:key};
+                                       }
+                                   });
+
+                                    tblcolumns = tblcolumns.filter(function(element) {
+                                        return element !== undefined;
+                                    });
+                                    for(var i=0; i<subcolumns.length; i++){
+                                          tblcolumns.push(subcolumns[i]);
+                                      }
+
+                                    tblcolumns.push({data: null,
+                                      title: 'Report',
+                                      "render": function (data, type, row) {
+                                        return '<button type="button" class="btn btn-sm btn-info" onclick="onReportClick('+data.StudentId+')"><i class="ri-printer-line"></i></button>'
+                                      }
+                                  });
+
+                                   rpTable.destroy();
+                                   $("#tblreportcardresult thead").empty().append('<tr>'+ tblcolumns.map(c=>'th' + c.title +'</th>').join('')+'</tr>');
+                                   rpTable = $("#tblreportcardresult").DataTable({
+                                       data : result,
+                                       columns: tblcolumns,
+                                        "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                                         "bLengthChange": false,
+                                        paging: false,
+                                        "info": false,
+                                        //"ordering": false,
+                                         'rowCallback': function(row, data, index){
+                                            // console.log(row,data.GradeColor);
+                                                $(row).find('td').each (function(colindex,cell) {
+                                                    //for(var colorindex=0; colorindex < tblcolumns.length;  colorindex++){
+
+                                                    //    if(colindex == colorindex){
+                                                    //        if(tblcolumns[colorindex].data=="GradeColor"){
+                                                    //        console.log(cell.innerHTML,tblcolumns[colorindex].data);
+                                                    //        }
+                                                    //    }
+
+                                                    //}
+                                                    if(cell.innerHTML=='D'){
+                                                        $(row).find('td:eq('+colindex+')').css('color', 'red');
+                                                    }
+                                                    else{
+                                                        $(row).find('td:eq('+colindex+')').css('color', '');
+                                                    }
+                                                });
+                                            }
+                                   });
+                                   var jsonHeader = JSON.parse(response.postResult);
+                                          addHeaderRow(jsonHeader);
+                               }
+                               else{
+                                   $("#tblreportcardresult thead").empty();
+                               }
+                           },
+                           error: function (response) {
+                               toastr.error(`@_localization.Getkey("Error")`);
+                           }
+                       });
+                          $("#loaderDiv1").hide();
+                     });
+
+        })
+    });
+    function getSPReportCard(){
+
+                  $.ajax({
+                              type: "post",
+                              async : false,
+                              url: '@Url.Action("GetSPReportCard","ReportCard")',
+                              data: { reportCardId: $("#hfreportcarddetailid").val(), branchClassId : $("#hfreportcarddetailbranchclassid").val() },
+                                  dataType: 'json',
+                              traditional: true,
+                              success: function (response) {
+                                 // console.log(rpTable);
+                                 //  rpTable.clear();
+                                 // $("#tblreportcardresult").DataTable().clear();
+                                  if(response != null){
+                                     // console.log(response);
+                                      if(JSON.parse(response.preResult).length > 0){
+                                          var jsonData = JSON.parse(response.preResult);
+                                         fillPivotReportCard(jsonData);
+
+                                         var jsonHeader = JSON.parse(response.postResult);
+                                          addHeaderRow(jsonHeader);
+                                      }
+                                      else{
+                                            $("#tblreportcardresult thead").empty();
+                                     }
+                                  }
+                                  else{
+                                       //$("#loaderDiv").hide();
+
+                                  }
+                              },
+                         error: function (response) {
+                             toastr.error(`@_localization.Getkey("Error")`);
+                         }
+                          });
+       }
+       function fillPivotReportCard(data){
+          var columns=[];
+          var subcolumns=[];
+              var rowData = data[0];
+                  Object.keys(rowData).forEach( function (key, index){
+                      if (key == 'TotalMarks' || key == 'TotalMaxMarks'  || key == 'MrkPercent' || key == 'Grade' || key == 'PRank'){
+
+                          if(key == 'TotalMarks'){
+                               subcolumns.push({data: key,
+                                      title: 'Mrk',
+                                  });
+                          }
+                          else if(key == 'TotalMaxMarks'){
+                               subcolumns.push({data: key,
+                                      title: 'Total',
+                                  });
+                          }
+                         else if(key == 'MrkPercent'){
+                               subcolumns.push({data: key,
+                                      title: '%',
+                                  });
+                          }
+                          else{
+                               subcolumns.push({data: key,
+                                      title: key,
+                                  });
+                          }
+
+
+                      }
+                      else{
+                          columns.push({data: key,
+                                      title: key,
+                                  });
+                      }
+
+              })
+               console.log(rpTable);
+             //  rpTable.destroy();
+             // $("#tblreportcardresult").DataTable().destroy();
+              for(var i=0; i<subcolumns.length; i++){
+                  columns.push(subcolumns[i]);
+
+              }
+
+               columns.push({data: null,
+                                      title: 'Report',
+                                      "render": function (data, type, row) {
+                                        return '<button type="button" class="btn btn-sm btn-info" onclick="onReportClick('+data.StudentId+')"><i class="ri-printer-line"></i></button>'
+                                      }
+                                  });
+           rpTable = $("#tblreportcardresult").DataTable({
+
+                  data : data,
+                    columns: columns,
+                  "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                   "searching": false,
+                  "bLengthChange": false,
+                  paging: false,
+                  //"info": false,
+                  //"ordering": false,
+
+                  'rowCallback': function(row, data, index){
+                        $(row).find('td').each (function(colindex,cell) {
+                            if(cell.innerHTML=='D'){
+                                $(row).find('td:eq('+colindex+')').css('color', 'red');
+
+                            }
+                            else{
+                                $(row).find('td:eq('+colindex+')').css('color', '');
+                            }
+                        });
+                        }
+              })
+             // console.log(data);
+
+     }
+    function setTableHeader(header){
+        var th = document.createElement('th');
+          th.colSpan=header.ColCount;
+          th.innerText =header.Title;
+          th.style.textAlign = 'center';
+          return th;
+     }
+     function addHeaderRow(data){
+         $("#headerrow").remove();
+          var tblhead = document.getElementById("tblrcphead");
+                  var rowIndex= tblhead.rows.length > 0 ? (tblhead.rows.length)-(tblhead.rows.length) : tblhead.rows.length;
+                  var tr = tblhead.insertRow(rowIndex);
+                  tr.id="headerrow";
+
+                 var th = document.createElement('th');
+                     th.colSpan='2';
+                     th.innerText ='Name';
+                     th.style.textAlign = 'center';
+                     tr.appendChild(th);
+
+                 for(var i=0; i<data.length; i++){
+                 var thresult =  setTableHeader(data[i]);
+                 tr.appendChild(thresult);
+
+                 }
+                 var th2 = document.createElement('th');
+                     th2.colSpan='6';
+                     th2.style.textAlign = 'center';
+                     th2.innerText ='Result';
+                     tr.appendChild(th2);
+
+     }
+      var onReportClick=function(studid){        
+          var url = '@Url.Action("Index", "ProgressReport")?rptcardId=' + $("#hfreportcarddetailid").val() +'&branchclassId=' + $("#hfreportcarddetailbranchclassid").val() +'&studentId=' +parseInt(studid);
+    //           $('#progressModalBodyDiv').load(url, function () {
+    //     $('#primary-header-modalprogress').modal("show");
+    // })
+
+          printStudentReport(url);
+     }
+</script>

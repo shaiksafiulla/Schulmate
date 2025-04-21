@@ -1,0 +1,325 @@
+﻿@using SchoolCoreMOB.Models
+@model IEnumerable<VTeacherAnnouncement>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<div class="page-title page-title-small">
+    <h2><a href="#" onclick="setNewChildNavigation(`@Url.Content("/Home")`)"><i class="fa fa-arrow-left"></i></a>Notifications</h2>
+</div>
+<div class="content mt-0 mb-0">
+    <div id="readtype-container" style="display: flex; justify-content:center;">
+    </div>
+</div>
+<div id="notification-container">
+</div>
+<a href="#" data-menu="menu-notifications" id="ancmenunotificationtrigger" style="display:none">Notifications</a>
+<a href="#" id="ancupdatenotificationtrigger" style="display:none">Update Notification</a>
+@*<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content mt-0 mb-0">
+    <div class="list-group list-custom-large check-visited" id="notification-container">
+    </div>
+    </div>
+    </div>*@
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+
+<script type="text/javascript">
+     let notificationArr=[];
+    $(document).ready(function () {
+        showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/notification`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                            notificationArr= response;
+                            setReadTypeBinding();
+                             //$('#notification-container').empty();
+                             //setBindingValues(response);
+                             hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+    });
+     function setReadTypeBinding(){
+                         $('#readtype-container').empty();
+        const container = document.getElementById('readtype-container');
+        const div = document.createElement('div');
+                div.className = 'weekdaycard';
+                div.setAttribute('id', '2');
+                div.textContent = 'All';
+                div.addEventListener('click', () => {
+                        const selectedCard = container.querySelector('.weekdaycard.selected');
+                        if (selectedCard) {
+                            selectedCard.classList.remove('selected');
+                        }
+                        div.classList.add('selected');
+                        setBindingValues('2');
+                });
+
+                const div1 = document.createElement('div');
+                div1.className = 'weekdaycard';
+                div1.setAttribute('id', '1');
+                div1.textContent = 'UnRead';
+                div1.addEventListener('click', () => {
+                        const selectedCard1 = container.querySelector('.weekdaycard.selected');
+                        if (selectedCard1) {
+                            selectedCard1.classList.remove('selected');
+                        }
+                        div1.classList.add('selected');
+                        setBindingValues('1');
+                });
+                const div2 = document.createElement('div');
+                div2.className = 'weekdaycard';
+                div2.setAttribute('id', '0');
+                div2.textContent = 'Read';
+                div2.addEventListener('click', () => {
+                        const selectedCard2 = container.querySelector('.weekdaycard.selected');
+                        if (selectedCard2) {
+                            selectedCard2.classList.remove('selected');
+                        }
+                        div2.classList.add('selected');
+                        setBindingValues('0');
+                });
+                container.appendChild(div);
+                container.appendChild(div1);
+                container.appendChild(div2);
+
+                const requestCards = container.querySelectorAll('.weekdaycard');
+                    requestCards.forEach(card => {
+                if (card.textContent === 'All') {
+                    card.classList.add('selected');  // Manually add selected class
+                    setBindingValues(card.id);  // Call setTeacherPeriodBinding directly after selecting the card
+                }
+         });
+    }
+     function setBindingValues(type) {
+        $('#notification-container').empty(); // Clear the existing content
+
+        // Filter the leave requests based on the type
+        let data = type == '2' ? notificationArr
+            : type == '1' ? notificationArr.filter(item => item.readStatusId == '1')
+            : notificationArr.filter(item => item.readStatusId == '0');
+
+        let groupedByMonth = {};
+        data.forEach(item => {
+           let monthName = item.strCreatedDate;
+            if (!groupedByMonth[monthName]) {
+                groupedByMonth[monthName] = [];
+            }
+            groupedByMonth[monthName].push(item);
+        });
+        let anchors = "";
+        Object.keys(groupedByMonth).forEach(monthName => {
+            anchors += `
+                <div style="margin-left:20px;"><p class="card-title">${monthName}</p></div>
+                <div class="card card-style mb-2 custom-card rounded-2">
+                    <div class="content mt-0 mb-2">
+                        <div class="list-group list-custom-large list-icon-0">
+            `;
+            // Add each leave request for the current month-year group
+            groupedByMonth[monthName].forEach(item => {
+                let statusName = "";
+                let statusDot = "";               
+                if (item.readStatusId === '1') {
+                    statusDot = `<i class="fa fa-star color-yellow-dark" data-id="${item.id}"></i>`;
+                } else if (item.readStatusId === '0') {
+                    statusDot = `<i class="fa fa-star color-blue-dark" data-id="${item.id}"></i>`;
+                }
+                if (item.isActionTaken === '1') {
+                    statusName = `<span class="badge bg-red-light font-11">@_localization.Getkey("TakeAction")</span>`;
+                }
+                else{
+                   statusName = `<i class="fa fa-angle-right"></i>`;
+                }
+                anchors += `
+                    <a href="#" onclick="viewNotification(`+item.id+`)">
+                        ${statusDot}
+                        <span> ${item.fromPersonnelName} </span>
+                        <strong> ${item.message}</strong>
+                        ${statusName}
+                    </a>
+                `;
+            });
+            // Close the card for the current month-year group
+            anchors += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        // Append the generated HTML to the container
+        $('#notification-container').append(anchors);
+    }
+    function viewNotification(id){
+
+        var objNotification = notificationArr.find(item=> item.id === id);
+        if(objNotification !== null && objNotification !== undefined){           
+           //var status = objLeave.statusId==1 ? `<span class="badge bg-yellow-dark font-11">@_localization.Getkey("Awaiting")</span>`
+           //: objLeave.statusId==2 ? `<span class="badge bg-red-dark">@_localization.Getkey("Rejected")</span>`
+           //: `<span class="badge bg-green-dark">@_localization.Getkey("Approved")</span>`;
+
+             $("#sp_notificationfrom").html(objNotification.fromPersonnelName || '&nbsp;');
+             $("#sp_notificationtype").html(objNotification.notificationTypeName || '&nbsp;');
+             $("#sp_notificationsubject").html(objNotification.message || '&nbsp;');
+              $("#sp_notificationDescrition").html(objNotification.description || '&nbsp;');                  
+
+              $("#noti_leave_notificationid").val(id);
+              
+              
+              $("#divnoti_leavedetail").hide();
+              $("#divnoti_adminpostdetail").hide();
+              if(objNotification.notificationType=="1"){
+                  getLeaveRequest(objNotification.recordId);
+              }
+               if(objNotification.notificationType=="5"){
+                  getAdminPost(objNotification.recordId);
+              }
+
+              if(objNotification.readStatusId=="1"){
+                   updateNotificationStatus(id);
+              } 
+              
+              $("#ancmenunotificationtrigger")[0].click();
+        }
+    }
+    function updateNotificationStatus(id){
+         getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/notification/Update/`+id,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                            var objStatus = notificationArr.find(item=> item.id === id);
+                            if(objStatus !== null && objStatus !== undefined){
+                                objStatus.readStatusId='0';
+
+                                 // Update the icon's color
+                                let iconElement = $(`i[data-id="${id}"]`);
+                                iconElement.removeClass('color-yellow-dark').addClass('color-blue-dark');      
+                               
+                                
+                                var lblnoti = $("#lblNoticount").val();
+                                if(lblnoti !== null && lblnoti !== undefined){
+                                    var notiCount = parseInt(document.getElementById('lblNoticount').innerText) || 0;
+                                    notiCount -= 1; // Increment the notification count by 1 (you can modify this logic as per your needs)
+                                    document.getElementById('lblNoticount').innerHTML = notiCount;
+                                    setSessionNewCount(notiCount);
+                                }                               
+                                
+                                //$('#ancupdatenotificationtrigger').on('click', function(event) {
+                                //    event.preventDefault();  // This prevents the default anchor click behavior (navigation)                                 
+                                //    setSessionNewCount(notiCount);
+                                //});
+                                //$("#ancupdatenotificationtrigger")[0].click();
+                                
+                            }
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")` + error);
+                        });
+    }
+    function setSessionNewCount(newcount){       
+        //setNewChildNavigation('@Url.Content("/Notification/SetUnReadCount?newCount=")' + newcount);
+        $.ajax({
+            type: 'GET',
+            async: false,
+            url: '@Url.Action("SetUnReadCount", "Notification")?newCount=' + newcount,
+            Accept: 'application/json, text/javascript',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function (response) {
+               
+            },
+            error: function (response) {             
+
+            }
+        })
+    }
+    function getLeaveRequest(id){
+         getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/LeaveRequest/View/`+id,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                           // console.log(response);
+                             var status = response.statusId==1 ? `<span class="badge bg-yellow-dark font-11">@_localization.Getkey("Awaiting")</span>`
+                           : response.statusId==2 ? `<span class="badge bg-red-dark">@_localization.Getkey("Rejected")</span>`
+                           : `<span class="badge bg-green-dark">@_localization.Getkey("Approved")</span>`;
+
+                            $("#divnoti_leavedetail").show();
+                            $("#noti_leave_requestid").val(id);
+                            
+                            $("#sp_noti_leavefromdate").html(response.strFromDate || '&nbsp;');
+                             $("#sp_noti_leavetodate").html(response.strToDate || '&nbsp;');
+                             $("#sp_noti_leavereason").html(response.reason || '&nbsp;');
+                             $("#sp_noti_leavedays").html(response.dayCount || '&nbsp;');         
+                             $("#sp_noti_leaverequestdate").html(response.strCreatedDate || '&nbsp;');                                
+                            $("#sp_noti_leavestatus").html(status || '&nbsp;');
+                            $("#sp_noti_leavecomment").html(response.comment || '&nbsp;');     
+
+                                if(response.statusId==1){
+                                    $("#div_enterNotiComment").show();
+                                    $("#div_acceptRejectButton").show();
+                                }
+                                else{
+                                     $("#div_enterNotiComment").hide();
+                                    $("#div_acceptRejectButton").hide();
+                                }
+
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+    }
+    function UpdateLeaveRequest(statusId) {       
+        showLoading();
+        var objstat = {};
+        objstat.NotificationId =$("#noti_leave_notificationid").val();
+        objstat.RequestId = $("#noti_leave_requestid").val();
+        objstat.StatusId = statusId;
+        objstat.Comment = $("#noti_leave_comment").val();
+        var jstatdata = JSON.stringify(objstat);
+         fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/leaverequest/update', {
+                    method: 'POST', // HTTP method
+                    headers: {
+                        'Content-Type': 'application/json', // Standard content type for JSON data
+                        'Authorization': 'Bearer ' + `@strtoken`,
+                        'UserParam': `@Html.Raw(@userParamkey)`
+                    },
+                    body: jstatdata // Stringify the data object to JSON format
+                })
+                .then(response => response.json()) // Parse the JSON response
+                .then(result => {
+                            showToast('1', `@_localization.Getkey("Success")`);
+                            hideLoading();
+                            window.location.href="@Url.Action("Index", "Notification")";
+                })
+                .catch(error => {
+                    showToast('2', `@_localization.Getkey("Error")`);
+                });       
+    }
+   function getAdminPost(id){
+         getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/AdminNotification/View/`+id,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {                          
+                          
+                           if(response.filePath !==null && response.filePath !=='' && response.filePath !==undefined){
+                                
+                                if(response.fileType=="1"){
+                                      $("#img_notiadminpostfile").show();
+                                      $("#img_notiadminpostfile").attr("src", '@Configuration["WebApi:ImageBaseUrl"]' + response.filePath);
+                                }            
+                                 $("#divnoti_adminpostdetail").show();
+                                $("#down_notiadminpost").show();                   
+                                $("#down_notiadminpost").click(function(e) {
+                                    e.preventDefault();                             
+                                    setNewChildNavigation('@Url.Content("/AdminNotification/Download?Id=")' + response.id);
+                                });
+                            }
+                            else{
+                                $("#img_notiadminpostfile").hide();
+                                $("#down_notiadminpost").hide();
+                            }
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+    }
+</script>

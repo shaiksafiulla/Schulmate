@@ -1,0 +1,140 @@
+﻿@using SchoolCoreMOB.Models
+@model VPersonnelAttendenceBenchmark
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<style>
+    .fab {
+        /* position: relative;
+                          bottom: 10px;
+                          right: 10px;*/
+        background-color: #6C63FF;
+        color: #fff;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .fab:hover {
+            background-color: #388E3C;
+        }
+</style>
+<div class="page-title page-title-small">
+    @*<h2><a href="#" onclick="setNewChildNavigation(`@Url.Content("/Home")`)"><i class="fa fa-arrow-left"></i></a>Back To Home</h2>*@
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Home Works</h2>
+</div>
+
+<div id="announcementsection-container">
+    </div>
+<a href="#" data-menu="menu-announcement" id="ancmenuannouncetrigger" style="display:none">Announcements</a>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {      
+        showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/TeacherAnnouncement/TeacherAnnouncementSection`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             setBindingValues(response);                          
+                              hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+
+                        });
+    });
+
+     
+     function setBindingValues(data) {
+        $('#announcementsection-container').empty();
+        let groupedByMonth = {};
+        data.forEach(item => {
+           let monthName = item.strCreatedDate;
+
+            if (!groupedByMonth[monthName]) {
+                groupedByMonth[monthName] = [];
+            }
+            groupedByMonth[monthName].push(item);
+        });
+        let anchors = "";
+        Object.keys(groupedByMonth).forEach(monthName => {
+            anchors += `
+                <div style="margin-left:20px;"><p class="card-title">${monthName}</p></div>
+                <div class="card card-style mb-2 custom-card rounded-2">
+                    <div class="content mt-0 mb-0">
+                        <div class="list-group list-custom-large list-icon-0">
+            `;
+            groupedByMonth[monthName].forEach(item => {
+                let statusDot = `<i class="fa fa-star color-blue-dark"></i>`;
+               let statusName = `<span class="badge bg-yellow-dark font-11">${item.subjectName}</span>`;
+                // Safely stringify the item and escape it properly for use in onclick
+            let itemString = JSON.stringify(item);
+            // Escape double quotes within the JSON string
+            itemString = itemString.replace(/"/g, '&quot;');
+
+                anchors += `
+                    <a href="#" onclick="viewAnnouncement(${itemString})">
+                       ${statusDot}
+                        <span> Subject : ${item.subjectName}</span>
+                        <strong> Title : ${item.title} </strong>
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                `;
+            });
+            anchors += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        $('#announcementsection-container').append(anchors);
+    }
+    function viewAnnouncement(item){
+
+        if(item !== null && item !== undefined){
+
+             $("#sp_announceclass").html(item.className || '&nbsp;');
+              $("#sp_announcesection").html(item.sectionName || '&nbsp;');
+               $("#sp_announcesubject").html(item.subjectName || '&nbsp;');
+                $("#sp_announcetitle").html(item.title || '&nbsp;');
+                  $("#sp_announcedescription").html(item.description || '&nbsp;');
+                  if(item.filePath !==null && item.filePath !=='' && item.filePath !==undefined){
+
+                  if(item.fileType=="1"){
+                      $("#img_announcefile").show();
+                        $("#img_announcefile").attr("src", '@Configuration["WebApi:ImageBaseUrl"]' + item.filePath);
+                     }
+
+                      //$("#img_announcefile").show();
+                      // $("#img_announcefile").attr("src", '@Configuration["WebApi:ImageBaseUrl"]' + item.filePath);
+
+                       $("#down_announcement").show();
+                        $("#down_announcement").click(function(e) {
+                            e.preventDefault();
+                           setNewChildNavigation('@Url.Content("/Announcement/Download?Id=")' + item.teacherAnnouncementId);
+                        });
+                  }
+                  else{
+                      $("#img_announcefile").hide();
+                       $("#down_announcement").hide();
+                  }
+
+                    $("#ancmenuannouncetrigger")[0].click();
+        }
+    }
+
+
+</script>
+
+

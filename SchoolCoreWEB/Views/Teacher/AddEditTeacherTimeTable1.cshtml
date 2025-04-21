@@ -1,0 +1,150 @@
+﻿@model SchoolCoreWEB.Models.TeacherTimeTableVM
+@using Localization.Services
+@inject LanguageService _localization
+@{
+    string cultur = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string locale = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "ar" : "en";
+}
+
+<style>
+    #external-events .fc-event {
+        cursor: move;
+        margin: 3px 0;
+    }
+
+    .fc .fc-timegrid-slot {
+        height: 5em;
+    }
+</style>
+<div class="row">
+    <div class="row">
+       
+
+       
+       
+            <div class="card">
+                <div class="card-body">                   
+                 
+                    <div id='calendar-container'>
+                        
+                        <div id='calendar'></div>
+                    </div>
+                </div>
+            </div>
+
+      
+       
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    var eventsData = [];
+    var eventsArray = [];
+    var jsmodel = @Html.Raw(Json.Serialize(Model));   
+    if (jsmodel != null && jsmodel.lstTeacherTimeTable != null) {
+        var lst = jsmodel.lstTeacherTimeTable;
+            lst.forEach(function (event) {
+                var evobj = {};
+                evobj.id = event.id;
+                evobj.title = event.title;
+                evobj.start = event.start;
+                evobj.end = event.end;
+                evobj.backgroundColor = event.backgroundColor;
+                evobj.borderColor = event.borderColor;
+                evobj.classSubjectId = event.classSubjectId;
+                evobj.subjectId = event.subjectId;
+                evobj.teacherId = event.teacherId;
+                eventsArray.push(evobj);
+                // calendar.addEvent(evobj);
+            });
+
+
+       
+    }
+    var calendar;
+
+    // debugger;
+    function setCalendar() {
+        var tmpArr = [];
+        $("#loaderDiv1").show();
+        var Calendar = FullCalendar.Calendar; 
+        var calendarEl = document.getElementById('calendar');    
+        //initialize the calendar
+        calendar = new Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            validRange: {
+                start: jsmodel.strStartDate,
+                end: jsmodel.strEndDate
+            },        
+            slotMinTime: jsmodel.slotMinTime + `:00`,
+            slotMaxTime: jsmodel.slotMaxTime + `:00`,
+            allDaySlot: false,
+            slotDuration: `00:` + jsmodel.slotDuration + `:00`,
+            slotEventOverlap: false,
+            eventOverlap: false,
+            snapDuration: `00:` + jsmodel.slotDuration + `:00`,          
+            slotLabelInterval: `00:` + jsmodel.slotDuration + `:00`,
+            headerToolbar: {
+                left: '',
+                center: jsmodel.teacherName,
+                right: ''
+            },
+            dayHeaderFormat: { weekday: 'long' },
+            firstDay: 1,
+            allDaySlot: false,
+            editable: true,
+            droppable: true,
+            events: []        
+          
+        });
+        calendar.render();
+
+        if (jsmodel != null && eventsArray.length > 0) {
+            eventsArray.forEach(function (event) {
+                calendar.addEvent(event);
+            });
+            // var events = calendar.getEvents();
+            // events.forEach(function (event) {
+            //     var extprop = lst.find(x => x.id == event._def.publicId);
+            //     if (extprop !== undefined) {
+            //         event.setExtendedProp('classsubjectid', extprop.classSubjectId);
+            //         event.setExtendedProp('subjectid', extprop.subjectId);
+            //         event.setExtendedProp('teacherid', extprop.teacherId);
+            //     }
+            // })
+
+        }
+        $("#loaderDiv1").hide();
+    }
+
+    // function getSlotDurationMilliseconds(calendar) {
+    //     var slotDuration = calendar.getOption('slotDuration');
+    //     var parts = slotDuration.split(':');
+    //     return (parseInt(parts[0]) * 60 + parseInt(parts[1])) * 60 * 1000; // Convert hours and minutes to milliseconds
+    // }
+    
+
+    function destroyCalendar() {
+        if (calendar && typeof calendar.destroy === 'function') {
+            calendar.destroy(); // Destroy the calendar instance
+            calendar = null; // Reset the calendar variable
+        } else {
+         
+        }
+    }
+   
+</script>

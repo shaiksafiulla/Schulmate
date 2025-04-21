@@ -1,0 +1,333 @@
+﻿@model SchoolCoreWEB.Models.ReportCard
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="card">
+    <div class="card-body">
+        <form id="reportCardForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id, new { @id = "hfreportcardid" })
+            @Html.HiddenFor(m => m.BranchId, new { @id = "hfreportcardbranchid" })
+             @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "80", onkeyup = "Validate()" })
+            </div>
+           @* <div class="form-group required mb-3">
+                <label for="type" class="form-label">@_localization.Getkey("Branch")</label>
+                @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select", @id = "ddlbranch", @required = "required", onChange = "selectedBranchIndexChanged()" })
+            </div>*@
+           @* <div class="row" id="divschedule" style="display:none;">
+                <table class="table table-sm table-bordered table-centered mb-0" id="tblschedule">
+                    <thead>
+                        <tr>
+                            <th style="display:none">Id</th>
+                            <th style="width:20%; text-align:center">
+                                <div class="form-check form-check-inline">
+                                    <input type="checkbox" class="form-check-input" id="chkcls">
+                                    <label class="form-check-label" for="chkcls">Select</label>
+                                </div>
+                            </th>
+                            <th style="width:50%">@_localization.Getkey("Examination")</th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="bodyschedule">
+                    </tbody>
+                </table>
+
+
+            </div>*@
+
+            <div class="form-group mb-3">
+                <label for="time" class="form-label">Examinations</label>
+                <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblexamination">
+                    <thead>
+                        <tr>
+                            <th style="display:none">Id</th>
+                            <th>Select</th>
+                            <th>Examination</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int j = 0; j < @Model.LstScheduleClass.Count(); j++)
+                        {
+                            <tr>
+                                <td style="display:none">
+
+                                    @Html.HiddenFor(m => @Model.LstScheduleClass[j].Id);
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => @Model.LstScheduleClass[j].IsSelected, new { @class = "form-check-input", @required = "required", @onclick = "Validate()" })
+
+
+                                </td>
+                                <td>
+                                    @Model.LstScheduleClass[j].Title - @Model.LstScheduleClass[j].ExamTypeName
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+            <hr />
+            <div style="text-align:center"><label for="time" class="form-label">Attendence</label></div>
+            <hr />
+            <div class="form-group required mb-3">                
+                <label  class="form-label" for="startdate">@_localization.Getkey("FromDate")</label>
+                @Html.EditorFor(model => model.FromDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control  form-control-sm datetimepicker", @required = "required", @id = "fromdate", onChange = "Validate()" } })
+            </div>
+            <div class="form-group required mb-3">
+                <label  class="form-label" for="enddate">@_localization.Getkey("ToDate")</label>
+                @Html.EditorFor(model => model.ToDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control  form-control-sm datetimepicker", @required = "required", @id = "todate", onChange = "Validate()" } })
+            </div>
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "description", @rows = "2", @maxlength = "250" })
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitReportCard()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+       
+        if (@Html.Raw(Json.Serialize(Model)) != null) {
+            var objrc = @Html.Raw(Json.Serialize(Model));
+            if (objrc.Id == null) {
+                objrc.Id = 0;
+            }
+            $("#hfreportcardid").val(objrc.Id);
+             Validate();
+            //if (objrc.BranchId > 0) {
+            //    getSchedulesByBranch();
+            //}
+            
+        }
+      //  getSchedulesByBranch();
+      
+    });
+     $('#chkcls').change(function () {
+             $('#tblschedule tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+             Validate();
+        });
+       function chkFields(){
+        var isvalid=true;
+        if($("#name").val() == ""){
+             isvalid =false;
+        }
+        //if($("#ddlbranch").val() == ""){
+        //     isvalid =false;
+        //}
+        if($("#fromdate").val() == ""){
+             isvalid =false;
+        }
+        if($("#todate").val() == ""){
+             isvalid =false;
+        }
+        if($("#fromdate").val() !== "" && $("#todate").val() !== ""){
+            if($("#todate").val() < $("#fromdate").val()){
+                isvalid =false;
+            }
+        }
+        //var chkArray = getSchedArray();
+        //console.log(chkArray);
+        //var found = chkArray.some(el => el.IsSelected == true);
+        //if(!found){
+        //     isvalid =false;
+        //}
+
+       return isvalid;
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function getSchedArray(){
+         var chkClsArray=[];
+         $("#tblexamination tbody tr").each(function () {
+             var tr = $(this);
+             var paramcls = {};
+             var FirstCol = tr.find("input").eq(0).val();
+             var SecondCol = tr.find("input").eq(0).is(':checked');
+             //console.log(FirstCol,SecondCol)
+             paramcls.Id = parseInt(FirstCol);
+             paramcls.IsSelected = SecondCol;
+             chkClsArray.push(paramcls);
+         });
+         return chkClsArray;
+     }
+      function submitReportCard(){
+          $("#loaderDiv1").show("slow", function () {
+          var myformdata = $("#reportCardForm").serialize();
+             $.ajax({
+              type: 'POST',
+               url: '@Url.Action("Save","ReportCard")',
+              contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+              data: myformdata,
+              success: function (response) {
+                 if (response != null) {
+                      var serviceresult = JSON.parse(response);
+                      if (serviceresult === true) {
+                          $("#loaderDiv1").hide();
+                            toastr.error(`@_localization.Getkey("ReportCardExists")`);
+                      }
+                      else {
+                          actionAfterResponse('ReportCardGrid', serviceresult.recordId, serviceresult.statusId, '20');
+                      }
+                      } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                      }
+              },
+              error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+              }
+             })
+          })
+      }
+      //function submitReportCard(){
+      //    $("#loaderDiv1").show("slow", function () {
+
+      //    var lstSch = getSchedArray();
+      //     var obj={};
+      //     obj.Id=$('#hfreportcardid').val();
+      //     obj.Name=$('#name').val();
+      //     obj.FromDate=$('#fromdate').val();
+      //     obj.ToDate=$('#todate').val();
+      //     obj.BranchId=$('#hfreportcardbranchid').val();
+      //     obj.Description=$('#description').val();
+      //     obj.LstScheduleClass = lstSch;
+      //      var jdata = JSON.stringify(obj);
+
+      //       $.ajax({
+      //        type: 'POST',
+      //         url: '@Url.Action("Save","ReportCard")',
+      //        dataType: "JSON",
+      //           data: {model :jdata },
+      //        success: function (response) {
+      //            if (response != null) {
+      //                var serviceresult = JSON.parse(response);
+      //                if (serviceresult === true) {
+      //                    $("#loaderDiv1").hide();
+      //                    toastr.error(`@_localization.Getkey("ReportCardExists")`);
+      //                }
+      //                else {
+      //                    actionAfterResponse('ReportCardGrid', serviceresult.recordId, serviceresult.statusId, '20');
+      //                }
+
+      //                } else {
+      //                     toastr.error(`@_localization.Getkey("Error")`);
+      //                }
+      //        },
+      //        error: function (response) {
+      //                 toastr.error(`@_localization.Getkey("Error")`);
+
+      //        }
+      //       })
+      //    })
+      //}
+    //function selectedBranchIndexChanged(){
+    //     if($("#ddlbranch").val() != ""){
+    //         getSchedulesByBranch();
+    //     }
+    //     else{
+    //         $("#bodyschedule").empty();
+    //         $("#divschedule").hide();
+    //     }
+    // }
+     //function getSchedulesByBranch(){
+     //     $("#loaderDiv1").show();
+     //         $.ajax({
+
+     //         type: "post",
+     //                async : false,
+     //                url: '@Url.Action("GetSchedulesByBranch","ReportCard")',
+     //                data: { branchId: $("#hfreportcardbranchid").val(), reportcardId : $("#hfreportcardid").val() },
+     //                dataType: 'json',
+     //                traditional: true,
+     //                 success: function (response) {
+     //                     if (response != null) {
+                              
+     //                         var result = response;                              
+     //                         $("#bodyschedule").empty();
+     //                         $("#tblschedule").hide();
+
+     //                         if (result.length > 0){
+     //                             $("#divschedule").show();
+     //                             for (var j = 0; j < result.length; j++){
+     //                                 insertintotblcls(result[j]);
+     //                                }
+     //                                $("#tblschedule").show();
+     //                         }
+
+     //                             $("#loaderDiv1").hide();
+
+     //                         } else {
+     //                                 toastr.error(`@_localization.Getkey("Error")`);
+     //                         }
+     //                 },
+     //                 error: function (response) {
+     //                             toastr.error(`@_localization.Getkey("Error")`);
+     //                 }
+     //     })
+     //     Validate();
+     //}
+     // function insertintotblcls(data){
+     //        var tblbdy = document.getElementById("bodyschedule");
+     //            var rowIndex= tblbdy.rows.length;
+     //            var newRow = tblbdy.insertRow(rowIndex);
+     //            cell1 = newRow.insertCell(0);
+     //            cell1.innerHTML = data.id;
+     //            cell1.style.display="none";
+
+     //            var chk = document.createElement("input");
+     //            chk.type="checkbox";
+     //            chk.className="form-check-input";
+     //            chk.checked=data.isSelected;
+     //            chk.onclick=(function() { return function(){ Validate(); }})();
+
+     //            cell2 = newRow.insertCell(1);
+     //            cell2.appendChild(chk);
+
+     //           var spcls = document.createElement("span");
+     //           spcls.innerText =data.title +' - '+ data.examTypeName //+' (Students : '+data.StudentCount+')';
+     //           cell3 = newRow.insertCell(2);
+     //           cell3.appendChild(spcls);
+     //}
+
+    
+      
+</script>

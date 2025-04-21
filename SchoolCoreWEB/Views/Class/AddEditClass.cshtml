@@ -1,0 +1,118 @@
+﻿@model SchoolCoreWEB.Models.Class
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="card">
+    <div class="card-body">
+        <form id="classForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id)
+            
+            <div class="form-group required mb-3">
+                <label for="branch" class="form-label">@_localization.Getkey("Medium")</label>
+                @Html.DropDownListFor(model => model.MediumId, Model.MediumSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlmedium", @required = "required", onChange = "selectedMediumIndexChanged()" })
+            </div>            
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "80", onkeyup = "Validate();" })
+            </div>
+             <div class="form-group required mb-3">
+                <label for="shortname" class="form-label">@_localization.Getkey("ShortName")</label>
+                @Html.TextBoxFor(model => model.ShortName, new { @class = "form-control form-control-sm", @id = "shortname", @required = "required", @maxlength = "15", onkeyup = "Validate();" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "description", @rows = "2", @maxlength = "250" })
+            </div>
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitClass()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+       function chkFields(){
+        var isvalid=true;       
+        if ($("#name").val() == "") {
+            isvalid = false;
+        }
+         if ($("#shortname").val() == "") {
+            isvalid = false;
+           }
+           if ($("#ddlmedium").val() == "") {
+            isvalid = false;
+           }
+       return isvalid;
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function selectedMediumIndexChanged() {
+        Validate();
+    }
+   
+
+      function submitClass(){
+          $("#loaderDiv1").show("slow", function () {
+          var myformdata = $("#classForm").serialize();
+             $.ajax({
+              type: 'POST',
+               url: '@Url.Action("Save","Class")',
+              contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+              data: myformdata,
+              success: function (response) {
+                 if (response != null) {
+                      var serviceresult = JSON.parse(response);
+                      if (serviceresult === true) {
+                          $("#loaderDiv1").hide();
+                            toastr.error(`@_localization.Getkey("ClassExist")`);
+                      }
+                      else {
+                          actionAfterResponse('ClassGrid', serviceresult.recordId, serviceresult.statusId, '2');
+                      }
+
+                      } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                      }
+              },
+              error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+              }
+             })
+          })
+      }
+      Validate();
+</script>

@@ -1,0 +1,129 @@
+﻿@model SchoolCoreWEB.Models.TeacherTimeTableVM
+@using Localization.Services
+@inject LanguageService _localization
+@{
+    string cultur = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string locale = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "ar" : "en";
+}
+
+
+<div class="row">
+    <div class="row">
+        <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="tblteachertimetable">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    @if (Model.castTimetable.Periods != null)
+                    {
+                        @foreach (var period in Model.castTimetable.Periods)
+                        {
+                            <th>
+                                @period.StartTime.ToString(@"hh\:mm") - @period.EndTime.ToString(@"hh\:mm")
+                                @if (period.IsBreak)
+                                {
+                                   
+                                }
+                            </th>
+                        }
+                    }
+
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.castTimetable.Weekdays != null)
+                {
+                    @for (int i = 0; i < Model.castTimetable.Weekdays.Count; i++)
+                    {
+                        var day = Model.castTimetable.Weekdays[i];
+
+                        <tr>
+                            <td>@day.Name</td>
+                            @for (int j = 0; j < day.PeriodSlots.Count; j++)
+                            {
+                                var slot = day.PeriodSlots[j];
+                                if (slot.Period.IsBreak)
+                                {
+                                    // Only render the cell for the first weekday to apply rowspan
+                                    if (i == 0)
+                                    {
+                                        <td class="lunch rotatetext" rowspan="@Model.castTimetable.Weekdays.Count">@slot.Period.Description</td>
+                                    }
+                                }
+                                else
+                                {
+                                    <td class="drop" data-day=@Model.castTimetable.Weekdays[i].Name
+                        data-starttime=@day.PeriodSlots[j].Period.StartTime.ToString()
+                        data-endtime=@day.PeriodSlots[j].Period.EndTime.ToString()>
+                                        @slot.Subject
+                                    </td>
+                                }
+                            }
+                        </tr>
+                    }
+                }
+
+            </tbody>
+        </table>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+         var jsmodel = @Html.Raw(Json.Serialize(Model));
+         if (jsmodel != null){
+             $("#loaderDiv1").show("slow", function () {
+                 getTeacherTimeTableFromDB(jsmodel.teacherId,jsmodel.sessionYearId);
+             })
+         }
+     });
+      function getTeacherTimeTableFromDB(teacherId,sessionYearId) {
+             $.ajax({
+                 type: 'GET',
+                 async: false,
+                 url: '@Url.Action("GetTeacherTimeTableFromDB", "Teacher")?teacherId=' + teacherId +'&sessionyearId='+sessionYearId,
+                 Accept: 'application/json, text/javascript',
+                 contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                 success: function (response) {
+                     if (response != null) {
+
+                                 $('#tblteachertimetable .drop').html('');
+
+                                 $.each(JSON.parse(response), function (key, value) {
+                                     var strday = getDayOfWeekString(value.dayOfWeek);
+
+                                     var displayText =value.classSectionName + ' - ' +value.subjectActivityName;
+
+                                    let cell = $('td[data-day="' + strday + '"][data-starttime="' + value.fromTime + '"][data-endtime="' + value.toTime + '"]');
+
+                                     // Fill the cell with the subject if it exists
+                                     if (cell.length) {
+                                         cell.html('<div class="item assigned" style="background-color: '+value.subjectActivityColor+';">'+displayText+'</div>');
+                                     }
+                                 });
+
+                         $("#loaderDiv1").hide();
+                     } else {
+                         toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 },
+                 error: function (response) {
+                     toastr.error(`@_localization.Getkey("Error")`);
+
+                 }
+             })
+         }
+</script>

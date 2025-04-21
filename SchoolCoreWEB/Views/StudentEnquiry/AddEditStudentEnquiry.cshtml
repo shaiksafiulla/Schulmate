@@ -1,0 +1,247 @@
+﻿@model SchoolCoreWEB.Models.StudentEnquiry
+@using Localization.Services
+@inject LanguageService _localization
+
+<form id="enquiryForm" class="forms-sample">
+
+    @Html.HiddenFor(model => model.Id)
+    @Html.HiddenFor(model => model.SessionYearId)
+    @Html.HiddenFor(model => model.BranchId)
+
+    <div class="row">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("BasicInfo")</div>
+                <div class="ribbon-content">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group required mb-3">
+                                <label for="firstName" class="form-label">@_localization.Getkey("Name")</label>
+                                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                            </div>
+
+                            <div class="row g-2">
+
+                                <div class="col-sm-6">
+                                    <br />
+                                    @Html.RadioButtonFor(model => model.Gender, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Male")</label> &nbsp;
+                                    @Html.RadioButtonFor(model => model.Gender, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Female")</label>
+                                </div>
+                                <div class="col-sm-6 form-group required mb-3">
+                                    <label for="age" class="form-label">@_localization.Getkey("Age")</label>
+                                    @Html.TextBoxFor(model => model.Age, new { @class = "form-control form-control-sm", @maxlength = 2, @id = "age", @name = "age", @required = "required", onkeyup = "Validate();", onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+                                </div>
+                            </div>                           
+                            <div class="form-group required mb-3">
+                                <label for="previousschool" class="form-label">@_localization.Getkey("PreviousSchool")</label>
+                                @Html.TextBoxFor(model => model.PreviousSchool, new { @class = "form-control form-control-sm", @id = "previousschool", @rows = "2" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="address" class="form-label">@_localization.Getkey("Comments")</label>
+                                @Html.TextAreaFor(model => model.Comments, new { @class = "form-control form-control-sm", @id = "comments", @rows = "2" })
+                            </div>
+                            
+
+
+                        </div>
+                        <div class="col-6">
+
+
+                            <div class="form-group required mb-3">
+                                <label for="fatherName" class="form-label">@_localization.Getkey("FatherName")</label>
+                                @Html.TextBoxFor(model => model.FatherName, new { @class = "form-control form-control-sm", @id = "fatherName", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                            </div>
+                            <div class="form-group required mb-3">
+                                <label for="motherName" class="form-label">@_localization.Getkey("MotherName")</label>
+                                @Html.TextBoxFor(model => model.MotherName, new { @class = "form-control form-control-sm", @id = "motherName", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                            </div>
+                            <div class="form-group required mb-3">
+                                <label for="mobileno" class="form-label">@_localization.Getkey("MobileNumber")</label>
+                                @Html.TextBoxFor(model => model.MobileNo, new { @class = "form-control form-control-sm", @id = "mobileno", @required = "required", @maxlength = "10", onkeyup = "Validate();", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+                            </div>
+                            <div class="form-group required mb-3">
+                                <label for="address" class="form-label">@_localization.Getkey("Address")</label>
+                                @Html.TextAreaFor(model => model.Address, new { @class = "form-control form-control-sm", @id = "address", @rows = "2" })
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ClassInfo")</div>
+                <div class="ribbon-content"></div>
+                <div class="row">
+                    
+                    <div class="col-4">
+                        <div class="form-group required mb-3">
+                            <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                            @Html.DropDownListFor(model => model.ClassId, Model.ClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlclass", @required = "required", onChange = "selectedClassIndexChanged()" })
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group required mb-3">
+                            <label for="class" class="form-label">@_localization.Getkey("Status")</label>
+                            @Html.DropDownListFor(model => model.StatusId, Model.StatusSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlstatus", @required = "required", onChange = "selectedStatusIndexChanged()" })
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group required mb-3">
+                            <label for="class" class="form-label">@_localization.Getkey("Reference")</label>
+                            @Html.DropDownListFor(model => model.ReferenceId, Model.ReferenceSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlreference", onChange = "selectedreferenceIndexChanged()" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnsubmit" onclick="submitStudentEnquiry()" disabled="disabled">
+            @if (Model.Id > 0)
+            {
+                <span>@_localization.Getkey("Update")</span>
+            }
+            else
+            {
+                <span>@_localization.Getkey("Save")</span>
+            }
+        </button>
+        <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+
+<script type="text/javascript">
+
+    function chkFields() {
+        var isvalid = true;
+        var validNumber = new RegExp(/^\d+$/);
+
+        if ($('#name').val() == "") {
+            isvalid = false;
+        }      
+        if ($('#age').val() == "") {
+            isvalid = false;
+        }
+        var mobile = $('#mobileno').val();
+        if (mobile == "") {
+            isvalid = false;
+        }
+        else if (mobile != "" & !mobile.match(validNumber)) {
+            isvalid = false;
+        }       
+        if ($('#ddlclass').val() == "-1" || $('#ddlclass').val() =="") {
+            isvalid = false;
+        }
+        if ($('#ddlstatus').val() == "-1" || $('#ddlstatus').val() == "") {
+            isvalid = false;
+        }
+        if ($('#ddlreference').val() == "-1" || $('#ddlreference').val() == "") {
+            isvalid = false;
+        }
+      
+        if ($('#fatherName').val() == "-1" || $('#fatherName').val() == "") {
+            isvalid = false;
+        }
+        if ($('#motherName').val() == "-1" || $('#motherName').val() == "") {
+            isvalid = false;
+        }
+        if ($('#address').val() == "-1" || $('#address').val() == "") {
+            isvalid = false;
+        }
+        if ($('#previousschool').val() == "-1" || $('#previousschool').val() == "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function selectedBranchIndexChanged() {
+        $('#ddlclass')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+        $.ajax({
+            type: "post",
+            url: '@Url.Action("GetClassByBranch", "StudentEnquiry")',
+            data: { branchId: $('#ddlbranch').val() },
+            dataType: 'json',
+            traditional: true,
+            success: function (response) {
+                var lst = response;
+                var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                for (var i = 0; i < lst.length; i++) {
+                    s += '<option value="' + lst[i].value + '">' + lst[i].text + '</option>';
+                }              
+                $("#ddlclass").html(s);
+               
+
+            }
+        });
+        Validate();
+    }
+    function selectedClassIndexChanged() {
+        Validate();
+    }
+    function selectedStatusIndexChanged() {
+        Validate();
+    }
+    function selectedreferenceIndexChanged(){
+        Validate();
+    }
+
+    function submitStudentEnquiry() {
+        $("#loaderDiv1").show("slow", function () {
+
+            var myformdata = $("#enquiryForm").serialize();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("Save", "StudentEnquiry")',
+                data: myformdata,
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('StudentEnquiryGrid', serviceresult.recordId, serviceresult.statusId, '34');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                    $("#loaderDiv").hide();
+                }
+            });
+        })
+
+    }
+    Validate();
+</script>

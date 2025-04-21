@@ -1,0 +1,260 @@
+﻿@model IEnumerable<VLeaveRequest>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<style>
+    .fab {
+        background-color: #6C63FF;
+        color: #fff;
+        border-radius: 50%;
+        width: 40px; /* Adjust size of the button */
+        height: 40px; /* Adjust size of the button */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        font-size: 20px; /* Adjust icon size */
+        cursor: pointer;
+        margin-left: 10px; /* Add some space between the button and the cards */
+    }
+        /*  .fab {
+
+            background-color: #87a96b;
+            color: #fff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+            cursor: pointer;
+        }*/
+
+        .fab:hover {
+            background-color: #388E3C;
+        }
+</style>
+<div class="page-title page-title-small">
+    @*  <h2><a href="#" onclick="setNewChildNavigation(`@Url.Content("/Home")`)"><i class="fa fa-arrow-left"></i></a>Back To Home</h2>*@
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Leave Requests</h2>
+</div>
+
+@*<div class="content mt-0 mb-2" style="display: flex; justify-content:space-evenly;">
+    <div id="leavetype-container">
+    </div>
+    <div class="fab" onclick="setNewChildNavigation('@Url.Content("/LeaveRequest/AddLeaveRequest?Id=0")')" >
+    <i class="fa fa-plus"></i>
+    </div>
+    </div>*@
+<div class="content mt-0 mb-2">
+    <div style="display: flex; justify-content: space-evenly; align-items: stretch; width: 100%;">
+        <div id="leavetype-container" style="flex: 1; display: flex; justify-content: space-evenly; align-items: center;">
+        </div>
+        <div class="fab" onclick="setNewChildNavigation('@Url.Content("/LeaveRequest/AddLeaveRequest?Id=0")')">
+            <i class="fa fa-plus"></i>
+        </div>
+    </div>
+
+</div>
+
+
+<div id="request-container">
+</div>
+
+<a href="#" data-menu="menu-leaves" id="ancmenuleavestrigger" style="display:none">Leaves</a>
+
+@*<a href="#"
+    onclick="setNewChildNavigation('@Url.Content("/LeaveRequest/AddLeaveRequest?Id=0")')"
+    class="btn btn-border btn-m btn-full mb-3 rounded-sm text-uppercase font-900 border-blue-dark color-blue-dark bg-theme right-align small-btn">
+    <i class="fa fa-plus font-10"></i> New
+    </a>*@
+
+
+
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+           let leaveReqArr=[];
+              $(document).ready(function () {
+               showLoading();
+               getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/leaverequest`, '@strtoken', '@Html.Raw(@userParamkey)')
+                   .then(response => {
+                       leaveReqArr= response;
+                       setLeaveTypeBinding();
+                      // setBindingValues(response);
+                       hideLoading();
+                   })
+                   .catch(error => {
+                      showToast('2', '@_localization.Getkey("Error")');
+                   });
+           });
+
+
+
+
+            function setLeaveTypeBinding(){
+                         $('#leavetype-container').empty();
+                        const container = document.getElementById('leavetype-container');
+
+                        const div = document.createElement('div');
+                             div.className = 'weekdaycard';
+                             div.setAttribute('id', '0');
+                             div.textContent = 'All';
+                             div.addEventListener('click', () => {
+                                     const selectedCard = container.querySelector('.weekdaycard.selected');
+                                     if (selectedCard) {
+                                         selectedCard.classList.remove('selected');
+                                     }
+                                     div.classList.add('selected');
+                                       setBindingValues('0');
+                             });
+
+                             const div1 = document.createElement('div');
+                             div1.className = 'weekdaycard';
+                             div1.setAttribute('id', '1');
+                             div1.textContent = 'Casual';
+                             div1.addEventListener('click', () => {
+                                     const selectedCard1 = container.querySelector('.weekdaycard.selected');
+                                     if (selectedCard1) {
+                                         selectedCard1.classList.remove('selected');
+                                     }
+                                     div1.classList.add('selected');
+                                       setBindingValues('1');
+                             });
+                             const div2 = document.createElement('div');
+                             div2.className = 'weekdaycard';
+                             div2.setAttribute('id', '2');
+                             div2.textContent = 'Sick';
+                             div2.addEventListener('click', () => {
+                                     const selectedCard2 = container.querySelector('.weekdaycard.selected');
+                                     if (selectedCard2) {
+                                         selectedCard2.classList.remove('selected');
+                                     }
+                                     div2.classList.add('selected');
+                                       setBindingValues('2');
+                             });
+                             container.appendChild(div);
+                             container.appendChild(div1);
+                             container.appendChild(div2);
+
+                             const requestCards = container.querySelectorAll('.weekdaycard');
+                                  requestCards.forEach(card => {
+                               if (card.textContent === 'All') {
+                                   card.classList.add('selected');  // Manually add selected class
+                                   setBindingValues(card.id);  // Call setTeacherPeriodBinding directly after selecting the card
+                               }
+                           });
+
+               }
+
+    function setBindingValues(type) {
+        $('#request-container').empty(); // Clear the existing content
+
+        // Filter the leave requests based on the type
+        let data = type == '0' ? leaveReqArr
+            : type == '1' ? leaveReqArr.filter(item => item.leaveRequestType == '1')
+            : leaveReqArr.filter(item => item.leaveRequestType == '2');
+
+        // Group the data by month-year (e.g., Jan-2024)
+        let groupedByMonth = {};
+        data.forEach(item => {
+            // Get the month-year format (e.g., Jan-2024)
+            //let date = new Date(item.strFromDate);
+            //let monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+           let monthName = item.monthName;
+            // If the group for the month-year doesn't exist, create it
+            if (!groupedByMonth[monthName]) {
+                groupedByMonth[monthName] = [];
+            }
+            // Add the leave request to the corresponding month-year group
+            groupedByMonth[monthName].push(item);
+        });
+        // Generate HTML for each group (month-year)
+        let anchors = "";
+        Object.keys(groupedByMonth).forEach(monthName => {
+            // Start a new card for each month-year group
+            anchors += `
+                <div style="margin-left:20px;"><p class="card-title">${monthName}</p></div>
+                <div class="card card-style mb-2 custom-card rounded-2">
+                    <div class="content mt-0 mb-2">
+                        <div class="list-group list-custom-large list-icon-0">
+
+                        
+            `;
+            // Add each leave request for the current month-year group
+            groupedByMonth[monthName].forEach(item => {
+                let statusName = "";
+                let statusDot = "";
+                // Set status
+                if (item.statusId == 1) {
+                    //statusName = `<span class="badge bg-yellow-dark font-11">@_localization.Getkey("Awaiting")</span>`;
+                     statusName = `<i class="fa fa-clock color-yellow-dark" style="font-size : 15px"></i>`;
+                }
+                if (item.statusId == 2) {
+                    statusName = `<i class="fa fa-times-circle color-red-dark" style="font-size : 15px"></i>`;
+                }
+                if (item.statusId == 3) {
+                    statusName = `<i class="fa fa-check-circle color-green-dark" style="font-size : 15px"></i>`;
+                }               
+                if (item.leaveRequestType === '1') {
+                    statusDot = `<i class="fa fa-star color-blue-dark"></i>`;
+                } else if (item.leaveRequestType === '2') {
+                    statusDot = `<i class="fa fa-star color-orange-dark"></i>`;
+                }
+                // Add leave request to the current card
+                anchors += `
+                    <a href="#" onclick="viewLeaveRequest(`+item.id+`)">
+                        ${statusDot}
+                        <span> ${item.reason} (${item.dayCount})</span>
+                        <strong> ${item.strFromDate} - ${item.strToDate}</strong>
+                        ${statusName}
+                    </a>
+                `;
+            });
+            // Close the card for the current month-year group
+            anchors += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        // Append the generated HTML to the container
+        $('#request-container').append(anchors);
+    }
+    function viewLeaveRequest(id){
+
+        var objLeave = leaveReqArr.find(item=> item.id === id);
+
+        if(objLeave !== null && objLeave !== undefined){
+           var status = objLeave.statusId==1 ? `<span class="badge bg-yellow-dark font-11">@_localization.Getkey("Awaiting")</span>`
+           : objLeave.statusId==2 ? `<span class="badge bg-red-dark">@_localization.Getkey("Rejected")</span>`
+           : `<span class="badge bg-green-dark">@_localization.Getkey("Approved")</span>`;
+           // var status = objLeave.statusId==1 ? `<i class="fa fa-clock-circle color-yellow-dark" style="font-size : 15px"></i>`
+           //: objLeave.statusId==2 ? `<i class="fa fa-times-circle color-red-dark" style="font-size : 15px"></i>`
+           //: `<i class="fa fa-check-circle color-green-dark" style="font-size : 15px"></i>`;
+
+             $("#sp_leavefromdate").html(objLeave.strFromDate || '&nbsp;');
+              $("#sp_leavetodate").html(objLeave.strToDate || '&nbsp;');
+               $("#sp_leavereason").html(objLeave.reason || '&nbsp;');
+                $("#sp_leavedaycount").html(objLeave.dayCount || '&nbsp;');
+                  $("#sp_leavecreateddate").html(objLeave.strCreatedDate || '&nbsp;');
+                    $("#sp_leavestatus").html(status || '&nbsp;');
+                     $("#sp_leavecomment").html(objLeave.comment || '&nbsp;');
+
+                     $("#ancmenuleavestrigger")[0].click();
+        }
+    }
+
+
+</script>

@@ -1,0 +1,158 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<VClass>
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ClassesInfo")</div>
+		<button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('2','0')"><i class="ri-add-line"></i></button>
+		<div class="ribbon-content">
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="ClassGrid">
+				<thead>
+					<tr>
+						<th style="display:none;">Id</th>
+						<th>@_localization.Getkey("Name")</th>
+						<th>@_localization.Getkey("ShortName")</th>
+						<th>@_localization.Getkey("Description")</th>
+						<th>@_localization.Getkey("Medium")</th>
+						<th>@_localization.Getkey("Subjects")</th>
+						<th>@_localization.Getkey("Actions")</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+	<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="myModalBodyDiv1">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+
+	<script>
+		$(document).ready(function () {
+			$("#loaderDiv").show("slow", function () {
+				getClasses();
+				var resObj = setResourceObj();
+				getResourceObj(JSON.stringify(resObj));
+			})
+		});
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.classes = `@_localization.Getkey("Classes")`;
+			msgobj.viewclass = `@_localization.Getkey("ViewClass")`;
+			msgobj.editclass = `@_localization.Getkey("EditClass")`;
+			msgobj.addclass = `@_localization.Getkey("AddClass")`;
+			msgobj.classsubjects = `@_localization.Getkey("ClassSubjects")`;
+
+			return msgobj;
+		}
+		function getClasses() {
+
+			$.ajax({
+				type: 'POST',
+				async: false,
+				url: '@Url.Action("GetAll", "Class")',
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+
+				success: function (response) {
+					if (response != null) {
+
+						var classData = [];
+
+						$.each(JSON.parse(response), function (key, value) {
+
+							var btndelete = "";
+							if (value.isDelete == "1") {
+								btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`2`,`ClassGrid`, ' + value.id + ')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+							}
+							var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,ClassGrid);">' +
+								'<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+								'<div class="dropdown-menu dropdown-menu-end">' +
+								'<a class="dropdown-item" href="#" onclick="viewAction(`2`, ' + value.id + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("View")</a>' +
+								'<a class="dropdown-item" href="#" onclick="addEditAction(`2`, ' + value.id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' +
+								' <a class="dropdown-item" href="#" onclick="AddEditClassSubject(' + value.id + ')"><i class="ri-list-ordered"></i>&nbsp; @_localization.Getkey("ClassSubjects")</a>' + btndelete +
+								'</div>' +
+								'</div>'
+							classData.push([value.id, value.name, value.shortName, value.description, value.mediumName, value.subjectCount, btnaction])
+						})
+
+						$("#ClassGrid").DataTable({
+							"bDestroy": true,
+							data: classData,
+							order: [[0, "desc"]],
+							"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+							dom: 'lBfrtip',
+							buttons: [
+								{
+									extend: 'csvHtml5',
+									text: '<i class="ri-file-excel-line"></i>',
+									titleAttr: 'csv',
+									filename: `@_localization.Getkey("Classes")`,
+									className: 'btn btn-outline-light btn-sm',
+									exportOptions: {
+										columns: [1, 2, 3, 4]
+									}
+								}
+							]
+
+						})
+						$("#loaderDiv").hide();
+
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+
+				}
+			})
+		}
+		var AddEditClassSubject = function (classId) {
+			if (classId > 0) {
+				document.getElementById('primary-header-modalLabel').innerHTML = `@_localization.Getkey("EditClassSubject")`;
+			}
+			var url = '@Url.Action("AddEditClassSubject", "Class")?Id=' + classId;
+			$("#myModalBodyDiv1").load(url, function () {
+				$("#primary-header-modal").modal("show");
+			})
+		}
+	</script>
+}
+

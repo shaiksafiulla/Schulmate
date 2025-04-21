@@ -1,0 +1,739 @@
+﻿@using SchoolCoreWEB.Models
+@model Schedule
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<style>
+    /* Custom Styles */
+
+    /* Container Styling */
+    .exam-halls-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .exam-hall {
+        border: 1px solid #ccc;
+        padding: 15px;
+        border-radius: 8px;
+        min-width: 220px;
+        position: relative;
+        background-color: #f8f9fa;
+    }
+
+        .exam-hall h5 {
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        /* Action Icons */
+        .exam-hall .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+            .exam-hall .actions i {
+                cursor: pointer;
+                font-size: 1.2rem;
+                color: #0d6efd;
+            }
+
+                .exam-hall .actions i.rename-icon {
+                    color: #ffc107;
+                }
+
+                .exam-hall .actions i.remove-icon {
+                    color: #dc3545;
+                }
+
+    /* Seats Container */
+    .seats-container {
+        display: grid;
+        grid-gap: 5px;
+        justify-content: center;
+    }
+
+    .seat {
+        width: 60px;
+        height: 60px;
+        border: 1px solid #999;
+        border-radius: 4px;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 60px;
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+        background-color: #f0f0f0; /* Default to available */
+    }
+
+        .seat.allocated {
+            background-color: #90ee90; /* Light green */
+        }
+
+        .seat .student-name {
+            display: none;
+            position: absolute;
+            bottom: 2px;
+            width: 100%;
+            font-size: 12px;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2px 0;
+            border-top: 1px solid #ccc;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .seat.allocated:hover .student-name {
+            display: block;
+        }
+
+    /* Dragging Styles */
+    .dragging {
+        opacity: 0.5;
+        border: 2px dashed #555;
+    }
+
+    /* Highlight Droppable Area */
+    .seat.hovered {
+        border: 2px dashed #0d6efd;
+    }
+
+    /* Rename Input Styling */
+    .rename-input {
+        width: 100%;
+        padding: 5px;
+        margin-top: 5px;
+        display: none;
+    }
+
+    .exam-hall.editing .rename-input {
+        display: block;
+    }
+
+    .exam-hall.editing h5 {
+        display: none;
+    }
+
+    .exam-hall.editing .save-rename-btn,
+    .exam-hall.editing .cancel-rename-btn {
+        display: inline-block;
+        margin-top: 5px;
+    }
+
+    .exam-hall .save-rename-btn,
+    .exam-hall .cancel-rename-btn {
+        display: none;
+    }
+
+</style>
+<div class="row">
+    @Html.HiddenFor(m=>m.Id, new { @id="hfnewscheduleid" })
+    <div class="col-2">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Classes</div>
+                <div class="ribbon-content">
+                    <table id="tblbranchclassgroup" class="table table-sm table-bordered table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th style="display:none">Id</th>
+                                <th style="display:none">BranchId</th>
+                                <th style="display:none">ClassId</th>
+                                <th>
+                                    <div class="form-check form-check-inline">
+                                        <input type="checkbox" class="form-check-input" id="chkclassgroup">
+                                        <label class="form-check-label" for="chksec">@_localization.Getkey("All")</label>
+                                    </div>
+                                </th>
+                                <th>@_localization.Getkey("Class")</th>
+                            </tr>
+                        </thead>
+                        <tbody id="branchclassgroupbody"></tbody>
+                    </table>
+                    <button type="button" class="btn btn-primary" onclick="getClassStudents()">@_localization.Getkey("Allocate")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-10">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Seat Arrangement</div>
+                <div class="ribbon-content">
+                    <div class="row">
+                        <div class="col-3">
+                            <input type="text" id="examHallName" class="form-control form-control-sm" placeholder="Exam Hall Name" onkeyup="ValidateHallButton();">
+                        </div>
+                        <div class="col-3">
+                            <input type="number" class="form-control form-control-sm" id="rowCount" placeholder="Number of Rows" min="1" onchange="ValidateHallButton();">
+                        </div>
+                        <div class="col-3">
+                            <input type="number" class="form-control form-control-sm" id="colCount" placeholder="Number of Columns" min="1" onchange="ValidateHallButton();">
+                        </div>
+                        <div class="col-3">
+                            @* <button type="button" class="btn btn-primary" id="btnHallSubmit" onclick="AddExamHall()" disabled="disabled">Add Hall</button>*@
+                            <button type="button" class="btn btn-primary" id="addExamHallBtn" disabled="disabled">@_localization.Getkey("AddExamHall")</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="exam-halls-container" id="examHallsContainer">
+                            <!-- Exam halls with seats will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">    
+     <button type="button" class="btn btn-primary" id="saveAllocationsBtn">@_localization.Getkey("Save")</button>
+</div>
+
+<script>
+    let examHalls = []; // Array to hold exam hall objects
+
+     $(document).ready(function () {
+            getScheduleBranchClassGroup();
+             $('#chkclassgroup').change(function () {
+                $('#tblbranchclassgroup tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+            });
+        });
+         function getScheduleBranchClassGroup(){
+                 $.ajax({
+                     type: "post",
+                     async : false,
+                     url: '@Url.Action("GetScheduleBranchClassGroup","Schedule")',
+                     data: {scheduleId : $("#hfnewscheduleid").val() },
+                         dataType: 'json',
+                     traditional: true,
+                     success: function (response) {
+                         if (response != null) {
+                             var lstArr = JSON.parse(response);
+                                $("#branchclassgroupbody").empty();
+                                for (var j = 0; j < lstArr.length; j++){
+                                    insertintobranchclassgrouptbl(lstArr[j]);
+                                }
+                         }
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 });
+         }
+          function insertintobranchclassgrouptbl(data){
+
+                 var tblbdy = document.getElementById("branchclassgroupbody");
+                     var rowIndex= tblbdy.rows.length;
+                     var newRow = tblbdy.insertRow(rowIndex);
+                     cell1 = newRow.insertCell(0);
+                     cell1.innerHTML = data.id;
+                     cell1.style.display="none";
+
+                     cell2 = newRow.insertCell(1);
+                     cell2.innerHTML = data.branchId;
+                     cell2.style.display="none";
+
+                    cell3 = newRow.insertCell(2);
+                    cell3.innerHTML = data.classId;
+                    cell3.style.display = "none";
+
+                     var chk = document.createElement("input");
+                     chk.type="checkbox";
+                     chk.id="ClsIsSelected";
+                     chk.className="form-check-input";
+                     chk.checked=false;
+                     //chk.onclick=(function() { return function(){ Validate(); }})();
+
+                     cell4 = newRow.insertCell(3);
+                     cell4.appendChild(chk);
+
+                    var spcls = document.createElement("span");
+                    spcls.innerText = data.className +' (Count : '+data.studentCount+')'; //+' (Students : '+data.StudentCount+')';
+                    cell5 = newRow.insertCell(4);
+                    cell5.appendChild(spcls);
+         }
+     function chkHallFields(){
+              var isvalid=true;
+              if($('#examHallName').val()==''){
+                  isvalid =false;
+              }
+              if($('#rowCount').val()==''){
+                  isvalid =false;
+              }
+               if($('#colCount').val()==''){
+                  isvalid =false;
+              }
+              return isvalid;
+        }
+         function ValidateHallButton(){
+              if (chkHallFields()){
+                  $('#addExamHallBtn').prop('disabled', false);
+              }
+              else{
+                   $('#addExamHallBtn').prop('disabled', true);
+              }
+          }
+
+           // Utility Functions
+        function getSeatNumber(row, col) {
+            return String.fromCharCode(65 + row - 1) + col;
+        }
+
+        function createSeatElement(seat) {
+            const seatDiv = document.createElement('div');
+            seatDiv.classList.add('seat');
+            if (seat.allocated) seatDiv.classList.add('allocated');
+            seatDiv.setAttribute('data-seat-id', seat.id);
+            seatDiv.setAttribute('data-exam-hall-id', seat.examHallId);
+            seatDiv.innerHTML = seat.seatNumber;
+
+            if (seat.allocated && seat.student) {
+                const studentNameDiv = document.createElement('div');
+                studentNameDiv.classList.add('student-name');
+                studentNameDiv.textContent = seat.student.fullName;
+                seatDiv.appendChild(studentNameDiv);
+            }
+
+            return seatDiv;
+        }
+
+     function renderExamHalls() {
+         const container = document.getElementById('examHallsContainer');
+         container.innerHTML = ''; // Clear existing halls
+
+         examHalls.forEach(hall => {
+             const hallDiv = document.createElement('div');
+             hallDiv.classList.add('exam-hall');
+             hallDiv.setAttribute('data-hall-id', hall.id);
+
+             // Hall Header
+             const hallHeader = document.createElement('h5');
+             hallHeader.textContent = hall.name;
+             hallDiv.appendChild(hallHeader);
+
+             // Hall Actions (Rename & Remove)
+             const actionsDiv = document.createElement('div');
+             actionsDiv.classList.add('actions');
+
+             // Rename Icon
+             const renameIcon = document.createElement('i');
+             renameIcon.className="ri-pencil-line";
+            // renameIcon.classList.add('bi', 'bi-pencil-square', 'rename-icon');
+             renameIcon.setAttribute('title', 'Rename Exam Hall');
+             actionsDiv.appendChild(renameIcon);
+
+             // Remove Icon
+             const removeIcon = document.createElement('i');
+             removeIcon.className="ri-delete-bin-line";
+            // removeIcon.classList.add('bi', 'bi-trash', 'remove-icon');
+             removeIcon.setAttribute('title', 'Remove Exam Hall');
+             actionsDiv.appendChild(removeIcon);
+
+             hallDiv.appendChild(actionsDiv);
+
+             // Rename Input (Hidden by Default)
+             const renameInput = document.createElement('input');
+             renameInput.type = 'text';
+             renameInput.classList.add('form-control', 'rename-input');
+             renameInput.value = hall.name;
+             hallDiv.appendChild(renameInput);
+
+             // Save Rename Button
+             const saveRenameBtn = document.createElement('button');
+             saveRenameBtn.classList.add('btn', 'btn-sm', 'btn-success', 'save-rename-btn');
+             saveRenameBtn.innerHTML = '<i class="ri-save-line"></i>';
+             hallDiv.appendChild(saveRenameBtn);
+
+             // Cancel Rename Button
+             const cancelRenameBtn = document.createElement('button');
+             cancelRenameBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'cancel-rename-btn');
+             cancelRenameBtn.innerHTML = '<i class="ri-delete-back-2-line"></i>';
+             hallDiv.appendChild(cancelRenameBtn);
+
+             // Seats Container
+             const seatsContainer = document.createElement('div');
+             seatsContainer.classList.add('seats-container');
+             seatsContainer.style.gridTemplateColumns = `repeat(${hall.columns}, 60px)`;
+
+             hall.seats.forEach(seat => {
+                 const seatElement = createSeatElement(seat);
+                 seatsContainer.appendChild(seatElement);
+             });
+
+             hallDiv.appendChild(seatsContainer);
+             container.appendChild(hallDiv);
+
+             // Event Listeners for Rename and Remove
+             renameIcon.addEventListener('click', () => {
+                 hallDiv.classList.add('editing');
+             });
+
+             cancelRenameBtn.addEventListener('click', () => {
+                 hallDiv.classList.remove('editing');
+                 renameInput.value = hall.name; // Reset to original name
+             });
+
+             saveRenameBtn.addEventListener('click', () => {
+                 const newName = renameInput.value.trim();
+                 if (!newName) {
+                     alert('Exam Hall name cannot be empty.');
+                     return;
+                 }
+
+                 // Check for duplicate hall names
+                 const duplicate = examHalls.some(h => h.name.toLowerCase() === newName.toLowerCase() && h.id !== hall.id);
+                 if (duplicate) {
+                     alert('Duplicate Exam Hall names are not allowed.');
+                     return;
+                 }
+
+                 hall.name = newName;
+                 hallDiv.classList.remove('editing');
+                 renderExamHalls();
+             });
+
+             removeIcon.addEventListener('click', () => {
+                 const hasAllocations = hall.seats.some(seat => seat.allocated);
+                 if (hasAllocations) {
+                     // Do not allow removal if any seat is allocated
+                     return;
+                 }
+
+                 // Remove the hall from examHalls array
+                 examHalls = examHalls.filter(h => h.id !== hall.id);
+                 renderExamHalls();
+             });
+
+             // Hide Remove Icon if allocations exist
+             const hasAllocations = hall.seats.some(seat => seat.allocated);
+             if (hasAllocations) {
+                 removeIcon.style.display = 'none';
+             } else {
+                 removeIcon.style.display = 'inline';
+             }
+         });
+
+         initializeDragAndDrop(); // Re-initialize drag-and-drop after rendering
+     }
+       // Add Exam Hall
+     document.getElementById('addExamHallBtn').addEventListener('click', function () {
+         const name = document.getElementById('examHallName').value.trim();
+         const rows = parseInt(document.getElementById('rowCount').value);
+         const cols = parseInt(document.getElementById('colCount').value);
+
+         if (!name || rows < 1 || cols < 1) {
+             toastr.error('Please enter valid Exam Hall details');
+             return;
+         }
+
+         // Check for duplicate hall names
+         const duplicate = examHalls.some(hall => hall.name.toLowerCase() === name.toLowerCase());
+         if (duplicate) {
+             toastr.error('Duplicate Exam Hall names are not allowed');
+             return;
+         }
+
+         // Create Exam Hall Object
+         const hallId = examHalls.length > 0 ? Math.max(...examHalls.map(h => h.id)) + 1 : 1;
+         const seats = [];
+         let seatId = 1;
+         for (let row = 1; row <= rows; row++) {
+             for (let col = 1; col <= cols; col++) {
+                 seats.push({
+                     id: seatId,
+                     examHallId: hallId,
+                     seatNumber: getSeatNumber(row, col),
+                     allocated: false,
+                     student: null
+                 });
+                 seatId++;
+             }
+         }
+
+         const newHall = {
+             id: hallId,
+             name: name,
+             rows: rows,
+             columns: cols,
+             seats: seats
+         };
+
+         examHalls.push(newHall);
+         renderExamHalls();
+
+         // Clear form inputs
+         document.getElementById('examHallName').value = '';
+         document.getElementById('rowCount').value = '';
+         document.getElementById('colCount').value = '';
+     });
+     // Get Class Students
+      function getCheckedClassIds(){
+             var selectedArr =[];
+             $("#tblbranchclassgroup tbody tr").each(function () {
+                     var tr = $(this);
+                         var clsObj = {};
+                         var firstCol = tr.find("td").eq(0).html();
+                         var secondCol = tr.find("input").eq(0).is(':checked');
+                         clsObj.Id = firstCol;
+                         clsObj.IsSelected = secondCol;
+                         selectedArr.push(clsObj);
+             });
+             return selectedArr;
+         }
+
+        function getClassStudents(){
+             var lstchk = getCheckedClassIds();
+            const filteredchks = lstchk.filter(el => el.IsSelected == true);
+
+             if (filteredchks.length === 0) {
+                // If no class selected, clear all allocations
+                toastr.warning('Please select the classes');
+                clearAllAllocations();
+                renderExamHalls();
+                return;
+            }
+            // Check if there are exam halls created
+             if (examHalls.length === 0) {
+                toastr.warning('Please create at least one exam hall before allocating seats');
+                return;
+            }
+            let resultids = filteredchks.map(a => a.Id);
+
+             var obj={};
+             obj.ScheduleId=$("#hfnewscheduleid").val();
+             obj.ScheduleBranchClassIds=resultids;
+
+             var jdata = JSON.stringify(obj);
+                     $.ajax({
+                     type: 'POST',
+                         url: '@Url.Action("GetScheduleBranchClassStudent","Schedule")',
+                         dataType: "JSON",
+                     data: {model :jdata },
+                     success: function (response) {
+                         var selectedStudents = JSON.parse(response);
+                      
+                         // Calculate total available seats
+                        const totalSeats = examHalls.reduce((sum, hall) => sum + hall.seats.length, 0);
+                        const totalStudents = selectedStudents.length;
+
+                        if (totalStudents > totalSeats) {
+                            toastr.warning(`Not enough seats. Total Seats: ${totalSeats}, Total Students: ${totalStudents}`);
+                            return;
+                        }
+
+                        // Clear previous allocations
+                        clearAllAllocations();
+
+                        // Allocate seats
+                        allocateSeats(selectedStudents, examHalls);
+                        renderExamHalls();
+
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+
+                     }
+                 })
+        }
+
+      // Clear All Allocations
+        function clearAllAllocations() {
+            examHalls.forEach(hall => {
+                hall.seats.forEach(seat => {
+                    seat.allocated = false;
+                    seat.student = null;
+                });
+            });
+        }
+         // Allocate Seats Function
+        function allocateSeats(students, examHalls) {
+            const totalSeats = examHalls.reduce((sum, hall) => sum + hall.seats.length, 0);
+            const totalStudents = students.length;
+
+            let studentIndex = 0;
+
+            // Calculate number of seats per hall based on proportion
+            const seatsPerHall = examHalls.map(hall => hall.seats.length);
+            const proportion = seatsPerHall.map(seats => seats / totalSeats);
+
+            // Allocate students proportionally
+            examHalls.forEach((hall, index) => {
+                const hallSeatCount = Math.floor(proportion[index] * totalStudents);
+                let allocatedSeats = 0;
+
+                for (let seat of hall.seats) {
+                    if (allocatedSeats >= hallSeatCount || studentIndex >= totalStudents) break;
+                    if (!seat.allocated) {
+                        seat.allocated = true;
+                        seat.student = students[studentIndex];
+                        allocatedSeats++;
+                        studentIndex++;
+                    }
+                }
+            });
+
+            // Allocate remaining students if any
+            if (studentIndex < totalStudents) {
+                examHalls.forEach(hall => {
+                    for (let seat of hall.seats) {
+                        if (studentIndex >= totalStudents) break;
+                        if (!seat.allocated) {
+                            seat.allocated = true;
+                            seat.student = students[studentIndex];
+                            studentIndex++;
+                        }
+                    }
+                });
+            }
+        }
+
+      // Initialize Drag-and-Drop
+        function initializeDragAndDrop() {
+            const seats = document.querySelectorAll('.seat.allocated');
+
+            seats.forEach(seat => {
+                seat.setAttribute('draggable', 'true');
+
+                // Drag Start
+                seat.addEventListener('dragstart', function (e) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        seatId: seat.getAttribute('data-seat-id'),
+                        examHallId: seat.getAttribute('data-exam-hall-id')
+                    }));
+                    setTimeout(() => {
+                        seat.classList.add('dragging');
+                    }, 0);
+                });
+
+                // Drag End
+                seat.addEventListener('dragend', function () {
+                    seat.classList.remove('dragging');
+                });
+            });
+
+            const allSeats = document.querySelectorAll('.seat');
+
+            allSeats.forEach(targetSeat => {
+                // Prevent default to allow drop
+                targetSeat.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                });
+
+                // Highlight on hover
+                targetSeat.addEventListener('dragenter', function (e) {
+                    e.preventDefault();
+                    targetSeat.classList.add('hovered');
+                });
+
+                targetSeat.addEventListener('dragleave', function () {
+                    targetSeat.classList.remove('hovered');
+                });
+
+                // Handle Drop
+                targetSeat.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    targetSeat.classList.remove('hovered');
+
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (!data) return;
+                    const draggedData = JSON.parse(data);
+
+                    const draggedSeatId = parseInt(draggedData.seatId);
+                    const draggedHallId = parseInt(draggedData.examHallId);
+
+                    const targetSeatId = parseInt(targetSeat.getAttribute('data-seat-id'));
+                    const targetHallId = parseInt(targetSeat.getAttribute('data-exam-hall-id'));
+
+                    if (draggedSeatId === targetSeatId && draggedHallId === targetHallId) {
+                        return; // Dropped on the same seat
+                    }
+
+                    // Find the dragged and target seats
+                    const draggedHall = examHalls.find(hall => hall.id === draggedHallId);
+                    const targetHall = examHalls.find(hall => hall.id === targetHallId);
+
+                    if (!draggedHall || !targetHall) return;
+
+                    const draggedSeat = draggedHall.seats.find(seat => seat.id === draggedSeatId);
+                    const targetSeatObj = targetHall.seats.find(seat => seat.id === targetSeatId);
+
+                    if (!draggedSeat || !targetSeatObj) return;
+
+                    // Swap allocations
+                    if (draggedSeat.allocated && targetSeatObj.allocated) {
+                        const tempStudent = draggedSeat.student;
+                        draggedSeat.student = targetSeatObj.student;
+                        targetSeatObj.student = tempStudent;
+                    } else if (draggedSeat.allocated && !targetSeatObj.allocated) {
+                        targetSeatObj.allocated = true;
+                        targetSeatObj.student = draggedSeat.student;
+
+                        draggedSeat.allocated = false;
+                        draggedSeat.student = null;
+                    } else if (!draggedSeat.allocated && targetSeatObj.allocated) {
+                        draggedSeat.allocated = true;
+                        draggedSeat.student = targetSeatObj.student;
+
+                        targetSeatObj.allocated = false;
+                        targetSeatObj.student = null;
+                    }
+
+                    renderExamHalls();
+                });
+            });
+        }
+         document.getElementById('saveAllocationsBtn').addEventListener('click', function () {
+            // Prepare data to send
+            const dataToSave = examHalls.map(hall => ({
+                Id: hall.id,
+                ScheduleId : $("#hfnewscheduleid").val(),
+                RowCount : hall.rows,
+                ColumnCount : hall.columns,
+                Name: hall.name,
+                Seats: hall.seats.map(seat => ({
+                    Id: seat.id,
+                    SeatNumber: seat.seatNumber,
+                    IsAllocated: seat.allocated,
+                    ScheduleBranchClassStudent: seat.student ? { StudentId: seat.student.studentId, ScheduleId: seat.student.scheduleId,BranchClassId: seat.student.branchClassId,
+                    BranchId: seat.student.branchId,ClassId: seat.student.classId,SectionId: seat.student.sectionId} : null
+                }))
+            }));
+            
+            var jdata = JSON.stringify(dataToSave);
+                     $.ajax({
+                     type: 'POST',
+                         url: '@Url.Action("SaveExamHallAllocation","Schedule")',
+                         dataType: "JSON",
+                     data: {model :jdata },
+                     success: function (response) {
+                         console.log(response);
+                         var result = JSON.parse(response);
+                     },
+                     error: function (response) {
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                     }
+                 })
+        });
+
+       
+
+</script>
+
+
+
+
+
+
+
+
+
+

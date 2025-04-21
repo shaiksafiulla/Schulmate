@@ -1,0 +1,225 @@
+﻿@using SchoolCoreWEB.Models
+@model HallTicket
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="container-fluid" style="padding:0" id="reportbody">
+    <div class="row" id="a4headdiv" style="display:none">
+        @if (Model.ReportSettings.AFourHeaderType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+    <div class="row" id="a5headdiv" style="display:none">
+        @if (Model.ReportSettings.AFiveHeaderType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFiveHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFiveHeaderSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFiveHeaderSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+    <br />
+    <div class="row" style="padding:3%">
+        <table style="margin-left: auto; margin-right: auto; width: 100%;" border="0" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <td style="word-break: break-all;">
+                        <div class="text-center">
+                            <strong>@_localization.Getkey("HallTicket")</strong>
+                        </div>
+                        <hr />
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("SeatNumber"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <strong>@Model.ScheduleStudentAllocation.SeatNumber</strong>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("RollNo"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <strong>@Model.ScheduleStudentAllocation.RollNo</strong>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Name"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <strong>@Model.ScheduleStudentAllocation.FullName</strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("ExamHall"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <strong>@Model.ScheduleStudentAllocation.ExamHallName</strong>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Class"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <strong>@Model.ScheduleStudentAllocation.ClassSectionName</strong>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Examination"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <strong>@Model.ScheduleStudentAllocation.ExamTitle</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="row">
+                                <div class="col-12">
+                                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th align="center">@_localization.Getkey("Subject")</th>
+                                                <th align="center">@_localization.Getkey("Signature")</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.LstHallTicketSubject)
+                                            {
+                                                <tr>
+                                                    <td style="width:50%;  vertical-align:top;">
+                                                        @Html.DisplayFor(modelItem => item.SubjectName)
+                                                    </td>
+                                                    <td style="width:50%; vertical-align:top;">
+                                                        @Html.DisplayFor(modelItem => item.InvSignature)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+                            <br />
+                            <br />
+                            <div class="row">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h4 class="header-title">@_localization.Getkey("ClassTeacher")</h4>
+                                    <h4 class="header-title">@_localization.Getkey("OfficeSeal")</h4>
+                                    <h4 class="header-title">@_localization.Getkey("Director")</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>
+                        <div class="footer-space">
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="row" id="a4footdiv" style="display:none">
+        @if (Model.ReportSettings.AFourFooterType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFourFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFourFooterSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFourFooterSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+    <div class="row" id="a5footdiv" style="display:none">
+        @if (Model.ReportSettings.AFiveFooterType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFiveFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFiveFooterSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFiveFooterSpace + "px";
+            <div style="height:@percent"></div>
+        }
+    </div>
+
+</div>
+@* <div class="modal-footer" id="a5footer">
+    <button type="button" class="btn btn-info" onclick="printDiv('reportbody')">
+        <i class="ri-printer-line"></i> @_localization.Getkey("Print")
+    </button>
+
+</div> *@
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#a4headdiv').show();
+        $('#a4footdiv').show();
+
+        $('#a5headdiv').hide();
+        $('#a5footdiv').hide();
+
+    });
+
+    function generatePDF(regNo) {
+        var htmlWidth = $("#a4reportbody").width();
+        var htmlHeight = $("#a4reportbody").height();
+        var pdfWidth = htmlWidth + (15 * 2);
+        var pdfHeight = (pdfWidth * 1.5) + (15 * 2);
+
+        var doc = new jsPDF('p', 'pt', [pdfWidth, pdfHeight]);
+        var pageCount = Math.ceil(htmlHeight / pdfHeight) - 1;
+
+        html2canvas(document.getElementById("a4reportbody"), {
+            scale: "5",
+            allowTaint: true, useCORS: true
+        }).then(canvas => {
+            var image = canvas.toDataURL("image/jpeg", 1.0);
+            doc.addImage(image, "JPEG", 15, 15, htmlWidth, htmlHeight);
+            for (var i = 1; i <= pageCount; i++) {
+                doc.addPage(pdfWidth, pdfHeight);
+                doc.addImage(image, 'JPEG', 15, -(pdfHeight * i) + 15, htmlWidth, htmlHeight);
+            }
+            doc.save(regNo + ".pdf");
+        });
+    }
+
+</script>
+
+
+
+
+
+
+
+
+
+

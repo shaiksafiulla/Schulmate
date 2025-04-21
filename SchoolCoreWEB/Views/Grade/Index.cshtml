@@ -1,0 +1,184 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<Grade>
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+<div class="row">
+	<div class="col-2">
+		<div class="list-group">
+
+			<a href="@Url.Action("Index", "Medium")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Mediums")</a>
+			<a href="@Url.Action("Index", "Shift")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Shifts")</a>
+
+			<a href="@Url.Action("Index", "Activity")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Activities")</a>
+			<a href="@Url.Action("Index", "PeriodBreak")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("PeriodBreaks")</a>
+
+			<a href="@Url.Action("Index", "Subject")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Subjects")</a>
+			<a href="@Url.Action("Index", "Lesson")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Lessons")</a>
+			<a href="@Url.Action("Index", "Topic")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Topics")</a>
+
+			<a href="@Url.Action("Index", "BloodGroup")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("BloodGroup")</a>
+			@*  <a href="@Url.Action("Index", "Holiday")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Holidays")</a> *@
+			<a href="@Url.Action("Index", "FeeType")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("FeeTypes")</a>
+			<a href="@Url.Action("Index", "PayMode")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("PayModes")</a>
+			<a href="@Url.Action("Index", "EnquiryStatus")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("EnquiryStatus")</a>
+
+			<a href="@Url.Action("Index", "ExpenseCategory")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ExpenseCategory")</a>
+			<a href="@Url.Action("Index", "ReferenceAdmission")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ReferenceAdmission")</a>
+
+			<a href="@Url.Action("Index", "QuestionType")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("QuestionTypes")</a>
+			<a href="@Url.Action("Index", "QuestionDifficulty")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("DifficultyLevels")</a>
+			<a href="@Url.Action("Index", "QuestionCategory")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("QuestionCategories")</a>
+			<a href="@Url.Action("Index", "QuestionBank")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("QuestionBank")</a>
+
+			<a href="@Url.Action("Index", "ExamType")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ExamTypes")</a>
+			<a href="@Url.Action("Index", "ExamTime")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ExamTimes")</a>
+			<a href="@Url.Action("Index", "Grade")" class="list-group-item list-group-item-action active" aria-current="true"><i class="ri-pencil-line"></i> @_localization.Getkey("Grades")</a>
+
+		</div>
+	</div>
+	<div class="col-10">
+		<div class="card ribbon-box">
+			<div class="card-body">
+				<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i>@_localization.Getkey("GradeInfo")</div>
+				<button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('11','0')"><i class="ri-add-line"></i></button>
+				<div class="ribbon-content">
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="GradeGrid">
+						<thead>
+							<tr>
+								<th style="display:none;">Id</th>
+								<th>@_localization.Getkey("Name")</th>
+								<th>@_localization.Getkey("MinPercent")</th>
+								<th>@_localization.Getkey("MaxPercent")</th>
+								<th>@_localization.Getkey("Color")</th>
+								<th>@_localization.Getkey("Description")</th>
+								<th>@_localization.Getkey("Actions")</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+	<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="myModalBodyDiv1">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		$(document).ready(function () {
+
+			$("#loaderDiv").show("slow", function () {
+				getGrades();
+
+				var resObj = setResourceObj();
+				getResourceObj(JSON.stringify(resObj));
+			})
+		});
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.grades = `@_localization.Getkey("Grades")`;
+			msgobj.viewgrade = `@_localization.Getkey("ViewGrade")`;
+			msgobj.editgrade = `@_localization.Getkey("EditGrade")`;
+			msgobj.addgrade = `@_localization.Getkey("AddGrade")`;
+
+			return msgobj;
+		}
+		function getGrades() {
+			$("#loaderDiv").show();
+			$.ajax({
+				type: 'POST',
+				async: false,
+				url: '@Url.Action("GetAll", "Grade")',
+				Accept: 'application/json, text/javascript',
+				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+				success: function (response) {
+					if (response != null) {
+						var gradeData = [];
+						$.each(JSON.parse(response), function (key, value) {
+
+							var inputcolor = '<input class="form-control" type="color" name="color" disabled value=' + value.color + '>'
+							var btndelete = "";
+							//btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`1`, '+value.id+')"><i class="ri-delete-bin-line"></i>&nbsp; Delete</a>'
+
+							var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,GradeGrid);"> ' +
+								'<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+								'<div class="dropdown-menu dropdown-menu-end">' +
+								'<a class="dropdown-item" href="#" onclick="viewAction(`11`, ' + value.id + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("View")</a>' +
+								'<a class="dropdown-item" href="#" onclick="addEditAction(`11`, ' + value.id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' + btndelete +
+
+								'</div>' +
+								'</div>'
+
+							gradeData.push([value.id, value.name, value.minPercent, value.maxPercent, inputcolor, value.description, btnaction])
+						})
+
+						$("#GradeGrid").DataTable({
+							"bDestroy": true,
+							data: gradeData,
+							order: [[0, "desc"]],
+							"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+							dom: 'lBfrtip',
+							buttons: [
+								{
+									extend: 'csvHtml5',
+									text: '<i class="ri-file-excel-line"></i>',
+									titleAttr: 'csv',
+									filename: `@_localization.Getkey("Grades")`,
+									className: 'btn btn-outline-light btn-sm',
+									exportOptions: {
+										columns: [1, 2, 3, 4, 5]
+									}
+								}
+							]
+						})
+						$("#loaderDiv").hide();
+
+					} else {
+						toastr.error(`@_localization.Getkey("Error")`);
+					}
+				},
+				error: function (response) {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			})
+		}
+
+
+	</script>
+}

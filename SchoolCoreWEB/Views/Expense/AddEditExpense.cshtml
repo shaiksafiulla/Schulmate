@@ -1,0 +1,164 @@
+﻿@model SchoolCoreWEB.Models.Expense
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<div class="card">
+    <div class="card-body">
+        <form id="expenseForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id)
+            @Html.HiddenFor(m => m.BranchId)
+            @Html.HiddenFor(m => m.SessionYearId)
+            <div class="form-group required mb-3">
+                <label for="title" class="form-label">@_localization.Getkey("Title")</label>
+                @Html.TextBoxFor(model => model.Title, new { @class = "form-control form-control-sm", @id = "title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+            </div>
+           @*  <div class="form-group mb-3">
+                <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-control form-control-sm", @id = "ddlbranch", @required = "required", onChange = "selectedBranchIndexChanged()" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="sessionyear" class="form-label">@_localization.Getkey("SessionYear")</label>
+                @Html.DropDownListFor(model => model.SessionYearId, Model.SessionYearSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-control form-control-sm", @id = "ddlsessionyear", @required = "required", onChange = "selectedSessionYearIndexChanged()" })
+            </div> *@
+            <div class="form-group required mb-3">
+                <label for="categoryid" class="form-label">@_localization.Getkey("Category")</label>
+                @Html.DropDownListFor(model => model.CategoryId, Model.ExpenseCategorySheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlexpensecategory", @required = "required", onChange = "selectedexpensecategoryIndexChanged()" })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="startdate" class="form-label">@_localization.Getkey("ExpenseDate")</label>
+                @Html.EditorFor(model => model.ExpenseDate, "0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @required = "required", @name = "expensedate", @id = "expensedate", onChange = "Validate()" } })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="amount" class="form-label">@_localization.Getkey("Amount")</label>
+                @Html.EditorFor(model => model.Amount, "{0:n2}", new { htmlAttributes = new { @class = "form-control form-control-sm", @required = "required", @name = "amount", @id = "amount", onkeyup = "Validate()" } })
+            </div>
+            <div class="form-group mb-3">
+                <label for="referenceno" class="form-label">@_localization.Getkey("ReferenceNo")</label>
+                @Html.TextBoxFor(model => model.ReferenceNo, new { @class = "form-control form-control-sm", @id = "referenceno", @maxlength = "100", onkeyup = "Validate();" })
+            </div>        
+           
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "address", @rows = "2", @maxlength = "250" })
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitExpense()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+            <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function chkFields() {
+        var isvalid = true;        
+        // if ($("#ddlbranch").val() == "" || $("#ddlbranch").val() == "-1") {
+        //     isvalid = false;
+        // }
+        // if ($("#ddlsessionyear").val() == "" || $("#ddlsessionyear").val() == "-1") {
+        //     isvalid = false;
+        // }
+        if ($("#ddlexpensecategory").val() == "" || $("#ddlexpensecategory").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#title").val() == "") {
+            isvalid = false;
+        }
+        if ($("#amount").val() == "") {
+            isvalid = false;
+        }
+        if ($("#expensedate").val() == "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    // function selectedBranchIndexChanged() {
+    //     Validate();
+    // }
+    // function selectedSessionYearIndexChanged() {
+    //     Validate();
+    // }
+    function selectedexpensecategoryIndexChanged() {
+        Validate();
+    }
+    function submitExpense() {
+        $("#loaderDiv1").show("slow", function () {
+            var myformdata = $("#expenseForm").serialize();
+            // $.ajax({
+            //     type: 'POST',
+            //    // url: '@Url.Action("Save", "Expense")',
+            //      url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/Expense/Save',
+            //     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            //     data: myformdata,
+            //     success: function (response) {
+            //         if (response != null) {
+            //             var serviceresult = JSON.parse(response);
+            //             actionAfterResponse('ExpenseGrid', serviceresult.recordId, serviceresult.statusId, '36');
+            //         } else {
+            //             toastr.error(`@_localization.Getkey("Error")`);
+            //         }
+            //     },
+            //     error: function (response) {
+            //         toastr.error(`@_localization.Getkey("Error")`);
+
+            //     }
+            // })
+            fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/Expense/Save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'Authorization': 'Bearer ' + `@strtoken`,
+                            'UserParam': `@Html.Raw(@userParamkey)`
+                        },
+                        body: myformdata
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        toastr.success(`@_localization.Getkey("Success")`);
+                         // var serviceresult = JSON.parse(result);
+                         //   actionAfterResponse('ExpenseGrid', serviceresult.recordId, serviceresult.statusId, '36');
+                          window.location = '@Url.Action("Index", "Expense")';
+                    })
+                    .catch(error => {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    });
+        })
+    }
+    Validate();
+</script>

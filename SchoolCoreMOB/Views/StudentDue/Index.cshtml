@@ -1,0 +1,209 @@
+﻿@model IEnumerable<VLeaveRequest>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<div class="page-title page-title-small">
+    @*  <h2><a href="#" onclick="setNewChildNavigation(`@Url.Content("/Home")`)"><i class="fa fa-arrow-left"></i></a>Back To Home</h2>*@
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Fee Dues</h2>
+</div>
+<div class="content mt-0 mb-2">
+    <div style="display: flex; justify-content: space-evenly; align-items: stretch; width: 100%;">
+        <div id="duetype-container" style="flex: 1; display: flex; justify-content: space-evenly; align-items: center;">
+        </div>  
+         @*<div>
+            <span class="badge" id="spcount"></span>
+        </div>*@
+    </div>
+</div>
+<div id="due-container">
+</div>
+
+@*<a href="#" data-menu="menu-leaves" id="ancmenuleavestrigger" style="display:none">Leaves</a>*@
+
+
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+           let studentdueArr=[];
+              $(document).ready(function () {
+               showLoading();
+               getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/studentdue`, '@strtoken', '@Html.Raw(@userParamkey)')
+                   .then(response => {                      
+                       studentdueArr = response;
+                       //$("#spcount").html(studentdueArr.length);
+                       setDueTypeBinding();                      
+                       hideLoading();
+                   })
+                   .catch(error => {
+                      showToast('2', '@_localization.Getkey("Error")');
+                   });
+           });
+
+
+
+
+            function setDueTypeBinding(){
+                         $('#duetype-container').empty();
+                        const container = document.getElementById('duetype-container');
+
+                        //const div = document.createElement('div');
+                        //     div.className = 'weekdaycard';
+                        //     div.setAttribute('id', '0');
+                        //     div.textContent = 'All';
+                        //     div.addEventListener('click', () => {
+                        //             const selectedCard = container.querySelector('.weekdaycard.selected');
+                        //             if (selectedCard) {
+                        //                 selectedCard.classList.remove('selected');
+                        //             }
+                        //             div.classList.add('selected');
+                        //               setBindingValues('0');
+                        //     });
+
+                             const div1 = document.createElement('div');
+                             div1.className = 'weekdaycard';
+                             div1.setAttribute('id', '1');
+                             div1.textContent = 'Up To 30%';
+                             div1.addEventListener('click', () => {
+                                     const selectedCard1 = container.querySelector('.weekdaycard.selected');
+                                     if (selectedCard1) {
+                                         selectedCard1.classList.remove('selected');
+                                     }
+                                     div1.classList.add('selected');
+                                       setBindingValues('1');
+                             });
+                             const div2 = document.createElement('div');
+                             div2.className = 'weekdaycard';
+                             div2.setAttribute('id', '2');
+                             div2.textContent = '30 - 60%';
+                             div2.addEventListener('click', () => {
+                                     const selectedCard2 = container.querySelector('.weekdaycard.selected');
+                                     if (selectedCard2) {
+                                         selectedCard2.classList.remove('selected');
+                                     }
+                                     div2.classList.add('selected');
+                                       setBindingValues('2');
+                             });
+                             const div3 = document.createElement('div');
+                             div3.className = 'weekdaycard';
+                             div3.setAttribute('id', '3');
+                             div3.textContent = '60 - 100%';
+                             div3.addEventListener('click', () => {
+                                     const selectedCard3 = container.querySelector('.weekdaycard.selected');
+                                     if (selectedCard3) {
+                                         selectedCard3.classList.remove('selected');
+                                     }
+                                     div3.classList.add('selected');
+                                       setBindingValues('3');
+                             });
+                             //container.appendChild(div);
+                             container.appendChild(div1);
+                             container.appendChild(div2);
+                             container.appendChild(div3);
+
+                             const requestCards = container.querySelectorAll('.weekdaycard');
+                                  requestCards.forEach(card => {
+                               if (card.textContent === 'Up To 30%') {
+                                   card.classList.add('selected');  // Manually add selected class
+                                   setBindingValues(card.id);  // Call setTeacherPeriodBinding directly after selecting the card
+                               }
+                           });
+
+               }
+
+    function setBindingValues(type) {
+        $('#due-container').empty(); // Clear the existing content
+
+        // Filter the leave requests based on the type
+        let data = type == '0' ? studentdueArr
+            : type == '1' ? studentdueArr.filter(item => item.duePercent <= 30)
+            : type == '2' ? studentdueArr.filter(item => item.duePercent > 30 && item.duePercent <= 60)
+            : studentdueArr.filter(item => item.duePercent > 60 && item.duePercent <= 100)
+            
+       data.forEach(item => {
+              // Create a card for each subject
+                   const card = document.createElement('div');
+                   card.className = "card card-style mb-2 custom-card rounded-2 d-flex flex-column"; // Apply card styling
+
+                     const subcard = document.createElement('div');
+                   subcard.className = "content mt-2 mb-2 flex-grow-1"; // Apply card styling
+
+                    const subsubcard = document.createElement('div');
+                   subsubcard.className = "d-flex justify-content-start align-items-center"; // Apply card styling
+
+                   const studentDiv = document.createElement('span');
+                   studentDiv.innerHTML = item.fullName;
+                   studentDiv.className = "me-3";
+                   studentDiv.style.width = "100px";  // Fixed width for student name
+                   studentDiv.style.overflow = "hidden";  // Hide any overflow content
+                   studentDiv.style.textOverflow = "ellipsis";  // Show ellipsis when the text overflows
+                   studentDiv.style.whiteSpace = "wrap";  // Prevent the text from wrapping to the next line
+
+                   const maxMarksDiv = document.createElement('span');
+                   maxMarksDiv.innerHTML = `Class: ${item.className}`;
+                   maxMarksDiv.className = "me-3";
+
+                   var marksDiv = document.createElement('span')
+                   marksDiv.className="badge font-xl py-2 px-3";
+                   marksDiv.style.marginLeft = "auto";
+                   marksDiv.style.minWidth = "50px";  // Minimum width for the badge
+                   marksDiv.style.textAlign = "center";  // Center the text within the badge
+                   //marksDiv.style.padding = "6px 12px";  // Adjust padding to give it a consistent look
+                   //marksDiv.style.fontSize = "14px";  // Adjust the font size if needed
+                   marksDiv.style.backgroundColor=`red`;
+                   marksDiv.innerHTML=`${item.dueAmount}`;
+
+                   // Append the elements to the card
+                   subsubcard.appendChild(studentDiv);
+                   subsubcard.appendChild(maxMarksDiv);
+                   subsubcard.appendChild(marksDiv);
+
+                   subcard.appendChild(subsubcard);
+                   card.appendChild(subcard);
+
+
+                    // Add click event listener to the card
+                    card.addEventListener('click', function () {
+                       setNewChildNavigation(`/Student/Payments?Id=`+item.studentId+``);
+                       // alert(`Card clicked for ${item.fullName}`);
+                      
+                    });
+
+                $('#due-container').append(card);
+           });
+    }
+    function viewLeaveRequest(id){
+
+        var objLeave = leaveReqArr.find(item=> item.id === id);
+
+        if(objLeave !== null && objLeave !== undefined){
+           var status = objLeave.statusId==1 ? `<span class="badge bg-yellow-dark font-11">@_localization.Getkey("Awaiting")</span>`
+           : objLeave.statusId==2 ? `<span class="badge bg-red-dark">@_localization.Getkey("Rejected")</span>`
+           : `<span class="badge bg-green-dark">@_localization.Getkey("Approved")</span>`;
+           // var status = objLeave.statusId==1 ? `<i class="fa fa-clock-circle color-yellow-dark" style="font-size : 15px"></i>`
+           //: objLeave.statusId==2 ? `<i class="fa fa-times-circle color-red-dark" style="font-size : 15px"></i>`
+           //: `<i class="fa fa-check-circle color-green-dark" style="font-size : 15px"></i>`;
+
+             $("#sp_leavefromdate").html(objLeave.strFromDate || '&nbsp;');
+              $("#sp_leavetodate").html(objLeave.strToDate || '&nbsp;');
+               $("#sp_leavereason").html(objLeave.reason || '&nbsp;');
+                $("#sp_leavedaycount").html(objLeave.dayCount || '&nbsp;');
+                  $("#sp_leavecreateddate").html(objLeave.strCreatedDate || '&nbsp;');
+                    $("#sp_leavestatus").html(status || '&nbsp;');
+                     $("#sp_leavecomment").html(objLeave.comment || '&nbsp;');
+
+                     $("#ancmenuleavestrigger")[0].click();
+        }
+    }
+
+
+</script>

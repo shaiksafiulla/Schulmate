@@ -1,0 +1,44 @@
+﻿@model SchoolCoreMOB.Models.VTeacherAnnouncement
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Branch") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.BranchName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("SessionYear") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.SessionYearName)
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Description") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.Description)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Sections") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.SectionName)
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

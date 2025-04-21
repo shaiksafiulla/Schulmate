@@ -1,0 +1,2 @@
+﻿CREATE DATABASE hangfiredb;
+CREATE DATABASE schooldb;

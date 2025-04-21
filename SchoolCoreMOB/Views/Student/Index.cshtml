@@ -1,0 +1,198 @@
+﻿@model IEnumerable<MbStudent>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{    
+    string strtoken= @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");    
+}
+
+<style>
+     .autocomplete-suggestions {
+            border: 1px solid #ccc;
+            max-height: 400px;
+            overflow-y: auto;
+            position: absolute;
+            background: #fff;
+            width: 350px;
+            z-index: 1000;
+            border-radius: 8px; /* Rounded corners for the suggestion container */
+        }
+
+        .autocomplete-suggestion {
+            padding: 15px;
+            display: flex;
+            align-items: flex-start;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .autocomplete-suggestion:hover {
+            background-color: #f5f5f5;
+        }
+
+        .student-card {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            width: 100%;
+            position: relative; /* This is needed to align "View Profile" at the top-right */
+        }
+
+        .student-card img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            margin-top: 5px; /* Align the image to the top */
+        }
+
+        .student-details {
+            flex-grow: 1;
+            padding-top: 5px; /* Align the text to top with the image */
+        }
+
+        .student-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .student-email {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .student-phone {
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .view-profile {
+            position: absolute;
+            top: 5px; /* Align to the top-right corner */
+            right: 10px;
+            text-decoration: none;
+          /*  color: .color-highlight;*/
+            font-size: 12px;
+        }
+
+        .view-profile:hover {
+            text-decoration: underline;
+        }
+
+        /* Optional: Add a subtle shadow to the card */
+        .autocomplete-suggestion {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .autocomplete-suggestion:last-child {
+            border-bottom: none;
+        }
+</style>
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+@*<div class="card card-style mb-5">
+    <div class="content">
+        <p>
+            Search Students by Name or Mobile Number or Roll Number or Admission Number. The results shall be relevant to your accessibility.
+        </p>
+    </div>
+</div>*@
+<div class="content mt-0 mb-0">
+    <div class="search-box search-color shadow-xl border-0 bg-dark-dark rounded-l bottom-0">
+        <i class="fa fa-search"></i>
+        <input type="text" class="border-0" id="student-search" placeholder="Search for students..." />    
+        
+    </div>
+    <div class="search-results search-list">
+         <div id="autocomplete-container" class="list-group list-custom-large"></div>
+    </div>
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+  
+        $(document).ready(function () {
+            setActiveNav("@Url.Action("Index", "Home")");
+            loadDefaultStudents();
+           $("#student-search").on("input", function () {
+               var query = $(this).val();
+
+               if (query.length > 2) {
+                    showLoading();
+                      getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/MbStudent/`+query+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             showAutocompleteResults(response);
+                              hideLoading();                       
+                        })
+                        .catch(error => {                          
+                              $("#autocomplete-container").empty();
+                        });                   
+               } else {
+                   $("#autocomplete-container").empty();                 
+               }
+           });
+           
+          
+       
+       });
+  function loadDefaultStudents(){   
+      showLoading();
+                      getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/DefaultMbStudent`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             showAutocompleteResults(response);
+                              hideLoading();                       
+                        })
+                        .catch(error => {                          
+                              $("#autocomplete-container").empty();
+                        });
+
+  }
+   function showAutocompleteResults(data) {
+                var container = $("#autocomplete-container");
+                container.empty();
+               
+                if (data.length > 0) {
+                    data.forEach(function (student) {
+                        var suggestion = $("<div>")
+                            .addClass("autocomplete-suggestion")
+                            .append(
+                                $("<div>").addClass("student-card")
+                                    .append(
+                                            $("<img>").attr("src", '@Configuration["WebApi:ImageBaseUrl"]' + student.filePath).attr("alt", student.name),
+                                        $("<div>").addClass("student-details")
+                                            .append(
+                                                $("<div>").addClass("student-name").text(student.name),
+                                                $("<div>").addClass("student-email").text(student.classSectionName),
+                                                //$("<div>").addClass("student-phone").text(student.mobileNo),
+                                                $("<a>").addClass("view-profile").attr("href", "#").text("View Profile").on("click", function (event) {                                                   
+                                                    event.preventDefault();   
+                                                   
+                                                    setNewChildNavigation(`/Student/Profile?Id=`+student.id)
+                                                    //var url = '@Url.Action("Profile", "student", new { Id = "__studentId__" })';  
+                                                    // url = url.replace('__studentId__', student.id); 
+                                                    //setChildNavigation('${url}');
+                                                })
+                                            )
+                                    )
+                            );
+                        //suggestion.on("click", function () {
+                        //    $("#student-search").val(student.name);
+                        //    container.empty();
+                        //});
+                        container.append(suggestion);
+                    });
+                } else {
+                    container.append("<div class='autocomplete-suggestion'>No results found</div>");
+                }
+            }
+
+</script>

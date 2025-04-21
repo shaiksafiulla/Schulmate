@@ -1,0 +1,170 @@
+﻿@model IEnumerable<VPersonnelAttendenceBenchmark>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{    
+    string strtoken= @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam"); 
+    
+}
+@*<style>
+    #charts-container {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content:center;*/
+    }
+
+    canvas {
+        margin: 10px;
+    }
+</style>*@
+<div class="page-title page-title-small">  
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+<div class="card card-style">
+
+    <div class="content mb-0">
+        <h3 class="text-center bottom-0">Attendance</h3>
+        @*<p class="text-center mt-n2 font-11 color-highlight">Attendance by Months</p>*@
+        <div id="totals-container" style="text-align:center; font-size: 11px" class="color-highlight"></div>
+        <div class="chart-container mb-2" id="charts-container" style="width:100%;"></div>
+    </div>
+</div>
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script src="~/scripts/chart.min.js"></script>
+<script>
+     $(document).ready(function () {        
+         // getAttendanceDetail();
+         showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/Personnel`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             setBindingValues(response);
+                           // setfooterActiveAfterNavigation();
+                            hideLoading();                            
+                        })
+                        .catch(error => {                          
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+     });
+     function getAttendanceDetail() {
+          showLoading();
+        $.ajax({
+            type: 'GET',
+            async: false,
+            url: '@Url.Action("GetAttendenceByPersonnelId", "Attendence")',
+            Accept: 'application/json, text/javascript',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function (response) {
+                if (response != null) {
+                    setBindingValues(response);
+                   // setfooterActiveAfterNavigation();
+                    hideLoading();
+                } else {
+                   // toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+               // toastr.error(`@_localization.Getkey("Error")`);
+
+            }
+        })
+    }
+     function setBindingValues(data){
+          $('#charts-container').empty();
+            if(data.length > 0){
+                createGaugeCharts(data);
+            }
+     }
+      function createGaugeCharts(attendanceData) {
+        let totalPresent = 0;
+        let totalAbsent = 0;
+        let totalLeave = 0;
+
+        attendanceData.forEach(function (item) {
+
+            totalPresent += item.presentDays;
+            totalAbsent += item.absentDays;
+            totalLeave += item.leaveDays;
+
+          const canvasId = item.monthName;
+
+          var divcard = document.createElement('div');
+          divcard.className="card";
+          divcard.style.width = "250px";
+          divcard.style.margin = "10px";
+
+          var divcardbody = document.createElement('div');
+          divcardbody.className="card-body";
+
+           var hfive = document.createElement('h5');
+          hfive.className="card-title";
+          hfive.innerText = item.monthName;
+
+           var elcanvas = document.createElement('canvas');
+          elcanvas.id = item.monthName;
+          elcanvas.width="100";
+          elcanvas.height="100";
+
+          divcardbody.appendChild(hfive);
+          divcardbody.appendChild(elcanvas);
+          divcard.appendChild(divcardbody)
+
+
+           // $('#charts-container').append("<canvas id="${canvasId}" width="200" height="200"></canvas>");
+           $('#charts-container').append(divcard);
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+
+            const total = item.presentDays + item.absentDays + item.leaveDays; // Update total to include leave
+            const presentPercentage = (item.presentDays / total) * 100;
+            const leavePercentage = (item.leaveDays / total) * 100;
+
+            const gaugeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Present - ' + item.presentDays, 'Absent - ' + item.absentDays, 'Leave - ' + item.leaveDays],
+                    datasets: [{
+                        data: [presentPercentage, 100 - presentPercentage - leavePercentage, leavePercentage],
+                        backgroundColor: ['#4CAF50', '#FF5733', '#FFC107'], // Colors for present, absent, leave
+                        hoverBackgroundColor: ['#45a049', '#c70039', '#ffca28'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    //maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                fontSize: 13,
+                                padding: 15,
+                                boxWidth: 12
+                            },
+                        },                       
+                         tooltips: {
+                                enabled: true
+                            },
+                            animation: {
+                                duration: 1500
+                            },
+                            layout: {
+                                padding: {
+                                    bottom: 30
+                                }
+                            }
+                    },
+                }
+            });
+        });
+        displayTotals(totalPresent,totalAbsent,totalLeave);
+    }
+    function displayTotals(present,absent,leave){
+        const totalsContainer = '<div style="text-align:center"> '+
+                       ' <h4>Total Present : '+present+'  Total Absent : '+absent+'  Total Leave : '+leave+' </h4> '+
+                    ' </div>';
+                    $('#totals-container').append(totalsContainer);
+    }
+</script>

@@ -1,0 +1,115 @@
+﻿@model SchoolCoreWEB.Models.BranchClass
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="card">
+    <div class="card-body">
+        <form id="branchClassForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id)
+            @Html.HiddenFor(m => m.BranchId)
+            @Html.HiddenFor(m => m.ClassId)
+           
+            <div class="form-group required mb-3">
+                <label for="class" class="form-label">@_localization.Getkey("Shift")</label>
+                @Html.DropDownListFor(model => model.ShiftId, Model.ShiftSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlshift", onChange = "selectedShiftIndexChanged()" })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("SlotDuration")</label>
+                @Html.TextBoxFor(model => model.SlotDuration, new { @class = "form-control form-control-sm", @id = "slotduration", @required = "required", @maxlength = "2", onkeyup = "Validate();", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+            </div>          
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitBranchClass()" id="btnsubmit" disabled="disabled">
+                    <span>@_localization.Getkey("Update")</span>                    
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function chkFields() {
+        var isvalid = true;
+        if ($("#slotduration").val() == "") {
+            isvalid = false;
+        }
+        if ($("#ddlshift").val() == "" || $("#ddlshift").val() == "-1") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function selectedShiftIndexChanged() {
+        Validate();
+    }
+    function submitBranchClass() {
+        $("#loaderDiv1").show("slow", function () {
+            var myformdata = $("#branchClassForm").serialize();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("Save", "BranchClass")',
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                data: myformdata,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('BranchClassGrid', serviceresult.recordId, serviceresult.statusId, '25');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        })
+    }
+    // function submitClassTeacher() {
+
+    //     $("#loaderDiv1").show("slow", function () {
+    //         var myformdata = $("#myForm").serialize();
+    //         $.ajax({
+    //             type: 'POST',
+    //             url: '@Url.Action("UpdateClassTeacher", "BranchClass")',
+    //             contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+    //             data: myformdata,
+    //             success: function (response) {
+    //                 if (response != null) {
+    //                     var serviceresult = JSON.parse(response);
+    //                     actionAfterResponse('BranchClassGrid', serviceresult.recordId, serviceresult.statusId, '25');
+    //                 } else {
+    //                     toastr.error(`@_localization.Getkey("Error")`);
+    //                 }
+    //             },
+    //             error: function (response) {
+    //                 toastr.error(`@_localization.Getkey("Error")`);
+
+    //             }
+    //         })
+    //     })
+
+    // }
+    Validate();
+</script>

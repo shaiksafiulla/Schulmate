@@ -1,0 +1,59 @@
+﻿@model SchoolCoreWEB.Models.VBranch
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("Name") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.Name)
+                        </div>
+               </div>
+                <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("Theme") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.Theme)
+                        </div>
+               </div>
+               <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("Address") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.Address)
+                        </div>
+               </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("PhoneNo") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.PhoneNo)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("EmailAddress") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.EmailAddress)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Admin") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.AdminName)
+                </div>
+            </div>
+
+        </div>
+    </div>   
+</div>

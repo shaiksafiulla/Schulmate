@@ -1,0 +1,85 @@
+﻿@model SchoolCoreWEB.Models.Profile
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+
+<div class="card">
+    <div class="card-body">
+       
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group required mb-3">
+                    <label for="firstName" class="form-label">@_localization.Getkey("Name") :</label>
+                    @Html.DisplayFor(model => model.FullName)
+                </div>
+                <div class="form-group required mb-3">
+                    <label for="startdate" class="form-label">@_localization.Getkey("Age") :</label>
+                    @Html.DisplayFor(model => model.Age)
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">@_localization.Getkey("Gender") :</label>
+                    @Html.DisplayFor(model => model.GenderName)
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <img id="emp_img" src="@(Model.FilePath)" alt="@_localization.Getkey("AltProfileImage")" width="200" height="100" />
+                </div>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                
+            </div>
+            <div class="col-6">
+                
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <label for="class" class="form-label">@_localization.Getkey("BloodGroup") :</label>
+                    @Html.DisplayFor(model => model.BloodGroupName)
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <label for="designation" class="form-label">@_localization.Getkey("Designation") :</label>
+                    @Html.DisplayFor(model => model.Designation)
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <label for="designation" class="form-label">@_localization.Getkey("Qualification") :</label>
+                    @Html.DisplayFor(model => model.Qualification)
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <label for="designation" class="form-label">@_localization.Getkey("EmailAddress") :</label>
+                    @Html.DisplayFor(model => model.EmailAddress)
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group required mb-3">
+                    <label for="class" class="form-label">@_localization.Getkey("Branch") :</label>
+                    @Html.DisplayFor(model => model.BranchName)
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <label for="designation" class="form-label">@_localization.Getkey("MobileNo") :</label>
+                    @Html.DisplayFor(model => model.DefaultMobileNo)
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

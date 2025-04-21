@@ -1,0 +1,69 @@
+﻿@model SchoolCoreWEB.Models.VFeeStructure
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Branch") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.BranchName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("SessionYear") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.SessionYearName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Title") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.Title)
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Classes") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.ClassName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("TotalAmount") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.TotalAmount)
+                </div>
+            </div>            
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Installments") : </label>
+                </div>
+                <div class="col-7">
+                    @{
+                        if (Model.HasInstallment == "1")
+                        {
+                            <span class="badge bg-success">@_localization.Getkey("Yes")</span>
+                        }
+                        if (Model.HasInstallment == "2")
+                        {
+                            <span class="badge bg-danger">@_localization.Getkey("No")</span>
+                        }                       
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

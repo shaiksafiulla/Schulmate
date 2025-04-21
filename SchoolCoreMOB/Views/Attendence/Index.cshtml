@@ -1,0 +1,85 @@
+﻿@model IEnumerable<VPersonnelAttendenceBenchmark>
+@using Localization.Services
+@using SchoolCoreMOB.Models
+@using Newtonsoft.Json
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+
+@{
+    VUserInfo struser = new VUserInfo();
+    var userInfokey = @Context.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        struser = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+    }
+    string strtoken = @Context.Session.GetString("strtoken");
+    string userParamkey = @Context.Session.GetString("UserParam");
+}
+<link rel="stylesheet" type="text/css" href="~/styles/attendance.css">
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Attendance</h2>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content mb-0">
+        <div id="grandAttendanceSummary" class="attendance-summary"></div>
+        <hr />
+        <div class="calendar-header">
+            <button class="prev-month">&#60;</button>
+            <span id="monthYear" class="cal-title text-center text-uppercase font-700 font-15 bg-theme color-theme">August 2024</span>
+            <button class="next-month">&#62;</button>
+        </div>
+        <div class="calendar-days">
+            <div class="day">Sun</div>
+            <div class="day">Mon</div>
+            <div class="day">Tue</div>
+            <div class="day">Wed</div>
+            <div class="day">Thu</div>
+            <div class="day">Fri</div>
+            <div class="day">Sat</div>
+        </div>
+        <div class="calendar-dates" id="dates"></div>
+        <hr />
+        <div id="attendanceDetails">
+            <div id="attendanceSummary" class="attendance-summary"></div>
+        </div>
+    </div>
+</div>
+<div class="card card-style mb-2 custom-card rounded-2">
+    @* <div class="event-dot" style="background-color:yellow"></div>*@
+
+    <div class="content mt-2 mb-2">
+        <h5>Leave Requests</h5>
+        <hr />
+        <div id="leaveRequests" class="list-group list-custom-large list-icon-0"></div>
+    </div>
+</div>
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script src="~/scripts/attendance.js"></script>
+<script>
+
+    const attendUrl = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/MbPersonnel/`+ @struser.PersonId+`,`+@struser.UserType+``;
+     const leaveUrl = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/leaverequest/Personnel/`+ @struser.PersonId+`,`+@struser.UserType+``;
+    const atttoken = `@strtoken`;
+    const struserparam = `@Html.Raw(@userParamkey)`;
+    //renderCalendar(new Date().getMonth(), new Date().getFullYear(), attendUrl, leaveUrl, strtoken,struserparam);
+     fetchAttendanceData(new Date().getMonth(), new Date().getFullYear(), attendUrl, leaveUrl, atttoken,struserparam);
+    // Handle next and previous month navigation
+    document.querySelector(".next-month").addEventListener("click", function () {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear);  // Pass the parameters here
+    });
+
+    document.querySelector(".prev-month").addEventListener("click", function () {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar(currentMonth, currentYear);  // Pass the parameters here
+    });
+</script>
+

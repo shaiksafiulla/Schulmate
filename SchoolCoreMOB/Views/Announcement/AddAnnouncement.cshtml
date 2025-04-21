@@ -1,0 +1,412 @@
+﻿@model SchoolCoreMOB.Models.TeacherAnnouncement
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<style>
+    /* Styling for the file upload input and button */
+    .file-upload-container {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between the button and file name display */
+        flex-wrap: wrap;
+    }
+
+    .file-upload-input {
+        display: none; /* Hide the default file input */
+    }
+
+    .file-upload-container label {
+        cursor: pointer;
+        padding: 8px 15px;
+        border: 1px solid #007bff;
+        border-radius: 4px;
+        background-color: #fff;
+        color: #007bff;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .file-upload-container .file-name {
+        font-size: 14px;
+        color: #333;
+    }
+
+
+    /* Responsive behavior */
+    @@media (max-width: 768px) {
+        .file-upload-container {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+            .file-upload-container label,
+            .file-upload-container .file-name {
+                font-size: 12px; /* Smaller font on mobile */
+            }
+    }
+
+    @@media (max-width: 576px) {
+        .file-upload-container {
+            flex-direction: column;
+            gap: 8px; /* Adjust gap between button and file name on small screens */
+        }
+
+            .file-upload-container label {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .file-upload-container .file-name {
+                font-size: 12px;
+            }
+    }
+</style>
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+
+<form id="announcementForm" class="forms-sample">
+    @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.SessionYearId)
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+    @* @Html.HiddenFor(m => m.BranchClassId)*@
+    @Html.HiddenFor(m => m.ClasssubjectId)
+    @Html.HiddenFor(m => m.SectionIds, new { @id = "hfsectionids" })
+
+    <div class="card card-style mb-2 custom-card rounded-2">
+        <div class="content mb-2">
+
+            <div class="input-style has-borders no-icon mb-4">
+                <label for="ddlclass" class="color-highlight">Class</label>
+                @Html.DropDownListFor(model => model.BranchClassId, Model.BranchClassSheet, @_localization.Getkey("PleaseSelect"), new {  @id = "ddlclass", @required = "required", onChange = "selectedClassIndexChanged()" })
+                <span><i class="fa fa-chevron-down"></i></span>
+                <i class="fa fa-check disabled valid color-green-dark"></i>
+                <i class="fa fa-check disabled invalid color-red-dark"></i>
+                <em></em>
+            </div>
+            <div class="form-group required mb-3">
+                <label for="class" class="form-label">@_localization.Getkey("Sections")</label>
+                <div id="section-container">
+                </div>
+            </div>
+            <div class="input-style has-borders no-icon mb-4">
+                <label for="ddlsubject" class="color-highlight">Subject</label>
+                @Html.DropDownListFor(model => model.SubjectId, Model.SubjectSheet, @_localization.Getkey("PleaseSelect"), new {  @id = "ddlsubject", @required = "required", onChange = "selectedSubjectIndexChanged()" })
+                <span><i class="fa fa-chevron-down"></i></span>
+                <i class="fa fa-check disabled valid color-green-dark"></i>
+                <i class="fa fa-check disabled invalid color-red-dark"></i>
+                <em></em>
+            </div>
+
+
+            <hr />
+            <div class="input-style has-borders no-icon validate-field mb-4">
+                @Html.TextBoxFor(model => model.Title, new { @class = "form-control validate-name", @id = "title", @placeholder="Title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                <label for="title" class="color-highlight">Title</label>
+                <i class="fa fa-times disabled invalid color-red-dark"></i>
+                <i class="fa fa-check disabled valid color-green-dark"></i>
+                <em>(required)</em>
+            </div>
+            <div class="input-style has-borders no-icon mb-4">
+                @Html.TextAreaFor(model => model.Description, new {  @id = "description", @placeholder="Description",  @maxlength = "200" })
+                <label for="description" class="color-highlight">Description</label>
+                <em class="mt-n3">(required)</em>
+            </div>
+            <div style="display: flex;justify-content: center;align-items: center;gap: 20px;">
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.FileType, "1", new { @id="rdoImg", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoImg">Image</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.FileType, "2", new { @id="rdoPdf", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdoPdf">Pdf</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="file-upload-container">
+                    <label for="file-upload" class="btn btn-outline-primary">Choose File</label>
+                    <input type="file" id="file-upload" name="postedFile1" class="file-upload-input" accept="image/*,.pdf" onchange="uploadFile(6, this)" style="display: none;" />
+                    <span id="lblSelectedFileName" class="file-name"></span>
+                </div>
+            </div>
+            <img id="imgphoto" src="@(Model.FilePath)" class="img-fluid" style="width:100%; display:block; height:300px">
+            @*<div style="position: relative; width: 100%;  text-align: center;">
+                <label for="file-upload" class="btn btn-secondary btn-sm w-100" style="display: inline-block;
+                cursor: pointer;
+                padding: 10px 20px;
+                font-size: 16px;
+                text-align: center;
+                border-radius: 50px;
+                background-color: #87a96b;
+                color: white;
+                transition: background-color 0.3s;">
+                <i class="fas fa-upload"></i> upload file
+                </label>
+                <input type="file" id="file-upload" name="postedFile1" accept="image/*,.pdf" onchange="uploadFile(6, this)" class="d-none">
+                </div>
+                <span id="lblselectedfilename"></span>*@
+            @*<div class="file-data pb-5">
+                <input type="file" id="file-upload" class="upload-file bg-highlight shadow-s rounded-s" name="postedFile1" accept="image/*,.pdf" onchange="uploadFile(6,this)">
+                <p class="upload-file-text color-white">Upload Image</p>
+                </div>*@
+
+        </div>
+        <button type="button" class="btn btn-primary" style="border-radius:10px; background-color:#6C63FF" onclick="submitTeacherAnnouncement()" id="btnsubmit">Post</button>
+    </div>
+</form>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        Validate();
+       // setActiveNav("@Url.Action("Index", "Announcement")");
+       // $('#ddlsection').multiSelect();
+    });
+
+    function chkFields() {
+        var isvalid = true;
+        //if ($("#ddlbranch").val() == "" || $("#ddlbranch").val() == "-1") {
+        //    isvalid = false;
+        //}
+        //if ($("#ddlsessionyear").val() == "" || $("#ddlsessionyear").val() == "-1") {
+        //    isvalid = false;
+        //}
+        if ($("#ddlclass").val() == "" || $("#ddlclass").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlsubject").val() == "" || $("#ddlsubject").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#title").val() == "") {
+            isvalid = false;
+        }
+        var lstcard = getSelectedCardIds();
+        if(lstcard.length <= 0){
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function uploadFile(type, file) {
+         var filetype = $('[name="FileType"]:checked').val();
+        if (validateuploadFile(type, filetype, file) == "") {
+            if (filetype == 1) {
+                $("#imgphoto").show();
+                $("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+                 $('#lblSelectedFileName').html('');
+            }
+            if (filetype == 2) {
+                $("#imgphoto").hide();
+                $('#imgphoto').removeAttr('src');
+                $('#lblSelectedFileName').html('Selected File : ' + file.files[0].name);
+
+            }
+        }
+        else{
+            showToast('2', validateuploadFile(type, filetype, file));
+            $('#imgphoto').removeAttr('src');
+            $("#imgphoto").hide();
+            $('#lblSelectedFileName').html('');
+        }
+        //var filetype = $('[name="FileType"]:checked').val();
+        //if (validateuploadFile(type, filetype, file) == "") {
+        //    if (filetype == 1) {
+        //        $("#imgphoto").show();
+        //        $("#imgphoto").attr("src", URL.createObjectURL(file.files[0]));
+        //    }
+        //    if (filetype == 2) {
+        //        $("#imgphoto").hide();
+        //        //  $("#imgheader").attr("src", URL.createObjectURL(file.files[0]));
+        //    }
+        //}
+        //else {
+        //    if (filetype == 1) {
+        //        $("#imgphoto").show();
+        //        $("#imgphoto").attr("src", "");
+        //    }
+        //    if (filetype == 2) {
+        //        $("#imgphoto").hide();
+        //        // $("#imgheader").attr("src", "");
+        //    }
+        //}
+    }
+
+    function selectedClassIndexChanged() {
+        getSections();
+        getSubjects();
+        Validate();
+    }
+    function selectedSubjectIndexChanged() {
+        Validate();
+    }
+     function getSections() {
+       showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/TeacherAnnouncement/TeacherSection/`+$("#ddlclass").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                            if(response !==null){
+                                setSectionBinding(response);
+                            }
+
+                              hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+
+    }
+    function setSectionBinding(data){
+        $('#section-container').empty();
+
+       const container = document.getElementById('section-container');
+        data.forEach(card => {
+            const div = document.createElement('div');
+            div.className = 'sectioncard';
+            div.setAttribute('data-value', card.value);
+            div.textContent = card.text;
+
+            // Add click event listener
+            div.addEventListener('click', () => {
+                div.classList.toggle('selected');
+            });
+            container.appendChild(div);
+        });
+
+    }
+
+
+    function getSubjects() {
+
+        $('#ddlsubject')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+
+            showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/TeacherAnnouncement/Subject/`+$("#ddlclass").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                            // console.log(response);
+                             if(response !==null && response.length > 0){
+                                 var lstdata = response;
+                                var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                                for (var i = 0; i < lstdata.length; i++) {
+                                    s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                                }
+                                $("#ddlsubject").html(s);
+                             }
+
+                                 hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+    }
+
+
+    function getSelectedCardIds() {
+        const selectedCards = document.querySelectorAll('.sectioncard.selected');
+        const selectedIds = Array.from(selectedCards).map(card => card.getAttribute('data-value'));
+        return selectedIds;
+    }
+
+    function submitTeacherAnnouncement1() {
+        showLoading();
+            //var selectedSectionIds = $('#ddlsection').val();
+            //var serializedArray = JSON.stringify(selectedSectionIds);
+            var serializedArray = JSON.stringify(getSelectedCardIds());
+            $("#hfsectionids").val(serializedArray);
+            var postData = new FormData($('#announcementForm')[0]);
+            postData.append("AssignmentFile", $("input[name=postedFile1]")[0].files[0]); // file
+            $.ajax({
+                type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/TeacherAnnouncement/Save',
+                headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                   },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                   
+                   //  alert(response);
+                    if (response != null) {    
+                          showToast('1', `@_localization.Getkey("Success")`);
+                        // hideLoading();                      
+                          window.location.href="@Url.Action("Index", "Announcement")";                       
+                    } else {
+                      //  alert(response);
+                       showToast('2', `@_localization.Getkey("Error")`+ response);
+                    }
+                },
+                error: function (error) {
+                  // alert(error);
+                  showToast('2', `@_localization.Getkey("Error")` + error);
+
+                }
+            });
+
+    }
+     function submitTeacherAnnouncement() {
+        showLoading();
+           
+        var serializedArray = JSON.stringify(getSelectedCardIds());
+        $("#hfsectionids").val(serializedArray);
+        var postData = new FormData($('#announcementForm')[0]);      
+
+        var fileInput = $("input[name=postedFile1]")[0];
+        if (fileInput.files.length > 0) {
+            postData.append("AssignmentFile", fileInput.files[0]);
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/TeacherAnnouncement/Save',
+            headers: {
+                'Authorization': 'Bearer ' + `@strtoken`,
+                'UserParam': `@Html.Raw(@userParamkey)`
+            },
+            data: postData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            timeout: 30000, // 30 seconds timeout
+            success: function (response) {               
+                if (response != null) {                       
+                    hideLoading();
+                    showToast('1', `@_localization.Getkey("Success")`);
+                    window.location.href = "@Url.Action("Index", "Announcement")";                       
+                } else {
+                    showToast('2', `@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (xhr, status, error) {
+                //console.error("Error details: ", xhr.responseText, status, error);
+                showToast('2', `@_localization.Getkey("Error")` + error);
+            }
+        });
+    }
+
+</script>

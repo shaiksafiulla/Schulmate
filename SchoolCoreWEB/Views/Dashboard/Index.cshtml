@@ -1,0 +1,688 @@
+﻿@using SchoolCoreWEB.Models
+@using Localization.Services
+@using Newtonsoft.Json
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	VUserInfo spadminuser = new VUserInfo();
+	var adminuserinfo = @Context.Session.GetString("UserInfo");
+	if (adminuserinfo != null)
+	{
+		spadminuser = JsonConvert.DeserializeObject<VUserInfo>(adminuserinfo);
+	}
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+
+<div class="container-fluid">
+	<input type="hidden" id="hfbranchid">
+	<div class="row">
+		<div class="card">
+			<div class="card-body">
+				<ul class="list-group list-group-horizontal" id="ulbrcls">
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-3">
+			<div class="card tilebox-one">
+				<div class="card-body">
+					<span class="text-info me-2"><i class='uil uil-users-alt float-start'></i></span>
+					<h6 class="text-uppercase mt-0">@_localization.Getkey("Students")</h6>
+					<h2 class="my-2" id="lbldashstudentcount"></h2>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card tilebox-one">
+				<div class="card-body">
+					<span class="text-info me-2"><i class='uil uil-users-alt float-start'></i></span>
+					<h6 class="text-uppercase mt-0">@_localization.Getkey("Teachers")</h6>
+					<h2 class="my-2" id="lbldashteachercount"></h2>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card tilebox-one">
+				<div class="card-body">
+					<span class="text-info me-2"><i class='uil uil-window-restore float-start'></i></span>
+					<h6 class="text-uppercase mt-0">@_localization.Getkey("Classes")</h6>
+					<h2 class="my-2" id="lbldashclasscount"></h2>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card tilebox-one">
+				<div class="card-body">
+					<span class="text-info me-2"><i class='uil uil-window-restore float-start'></i></span>
+					<h6 class="text-uppercase mt-0">@_localization.Getkey("Sections")</h6>
+					<h2 class="my-2" id="lbldashsectioncount"></h2>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-6">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Expenses</div>
+					<div class="ribbon-content">
+						<div>
+							<canvas id="homelinedashExpenseChart" width="400" height="200" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Fee Status</div>
+					<div class="ribbon-content">
+						<div>
+							<canvas id="homedoughdashFeeChart" width="400" height="200" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Gender Ratio</div>
+					<div class="ribbon-content">
+						<div>
+							<canvas id="homedoughdashGenderChart" width="400" height="200" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-6">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Attendance</div>
+					<div class="ribbon-content">
+						<div>
+							<canvas id="homebardashAttendenceChart" width="400" height="200" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-3">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Leave Requests</div>
+					<div class="ribbon-content">
+						<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbldashleavemetric">
+							<thead>
+								<tr>
+									<th style="text-align:center">@_localization.Getkey("Name")</th>
+									<th style="text-align:center">@_localization.Getkey("From")</th>
+									<th style="text-align:center">@_localization.Getkey("To")</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Birthdays</div>
+					<div class="ribbon-content">
+						<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbldashbirthday">
+							<thead>
+								<tr>
+									<th style="text-align:center">@_localization.Getkey("Name")</th>
+									<th style="text-align:center">@_localization.Getkey("DOB")</th>
+									<th style="text-align:center">@_localization.Getkey("Type")</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-6">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Class Performance</div>
+					<div class="ribbon-content">
+						<div>
+							<canvas id="homebardashClassexamChart" width="600" height="300" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Holidays</div>
+					<div class="ribbon-content">
+						<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbldashholiday">
+							<thead>
+								<tr>
+									<th style="text-align:center">@_localization.Getkey("Title")</th>
+									<th style="text-align:center">@_localization.Getkey("From")</th>
+									<th style="text-align:center">@_localization.Getkey("To")</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="card ribbon-box">
+				<div class="card-body">
+					<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Events</div>
+					<div class="ribbon-content">
+						<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tbldashevent">
+							<thead>
+								<tr>
+									<th style="text-align:center">@_localization.Getkey("Title")</th>
+									<th style="text-align:center">@_localization.Getkey("From")</th>
+									<th style="text-align:center">@_localization.Getkey("To")</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script src="~/assets/vendor/chart.js/chart.min.js"></script>
+	<script>
+		 $(document).ready(function(){
+			getBranches();
+
+
+
+		});
+		function getBranches(){
+			 $("#loaderDiv").show();
+			let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Dashboard/GetAll`;
+			 getOperation(url,`@strtoken`,`@Html.Raw(@userParamkey)`)
+				.then(response => {
+					var result = response;
+					$("#ulbrcls").empty();
+					var liexam=[];
+					for (var i = 0; i < result.length; i++){
+						var item = setLiBrcls(result[i]);
+								liexam.push(item);
+							}
+					$("#ulbrcls").html(liexam);
+					   // Set the first branch as default selection after rendering
+				setDefaultBranch(result); // Set the default branch (first item in the list)
+					$("#loaderDiv").hide();
+				})
+				.catch(error => {
+					console.log(error);
+						toastr.error(`@_localization.Getkey("Error")`);
+				});
+		}
+
+		function setLiBrcls(data){
+			var li=document.createElement('li');
+				  li.className ="list-group-item";
+				   li.onclick =  (function(id,li) { return function(){ SelectedBranchChanged(id,li); }})(data.id,li);
+				  var anchor = document.createElement('a');
+				  anchor.href="#";
+				  anchor.className="nav-link";
+				  anchor.innerText =data.name;// + ' ('+data.studentCount+')'
+				  li.appendChild(anchor);
+				  return li;
+			 }
+		function SelectedBranchChanged(id,li){
+			$("#hfbranchid").val(id);
+			  getDashboardMetrics(id);
+			//getOverAllPerformanceByBranch(id);
+			if (!$(li).hasClass("active")) {
+					// Remove the class from anything that is active
+					$("#ulbrcls li").removeClass("active");
+					// And make this active
+					$(li).addClass("active");
+				}
+		}
+			// Set the default branch after loading the branches (select the first branch)
+		function setDefaultBranch(branchList) {
+			if (branchList.length > 0) {
+				const firstBranch = branchList[0];  // Select the first branch in the array
+
+				// Trigger the selection of the first branch
+				const firstLi = $("#ulbrcls li").filter(function() {
+					return $(this).text().trim() === firstBranch.name; // Match branch name
+				}).first();
+
+				if (firstLi.length > 0) {
+					SelectedBranchChanged(firstBranch.id, firstLi[0]); // Simulate the click event
+					firstLi.addClass("active");  // Add active class
+				}
+			}
+		}
+		function getDashboardMetrics(id){
+			 $("#loaderDiv").show();
+
+			let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Dashboard/Metrics/`+ id +`,`+ @spadminuser.SessionYearId +``;
+			 getOperation(url,`@strtoken`,`@Html.Raw(@userParamkey)`)
+							.then(response => {
+								//console.log(response);
+								setPersonnelCount(response.personnelCountMetric);
+								setExpenseGraph(response.lstExpenseMetric);
+								setFeeStatusGraph(response.lstFeeStatusMetric);
+								setGenderGraph(response.lstGenderMetric);
+								setAttendenceGraph(response.lstAttendenceMetric);
+								setClassExamGraph(response.lstClassExamMetric);
+
+								setLeaveRequests(response.lstLeaveRequestMetric);
+								setHolidays(response.lstHolidayMetric);
+								setBirthdays(response.lstBirthdayMetric);
+								setEvents(response.lstEventMetric);
+
+								 $("#loaderDiv").hide();
+							})
+							.catch(error => {
+								console.log(error);
+								 toastr.error(`@_localization.Getkey("Error")`);
+							});
+		}
+		function setPersonnelCount(data){
+				$("#lbldashstudentcount").html(data.studentCount);
+				$("#lbldashteachercount").html(data.teacherCount);
+				$("#lbldashclasscount").html(data.classCount);
+				$("#lbldashsectioncount").html(data.sectionCount);
+		}
+		function setExpenseGraph(data) {
+			let chartStatus = Chart.getChart("homelinedashExpenseChart");
+			if (chartStatus != undefined) {
+				chartStatus.destroy();
+			}
+			// Prepare labels (months) and data (expense amounts)
+			if(data != null){
+				const labels = data.map(item => item.expenseMonth);
+				const expenses = data.map(item => item.expenseAmount);
+				var homeexpensectx_linechart = document.getElementById('homelinedashExpenseChart');
+				var expenseChart = new Chart(homeexpensectx_linechart, {
+					type: 'line',
+					data: {
+							labels: labels,
+							datasets: [{
+								label: 'Monthly Expense',
+								data: expenses,
+								borderColor: '#FF5733',
+								backgroundColor: 'rgba(255, 87, 51, 0.2)',
+								fill: true,
+								tension: 0.4
+							}]
+						},
+					options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							scales: {
+								// x: {
+								// 	title: {
+								// 		display: true,
+								// 		text: 'Month'
+								// 	}
+								// },
+								y: {
+									title: {
+										display: true,
+										text: 'Expense Amount'
+									}
+								}
+							}
+						}
+				});
+			}
+
+		}
+		function setFeeStatusGraph(data) {
+			let chartStatus = Chart.getChart("homedoughdashFeeChart");
+			if (chartStatus != undefined) {
+				chartStatus.destroy();
+			}
+			if(data != null){
+				const labels = data.map(item => item.paymentStatus);
+			const percentages = data.map(item => parseFloat(item.percentage));
+			const colors = data.map(item => item.statusColor);
+
+			var homefeectx_doughchart = document.getElementById('homedoughdashFeeChart');
+			var feeStatusChart = new Chart(homefeectx_doughchart, {
+				type: 'doughnut',
+					data: {
+						labels: labels,  // Payment statuses (Partially Paid, Unpaid)
+						datasets: [{
+							data: percentages,  // Percentage values
+							backgroundColor: colors,  // Color for each payment status
+							borderColor: 'rgba(255, 255, 255, 0.5)',  // Optional border color
+							borderWidth: 1
+						}]
+					},
+				options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: {
+								position: 'top',
+								labels: {
+									font: {
+										size: 14  // Optional: to change the font size of the legend
+									}
+								}
+							},
+							tooltip: {
+								callbacks: {
+									label: function(tooltipItem) {
+										// Format the percentage with the '%' symbol in the tooltip
+										return tooltipItem.label + ': ' + tooltipItem.raw.toFixed(2) + '%';
+									}
+								}
+							}
+						}
+					}
+			});
+			}
+
+		}
+		function setGenderGraph(data) {
+			let chartStatus = Chart.getChart("homedoughdashGenderChart");
+			if (chartStatus != undefined) {
+				chartStatus.destroy();
+			}
+
+			if(data != null){
+				const labels = data.map(item => item.genderName);  // Gender names (Female, Male)
+				const genderCounts = data.map(item => item.genderCount);  // Gender counts (55, 85)
+
+				var homegenderctx_doughchart = document.getElementById('homedoughdashGenderChart');
+				var genderChart = new Chart(homegenderctx_doughchart, {
+					type: 'doughnut',
+						data: {
+							labels: labels,  // Gender names (Female, Male)
+							datasets: [{
+								data: genderCounts,  // Gender counts (55, 85)
+								backgroundColor: ['#FF9999', '#66B3FF'],  // Colors for Female and Male
+								borderColor: 'rgba(255, 255, 255, 0.5)',  // Optional border color
+								borderWidth: 1
+							}]
+						},
+					options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							plugins: {
+								legend: {
+									position: 'top',
+									labels: {
+										font: {
+											size: 14  // Optional: to change the font size of the legend
+										}
+									}
+								},
+								tooltip: {
+									callbacks: {
+										label: function(tooltipItem) {
+											// Show count in the tooltip
+											return tooltipItem.label + ': ' + tooltipItem.raw;
+										}
+									}
+								}
+							}
+						}
+				});
+			}
+
+		}
+		function setAttendenceGraph(data) {
+			let chartStatus = Chart.getChart("homebardashAttendenceChart");
+			if (chartStatus != undefined) {
+				chartStatus.destroy();
+			}
+			if(data != null){
+				const months = data.map(item => item.attendenceMonth);  // Array of months (e.g. "Jun 2024", "Jul 2024")
+				const workingCounts = data.map(item => item.workingCount);  // Array of WorkingCount (e.g. 39, 27, 25)
+				const presentCounts = data.map(item => item.presentCount);  // Array of PresentCount (e.g. 27, 23, 22)
+
+				var homeattendctx_barchart = document.getElementById('homebardashAttendenceChart');
+				var attendChart = new Chart(homeattendctx_barchart, {
+					type: 'bar',
+						data: {
+						labels: months,  // Months on the X-axis
+						datasets: [
+							{
+								label: 'Working Count',
+								data: workingCounts,  // Data for total number of classes
+								backgroundColor: 'rgba(0, 123, 255, 0.5)',  // Color for WorkingCount bars
+								borderColor: 'rgba(0, 123, 255, 1)',  // Border color for WorkingCount
+								borderWidth: 1
+							},
+							{
+								label: 'Present Count',
+								data: presentCounts,  // Data for total number of classes attended
+								backgroundColor: 'rgba(40, 167, 69, 0.5)',  // Color for PresentCount bars
+								borderColor: 'rgba(40, 167, 69, 1)',  // Border color for PresentCount
+								borderWidth: 1
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							x: {
+								beginAtZero: true
+							},
+							y: {
+								beginAtZero: true
+							}
+						},
+						plugins: {
+							tooltip: {
+								enabled: true,
+								callbacks: {
+									label: function(tooltipItem) {
+										// Show percentage in tooltip
+										const total = tooltipItem.dataset.data.reduce((acc, value) => acc + value, 0);
+										const percentage = ((tooltipItem.raw / total) * 100).toFixed(2) + '%';
+										return tooltipItem.dataset.label + ': ' + tooltipItem.raw + ' (' + percentage + ')';
+									}
+								}
+							}
+						}
+					}
+				});
+
+			}
+
+		}
+		function setClassExamGraph(data) {
+			let chartStatus = Chart.getChart("homebardashClassexamChart");
+			if (chartStatus != undefined) {
+				chartStatus.destroy();
+			}
+			if(data != null){
+				const classNames = data.map(item => item.className);  // Class names (e.g., "1", "7", "4")
+				const performancePercentages = data.map(item => parseFloat(item.mrkPercent));  // Performance percentages (e.g., 52.93, 51.21)
+				const gradeColors = data.map(item => item.gradeColor);  // Grade colors (e.g., "#aa78e8")
+
+				var homeclassexamctx_barchart = document.getElementById('homebardashClassexamChart');
+				var classexamChart = new Chart(homeclassexamctx_barchart, {
+					type: 'bar',
+						data: {
+						labels: classNames,  // Class names on the Y-axis
+						datasets: [{
+							label: 'Performance (%)',
+							data: performancePercentages,  // The data (performance percentages)
+							backgroundColor: gradeColors,  // Use the grade color for each bar
+							borderColor: gradeColors,  // Border color matching the bar color
+							borderWidth: 1
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						indexAxis: 'y',  // Set the bars to be horizontal
+						scales: {
+							x: {
+								beginAtZero: true,
+								max: 100  // Max percentage value (0-100)
+							},
+							y: {
+								beginAtZero: true
+							}
+						},
+						plugins: {
+							tooltip: {
+								callbacks: {
+									label: function(tooltipItem) {
+										// Tooltip shows percentage with the % symbol
+										return tooltipItem.raw.toFixed(2) + '%';
+									}
+								}
+							}
+						}
+					}
+				});
+
+			}
+
+		}
+		function setLeaveRequests(data){
+
+			var reqData=[];
+			$.each(data,function(key,value){
+			   reqData.push([value.fromPersonnelName,value.strFromDate,value.strToDate,value.statusColor])
+			})
+			if ($.fn.dataTable.isDataTable('#tbldashleavemetric')) {
+					var table = $('#tbldashleavemetric').DataTable();
+					table.clear().rows.add(reqData).draw();
+				}
+				else{
+					$("#tbldashleavemetric").DataTable({
+						"bDestroy": true,
+						data : reqData,
+						"aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+						"searching": false,
+						"bLengthChange": false,
+						paging: false,
+						"info": false,
+						"ordering": false,
+						"createdRow": function(row, data, dataIndex) {
+							var statusColor = data[3];
+							$(row).css('background-color', statusColor);
+						},
+						"columnDefs": [
+							{
+								"targets": 3,
+								"visible": false
+							}
+						]
+				})
+
+			}
+
+		}
+		function setHolidays(data){
+
+
+			var holiData=[];
+			$.each(data,function(key,value){
+			   holiData.push([value.title,value.strStartDate,value.strEndDate])
+			})
+			if ($.fn.dataTable.isDataTable('#tbldashholiday')) {
+					var table = $('#tbldashholiday').DataTable();
+					table.clear().rows.add(holiData).draw();
+				}
+				else{
+					$("#tbldashholiday").DataTable({
+						"bDestroy": true,
+						data : holiData,
+						"aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+						"searching": false,
+						"bLengthChange": false,
+						paging: false,
+						"info": false,
+						"ordering": false
+					})
+				}
+
+		}
+		function setBirthdays(data){
+			var birData=[];
+			$.each(data,function(key,value){
+				 let imgpath ='@Configuration["WebApi:ClientBaseUrl"]' + "/"+ value.filePath;
+				var	pic = '<div class="table-user"><img src="' + imgpath + '"  class="me-2 rounded-circle" /><span>' + value.fullName + '</span></div>'
+			   birData.push([pic,value.dateOfBirth,value.personnelTypeName])
+			})
+			if ($.fn.dataTable.isDataTable('#tbldashbirthday')) {
+					var table = $('#tbldashbirthday').DataTable();
+					table.clear().rows.add(birData).draw();
+				}
+				else{
+					$("#tbldashbirthday").DataTable({
+						"bDestroy": true,
+						data : birData,
+						"aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+						"searching": false,
+						"bLengthChange": false,
+						paging: false,
+						"info": false,
+						"ordering": false
+					})
+				}
+
+		}
+		function setEvents(data){
+
+			var evData=[];
+			$.each(data,function(key,value){
+			   evData.push([value.title,value.strStartDate,value.strEndDate])
+			})
+			 if ($.fn.dataTable.isDataTable('#tbldashevent')) {
+					var table = $('#tbldashevent').DataTable();
+					table.clear().rows.add(evData).draw();
+				}
+				else{
+					$("#tbldashevent").DataTable({
+						"bDestroy": true,
+						data : evData,
+						"aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+						"searching": false,
+						"bLengthChange": false,
+						paging: false,
+						"info": false,
+						"ordering": false
+					})
+				}
+		}
+
+
+
+	</script>
+}

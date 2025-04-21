@@ -1,0 +1,164 @@
+﻿@using SchoolCoreWEB.Models
+@model AttachModel
+@using Localization.Services
+@inject LanguageService _localization
+
+
+@using (Html.BeginForm())
+{
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("AttachmentInfo")</div>
+
+            <button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="AddEditAttach('0')"><i class="ri-add-line"></i></button>
+            <div class="ribbon-content">
+                <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="AttachmentGrid">
+                    <thead>
+                        <tr>
+                            <th style="display:none;">Id</th>
+                            <th>@_localization.Getkey("Name")</th>
+                            <th>@_localization.Getkey("FileTypeName")</th>
+                            <th>@_localization.Getkey("FileName")</th>
+                            <th>@_localization.Getkey("Download")</th>
+                            <th>@_localization.Getkey("Actions")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+    <div id="primary-header-modal3" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header modal-colored-header bg-info">
+                    <h4 class="modal-title" id="primary-header-modalLabel3">Modal Heading</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="myModalBodyDiv3">
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+@* <script src="~/assets/vendor/jquery/jquery.min.js"></script> *@
+<script type="text/javascript">
+    var type, referId;
+    $(document).ready(function () {
+        $("#loaderDiv1").show("slow", function () {
+            var model = @Html.Raw(Json.Serialize(Model));
+            type = model.type;
+            referId = model.referId;
+            getAttachments();
+
+            var resObj = setResourceObj();
+            getResourceObj(JSON.stringify(resObj));
+        })
+    });
+    function setResourceObj() {
+        var msgobj = {};
+        msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+        msgobj.yes = `@_localization.Getkey("Yes")`;
+        msgobj.no = `@_localization.Getkey("No")`;
+        msgobj.error = `@_localization.Getkey("Error")`;
+        msgobj.added = `@_localization.Getkey("Added")`;
+        msgobj.updated = `@_localization.Getkey("Updated")`;
+
+        msgobj.deleted = `@_localization.Getkey("Deleted")`;
+        msgobj.delete = `@_localization.Getkey("Delete")`;
+        msgobj.view = `@_localization.Getkey("View")`;
+        msgobj.edit = `@_localization.Getkey("Edit")`;
+        msgobj.classes = `@_localization.Getkey("Classes")`;
+        msgobj.viewattachment = `@_localization.Getkey("ViewAttachment")`;
+        msgobj.editattachment = `@_localization.Getkey("EditAttachment")`;
+        msgobj.addattachment = `@_localization.Getkey("AddAttachment")`;
+
+        return msgobj;
+    }
+    function getAttachments() {
+
+        $.ajax({
+            type: 'GET',
+            async: false,
+            url: '@Url.Action("GetAll", "Attachment")?type=' + type + '&referid=' + referId,
+            Accept: 'application/json, text/javascript',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function (response) {
+                if (response != null) {
+                    var attachData = [];
+                    $.each(JSON.parse(response), function (key, value) {
+                        var btndownload = "";
+                        if (value.fileName != "" && value.fileName != null) {
+                            btndownload = '<a href="#" onclick="ondownloadAttach(' + value.id + ')"><i class="ri-download-2-line"></i>&nbsp;</a>'
+                        }
+                        var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,AttachmentGrid);"> ' +
+                            '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+                            '<div class="dropdown-menu dropdown-menu-end">' +
+                            '<a class="dropdown-item" href="#" onclick="AddEditAttach(' + value.id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' +
+                            '</div>' +
+                            '</div>'
+
+                        attachData.push([value.id, value.name, value.fileTypeName, value.fileName, btndownload, btnaction])
+                    })
+
+                    $("#AttachmentGrid").DataTable({
+                        "bDestroy": true,
+                        data: attachData,
+                        order: [[0, "desc"]],
+                        "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                        dom: 'lBfrtip',
+                        buttons: [
+                            {
+                                extend: 'csvHtml5',
+                                text: '<i class="ri-file-excel-line"></i>',
+                                titleAttr: 'csv',
+                                filename: `@_localization.Getkey("Attachments")`,
+                                className: 'btn btn-outline-light btn-sm',
+                                exportOptions: {
+                                    columns: [1, 2, 3]
+                                }
+                            }
+                        ]
+                    })
+                    $("#loaderDiv1").hide();
+
+                } else {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+                toastr.error(`@_localization.Getkey("Error")`);
+
+            }
+        })
+    }
+    function AddEditAttach(id) {
+        if (id > 0) {
+            $("#primary-header-modalLabel3").html(`@_localization.Getkey("EditAttachment")`);
+        }
+        else {
+            $("#primary-header-modalLabel3").html(`@_localization.Getkey("AddAttachment")`);
+        }
+        url = basepath + "/Attachment/AddEdit?Id=" + id + '&type=' + type + '&referid=' + referId;
+        $('#myModalBodyDiv3').load(url, function () {
+            $('#primary-header-modal3').modal("show");
+        })
+    }
+
+</script>
+
+

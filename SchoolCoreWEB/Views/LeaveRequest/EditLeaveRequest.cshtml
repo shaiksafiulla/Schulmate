@@ -1,0 +1,158 @@
+﻿@model SchoolCoreWEB.Models.VLeaveRequest
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<div class="card">
+    <div class="card-body">
+        @Html.HiddenFor(model => model.RequestId, new { @id = "hfrequestid" })
+        @Html.HiddenFor(model => model.NotificationId, new { @id = "hfnotificationid" })
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("Id") : </label>
+            </div>
+            <div class="col-7">
+                @Html.DisplayFor(model => model.Id)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("FromDate") : </label>
+            </div>
+            <div class="col-7">
+                @Html.DisplayFor(model => model.StrFromDate)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("ToDate") : </label>
+            </div>
+            <div class="col-7">
+                @Html.DisplayFor(model => model.StrToDate)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("Reason") : </label>
+            </div>
+            <div class="col-7">
+                @Html.DisplayFor(model => model.Reason)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("NoOfDays") : </label>
+            </div>
+            <div class="col-7">
+                @Html.DisplayFor(model => model.DayCount)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("RequestDate") : </label>
+            </div>
+            <div class="col-7">
+                @Html.DisplayFor(model => model.StrCreatedDate)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5">
+                <label>@_localization.Getkey("Status") : </label>
+            </div>
+            <div class="col-7">
+                @{
+                    if (Model.StatusId == "1")
+                    {
+                        <span class="badge bg-warning">@_localization.Getkey("UnderProcess")</span>
+                    }
+                    if (Model.StatusId == "2")
+                    {
+                        <span class="badge bg-danger">@_localization.Getkey("Rejected")</span>
+                    }
+                    if (Model.StatusId == "3")
+                    {
+                        <span class="badge bg-success">@_localization.Getkey("Approved")</span>
+                    }
+                }
+            </div>
+        </div>
+        @if (Model.StatusId != "1")
+        {
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Comment") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.Comment)
+                </div>
+            </div>
+        }
+        @if (Model.StatusId == "1")
+        {
+            <div class="form-group mb-3">
+                <label for="comment" class="form-label">@_localization.Getkey("Comment")</label>
+                @Html.TextAreaFor(model => model.Comment, new { @class = "form-control form-control-sm", @id = "comment", @rows = "2", @maxlength = "300" })
+            </div>
+        }
+    </div>
+
+    <div class="modal-footer">
+
+        @if (Model.StatusId == "1")
+        {
+            <button type="button" class="btn btn-success" onclick="UpdateLeaveRequest('3')" id="btnapprove">@_localization.Getkey("Approve")</button>
+            <button type="button" class="btn btn-danger" id="btnreject" onclick="UpdateLeaveRequest('2')">@_localization.Getkey("Reject")</button>
+        }
+
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    function UpdateLeaveRequest(statusId) {
+        var objstat = {};
+        objstat.RequestId = $("#hfrequestid").val();
+         objstat.NotificationId = $("#hfnotificationid").val();
+        objstat.StatusId = statusId;
+        objstat.Comment = $("#comment").val();
+        var jstatdata = JSON.stringify(objstat);
+        //console.log(jstatdata, $("#hfrequestid").val());
+        $("#loaderDiv1").show("slow", function () {
+
+            $.ajax({
+                type: 'POST',
+                async: false,
+                url: '@Url.Action("UpdateLeaveRequest", "Notifications")',
+                data: { model: jstatdata },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        // toastr.success("updated successfully");                       
+                        // $("#loaderDiv1").hide();
+                        // $("#primary-header-modal").modal("hide");
+                         var serviceresult = JSON.parse(response);
+                        actionAfterResponse('NotificationsGrid', $("#hfnotificationid").val(), serviceresult.statusId, '43');
+
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        })
+    }
+</script>

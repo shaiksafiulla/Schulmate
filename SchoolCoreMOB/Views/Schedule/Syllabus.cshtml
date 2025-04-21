@@ -1,0 +1,127 @@
+﻿@model ScheduleTitle
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{    
+    string strtoken= @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");    
+}
+@Html.HiddenFor(m => m.Id, new{ @id="hfschedulesyllabusid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+<div class="card card-style">     
+    <div class="content mb-0">
+        <h4 class="text-center bottom-0">Classes</h4>
+        <div id="classsyllabuspersonnel-container">
+        </div>
+    </div>  
+   
+    <div class="content mb-0">
+        <div class="divider mb-0"></div>
+         <div id="syllabus-container">
+            </div>
+    </div>
+
+</div>
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+           $(document).ready(function () {
+               setActiveNav("@Url.Action("Index", "Home")");
+              // getClassesByPersonnelId();   
+                showLoading();
+                    getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Section/MbBranchClass`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             setClassPersonnelBinding(response);
+                              hideLoading();                       
+                        })
+                        .catch(error => {                          
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+
+           });
+     
+         
+    function setClassPersonnelBinding(data){
+          $('#classsyllabuspersonnel-container').empty();
+
+         const container = document.getElementById('classsyllabuspersonnel-container');
+          data.forEach(card => {
+              const div = document.createElement('div');
+              div.className = 'sectioncard';
+              div.setAttribute('data-value', card.id);
+              div.textContent = card.className;
+
+             // Add click event listener
+              div.addEventListener('click', () => {
+                      const selectedCard = container.querySelector('.sectioncard.selected');
+                      if (selectedCard) {
+                          selectedCard.classList.remove('selected');
+                      }
+                      div.classList.add('selected');
+
+                      getExaminationLessons(card.id);
+              });
+              container.appendChild(div);
+          });
+
+      }
+      function getExaminationLessons(branchclassid) {     
+
+        showLoading();
+            getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Schedule/Syllabus/`+$("#hfschedulesyllabusid").val()+`,`+branchclassid+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {                            
+                             setBindingSyllabusLessonValues(response);
+                            hideLoading();
+              
+                        })
+                        .catch(error => {                          
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });        
+
+      
+    }
+    function setBindingSyllabusLessonValues(data) {
+            const container = document.getElementById('syllabus-container');
+    
+            let htmlContent = '';  // Build the HTML content here
+    
+            data.forEach((result, index) => {
+                // Generate unique IDs for each section
+                const collapseId = `collapse-${index}`;
+                const headerId = `header-${index}`;               
+                // Create the accordion HTML dynamically
+                const sectionHTML = `
+                    <div class="card card-style mb-3">
+                        <div class="list-group list-custom-small list-icon-0 bg-blue-dark ps-3 pe-4">
+                            <a data-bs-toggle="collapse" class="no-effect" href="#${collapseId}" id="${headerId}">
+                                <i class="fa font-14 fa-phone color-white"></i>
+                                <span class="font-14 color-white">${result.subjectName}</span>
+                                <i class="fa fa-angle-down color-white"></i>
+                            </a>
+                        </div>
+                        <div class="collapse ps-2 pe-4" id="${collapseId}">
+                            <div class="list-group list-custom-small">
+                                ${
+                                    // Check if there are lessons, otherwise show a fallback message
+                                    result.lstLesson && Object.keys(result.lstLesson).length > 0
+                                    ? Object.entries(result.lstLesson).map(([key, value]) => 
+                                    
+                                        ` <a href="#"><i class="far fa-clock font-14 color-brown-dark"></i><span>${value.name}</span></a>`
+                                    ).join('')
+                                    : '<p>No lessons available</p>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;       
+              
+                htmlContent += sectionHTML;
+            });        
+            container.innerHTML = htmlContent;             
+}
+
+
+
+</script>

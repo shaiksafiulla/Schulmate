@@ -1,0 +1,154 @@
+﻿@model SchoolCoreWEB.Models.CalendarEvent
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<div class="card">
+    <div class="card-body">
+        <form id="calendarForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id)
+            @Html.HiddenFor(m => m.BranchId)
+            @Html.HiddenFor(m => m.SessionYearId)
+            @Html.HiddenFor(m => m.IsPersonal)
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Title")</label>
+                @Html.TextBoxFor(model => model.Title, new { @class = "form-control", @id = "title", @required = "required", @maxlength = "80", onkeyup = "Validate();" })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="startdate" class="form-label">@_localization.Getkey("StartDate")</label>
+                @Html.EditorFor(model => model.StartDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control datetimepicker", @required = "required", @id = "startdate", onChange = "Validate();" } })
+            </div>
+            <div class="form-group required mb-3">
+                <label for="enddate" class="form-label">@_localization.Getkey("EndDate")</label>
+                @Html.EditorFor(model => model.EndDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control datetimepicker", @required = "required", @id = "enddate", onChange = "Validate();" } })
+            </div>
+            <div class="form-group required mb-3">
+                <label class="form-label">@_localization.Getkey("EventType")</label>
+                @Html.RadioButtonFor(model => model.EventType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Event")</label> &nbsp;
+                @Html.RadioButtonFor(model => model.EventType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Holiday")</label>
+            </div>
+            <div class="form-group required mb-3">
+                @Html.CheckBoxFor(model => model.IsPersonalSelected, new { @id = "personalselected", @class = "form-check-input" })@_localization.Getkey("IsPersonal")
+            </div>
+            <div class="form-group mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Color")</label>
+                @Html.TextBoxFor(model => model.Color, new { @class = "form-control", @type = "color", @id = "color", @required = "required", @maxlength = "10" })
+            </div>
+           
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control", @id = "address", @rows = "2", @maxlength = "250" })
+            </div>
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitCalendarEvent()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+            Validate();          
+        });
+
+    function chkFields(){
+        var isvalid=true;
+        if($("#title").val() == ""){
+             isvalid =false;
+        }
+         if($("#startdate").val() == ""){
+             isvalid =false;
+        }
+         if($("#enddate").val() == ""){
+             isvalid =false;
+        }
+        return isvalid;
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+
+      function submitCalendarEvent(){
+          $("#loaderDiv1").show("slow", function () {
+          var myformdata = $("#calendarForm").serialize();
+             // $.ajax({
+             //  type: 'POST',
+             //   url: '@Url.Action("Save","CalendarEvent")',
+             //  contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+             //  data: myformdata,
+             //  success: function (response) {
+             //     if (response != null) {
+             //          var serviceresult = JSON.parse(response);
+             //          $("#loaderDiv1").hide();
+             //          location.reload();
+             //          // actionAfterResponse('ExamTypeGrid', serviceresult.recordId, serviceresult.statusId, '7');                     
+             //          } else {
+             //            toastr.error(`@_localization.Getkey("Error")`);
+             //          }
+             //  },
+             //  error: function (response) {
+             //        toastr.error(`@_localization.Getkey("Error")`);
+             //  }
+             // })
+              fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/CalendarEvent/Save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'Authorization': 'Bearer ' + `@strtoken`,
+                            'UserParam': `@Html.Raw(@userParamkey)`
+                        },
+                        body: myformdata
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        toastr.success(`@_localization.Getkey("Success")`);
+                        $("#loaderDiv1").hide();
+                         location.reload();
+                         //   actionAfterResponse('ExpenseGrid', serviceresult.recordId, serviceresult.statusId, '36');
+                         
+                    })
+                    .catch(error => {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    });
+          })
+      }
+      
+</script>

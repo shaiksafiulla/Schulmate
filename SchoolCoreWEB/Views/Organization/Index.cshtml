@@ -1,0 +1,210 @@
+﻿@model SchoolCoreWEB.Models.Organization
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string struserid=string.Empty;
+    string strtoken;
+    var userInfokey = @HttpContextAccessor.HttpContext.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        var userInfo = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+        struserid = userInfo.Id.ToString();
+    }
+    strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+}
+
+<form id="myForm" class="forms-sample was-validated">
+    @Html.HiddenFor(m => m.Id, new { @id = "hforgid" })
+    <div class="row">
+        <div class="col-2">
+            <div class="list-group">
+              
+                <a href="@Url.Action("Index", "Medium")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Mediums")</a>
+                <a href="@Url.Action("Index", "Shift")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Shifts")</a>
+
+                <a href="@Url.Action("Index", "Activity")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Activities")</a>
+                <a href="@Url.Action("Index", "PeriodBreak")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("PeriodBreaks")</a>
+               
+                <a href="@Url.Action("Index", "Subject")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Subjects")</a>
+                <a href="@Url.Action("Index", "Lesson")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Lessons")</a>
+                <a href="@Url.Action("Index", "Topic")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Topics")</a>
+
+                <a href="@Url.Action("Index", "BloodGroup")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("BloodGroup")</a>
+                @* <a href="@Url.Action("Index", "Holiday")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Holidays")</a> *@
+                <a href="@Url.Action("Index", "FeeType")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("FeeTypes")</a>
+                <a href="@Url.Action("Index", "PayMode")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("PayModes")</a>
+                <a href="@Url.Action("Index", "EnquiryStatus")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("EnquiryStatus")</a>
+               
+                <a href="@Url.Action("Index", "ExpenseCategory")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ExpenseCategory")</a>
+                <a href="@Url.Action("Index", "ReferenceAdmission")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ReferenceAdmission")</a>
+
+                <a href="@Url.Action("Index", "QuestionType")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("QuestionTypes")</a>
+                <a href="@Url.Action("Index", "QuestionDifficulty")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("DifficultyLevels")</a>
+                <a href="@Url.Action("Index", "QuestionCategory")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("QuestionCategories")</a>
+                <a href="@Url.Action("Index", "QuestionBank")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("QuestionBank")</a>
+
+                <a href="@Url.Action("Index", "ExamType")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ExamTypes")</a>
+                <a href="@Url.Action("Index", "ExamTime")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("ExamTimes")</a>
+                <a href="@Url.Action("Index", "Grade")" class="list-group-item list-group-item-action"><i class="ri-pencil-line"></i> @_localization.Getkey("Grades")</a>
+               
+            </div>
+        </div>
+        <div class="card col-10 ribbon-box">
+            <div class="card-body">
+
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("BasicInfo")</div>
+                <div class="ribbon-content">
+                    <div class="row">
+
+                        <div class="col-sm-3">
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">@_localization.Getkey("Theme")</label>
+                                @Html.TextBoxFor(model => model.Theme, new { @class = "form-control form-control-sm", @id = "theme", @maxlength = "100" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">@_localization.Getkey("Address")</label>
+                                @Html.TextBoxFor(model => model.Address, new { @class = "form-control form-control-sm", @id = "address", @maxlength = "300" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <img id="imglogo" src="@(Model.LogoPhotoPath)" alt="logo image" width="100" height="100" />
+                                <div class="input-group">
+                                    @*class="file-upload-browse btn btn-info"*@
+                                    <input type="file" id="logophoto" name="postedFile1" accept="image/*" class="form-control form-control-sm" onchange="uploadFile(4,1,this,1)">
+                                           
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <img id="imgheader" src="@(Model.HeaderPhotoPath)" alt="header image" width="300" height="100" />
+                                <div class="input-group">
+                                    @*class="file-upload-browse btn btn-info"*@
+                                    <input type="file" id="headerphoto" name="postedFile2" accept="image/*" class="form-control form-control-sm" onchange="uploadFile(4,1,this,2)">                                           
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" onclick="submitOrganization()" id="btnsubmit" disabled="disabled">
+                                    @if (Model.Id > 0)
+                                    {
+                                        <span>@_localization.Getkey("Update")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@_localization.Getkey("Save")</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+            </div>
+        </div>
+        <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>           
+    </div>
+</form>
+
+
+
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+    function uploadFile(type, filetype, file, num) {
+        if (validateuploadFile(type, filetype, file) == "") {
+            if (num == 1) {
+                $("#imglogo").attr("src", URL.createObjectURL(file.files[0]));
+                $("#hflogofilename").val(file.files[0].name);
+            }
+            if (num == 2) {
+                $("#imgheader").attr("src", URL.createObjectURL(file.files[0]));
+                $("#hfheaderfilename").val(file.files[0].name);
+            }
+        }
+        else {
+            if (num == 1) {
+                $("#imglogo").attr("src", "");
+            }
+            if (num == 2) {
+                $("#imgheader").attr("src", "");
+            }
+        }
+    }
+
+    function chkFields() {
+        var isvalid = true;
+        var fname = document.getElementById("name");
+        if (fname.value === "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }    
+    function submitOrganization() {
+        $("#loaderDiv").show("slow", function () {
+            var postData = new FormData($('#myForm')[0]);
+            postData.append("LogoFile", $("input[name=postedFile1]")[0].files[0]); // file
+            postData.append("HeaderFile", $("input[name=postedFile2]")[0].files[0]); // file
+
+            $.ajax({
+                type: 'POST',             
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/organization/save',
+                headers: {                   
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                     'UserId': @struserid
+                },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response != null) {                        
+                        var serviceresult = response;                       
+                        if (serviceresult.statusId == 1) {
+                            toastr.success(`@_localization.Getkey("Added")`);
+                        }
+                        else if (serviceresult.statusId == 2) {
+                            toastr.success(`@_localization.Getkey("Updated")`);
+                        }
+                        $("#loaderDiv").hide()
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            });
+
+        })
+    }
+    Validate();
+</script>

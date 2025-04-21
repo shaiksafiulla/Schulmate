@@ -1,0 +1,209 @@
+﻿@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<style>
+    /* Styling for the file upload input and button */
+    .file-upload-container {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between the button and file name display */
+        flex-wrap: wrap;
+    }
+
+    .file-upload-input {
+        display: none; /* Hide the default file input */
+    }
+
+    .file-upload-container label {
+        cursor: pointer;
+        padding: 8px 15px;
+        border: 1px solid #007bff;
+        border-radius: 4px;
+        background-color: #fff;
+        color: #007bff;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .file-upload-container .file-name {
+        font-size: 14px;
+        color: #333;
+    }
+
+
+    /* Responsive behavior */
+    @@media (max-width: 768px) {
+        .file-upload-container {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+            .file-upload-container label,
+            .file-upload-container .file-name {
+                font-size: 12px; /* Smaller font on mobile */
+            }
+    }
+
+    @@media (max-width: 576px) {
+        .file-upload-container {
+            flex-direction: column;
+            gap: 8px; /* Adjust gap between button and file name on small screens */
+        }
+
+            .file-upload-container label {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .file-upload-container .file-name {
+                font-size: 12px;
+            }
+    }
+</style>
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+
+<form id="chatbotForm" class="forms-sample">
+    <div class="card card-style mb-2 custom-card rounded-2">
+        <div class="content mb-2">
+            <input type="text" id="subject" placeholder="Subject (e.g., Physics)" required />
+            <input type="text" id="chapter" placeholder="Chapter (e.g., Motion)" required />
+
+            <div style="display: flex;justify-content: center;align-items: center;gap: 20px;">
+                <div class="file-upload-container">
+                    <label for="file-upload" class="btn btn-outline-primary">Choose File</label>
+                    <input type="file" id="file-upload" name="postedFile1" class="file-upload-input" accept=".pdf" onchange="uploadFile(6, this)" style="display: none;" />
+                    <span id="lblSelectedFileName" class="file-name"></span>
+                </div>
+            </div>
+
+
+        </div>
+        <button type="button" class="btn btn-primary" style="border-radius:10px; background-color:#6C63FF" onclick="submitChatBot()" id="btnsubmit">Post</button>
+    </div>
+</form>
+
+<div class="content mb-2">
+    <div id="chat-box">
+        <div id="chat-window">
+            <!-- Chat messages will be shown here -->
+        </div>
+        <input type="text" id="user-query" placeholder="Ask your question..." autofocus />
+        <button type="button" class="btn btn-primary" style="border-radius:10px; background-color:#6C63FF" onclick="submitQuery()">Submit Query</button>
+    </div>
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+    function submitQuery() {
+            const userQuery = document.getElementById('user-query').value.trim();
+            if (!userQuery) {
+                alert("Please enter a query.");
+                return;
+            }
+
+            var QueryRequest={};
+            QueryRequest.Query=userQuery;
+            var jdata = JSON.stringify(QueryRequest);
+            // Show the user's query in the chat window
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML += `<div><strong>You:</strong> ${userQuery}</div>`;           
+            document.getElementById('user-query').value = '';     
+            fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/chatbot/query', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + `@strtoken`,
+                        'Content-Type': 'application/json',
+                        'UserParam': `@Html.Raw(@userParamkey)`
+                    },
+                    body: jdata
+                })
+                .then(response => {
+                    // console.log(JSON.parse(response));
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();  // Parse the JSON response
+                  // return response; 
+                })
+                .then(result => {
+                    // Now you have the response in 'result'
+                   // console.log('result :' + result);
+                    chatWindow.innerHTML += `<div><strong>Chatbot:</strong> ${result.response}</div>`;
+                    chatWindow.scrollTop = chatWindow.scrollHeight; 
+                })
+                .catch(error => {
+                    // Handle any errors here
+                    showToast('2', `@_localization.Getkey("Error")`);
+                    console.error('Error:', error);
+                });
+            //try {
+            //    const response = fetch('/api/chatbot/query', {
+            //        method: 'POST',
+            //        headers: {
+            //            'Content-Type': 'application/json'
+            //        },
+            //        body: JSON.stringify({ query: userQuery })
+            //    });
+            //    const result = response.json();                
+            //    chatWindow.innerHTML += `<div><strong>Chatbot:</strong> ${result.response}</div>`;
+            //    chatWindow.scrollTop = chatWindow.scrollHeight; 
+            //} catch (error) {
+            //    console.error("Error while submitting query:", error);
+            //    alert("There was an error processing your query. Please try again.");
+            //}
+    }
+    function uploadFile(type, file) {
+        var filetype = $('[name="FileType"]:checked').val();
+        if (validateuploadFile(type, 2, file) == "") {
+            $('#lblSelectedFileName').html('Selected File : ' + file.files[0].name);
+        }
+        else{
+            showToast('2', validateuploadFile(type, 2, file));
+        }
+    }
+    function submitChatBot() {
+            showLoading();
+
+            var postData = new FormData($('#chatbotForm')[0]);
+            postData.append("Subject",$("#subject").val());
+            postData.append("Chapter",$("#chapter").val());
+            var fileInput = $("input[name=postedFile1]")[0];
+            if (fileInput.files.length > 0) {
+                postData.append("DocumentFile", fileInput.files[0]);
+            }
+            $.ajax({
+                type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/ChatBot/Save',
+                headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                timeout: 30000, // 30 seconds timeout
+                success: function (response) {
+                    
+                    if (response != null) {
+                        hideLoading();
+                        showToast('1', `@_localization.Getkey("Success")`);
+                       // window.location.href = "@Url.Action("Index", "Announcement")";
+                    } else {
+                        showToast('2', `@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    //console.error("Error details: ", xhr.responseText, status, error);
+                    showToast('2', `@_localization.Getkey("Error")` + error);
+                }
+            });
+    }
+</script>

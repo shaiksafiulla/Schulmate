@@ -1,0 +1,122 @@
+﻿@model SchoolCoreWEB.Models.Role
+@using Localization.Services
+@inject LanguageService _localization
+
+
+    <div class="card">
+        <div class="card-body">
+            <form id="myForm" class="forms-sample was-validated">
+                @Html.HiddenFor(m=>m.Id)
+            <div class="form-group mb-3">
+                <label for="branch" class="form-label">@_localization.Getkey("SessionYear")</label>
+                @Html.DropDownListFor(model => model.SessionYearId, Model.SessionYearSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-control form-control-sm", @id = "ddlsessionyear", @required = "required", onChange = "selectedSessionyearIndexChanged()" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-control form-control-sm", @id = "ddlbranch", @required = "required", onChange = "selectedBranchIndexChanged()" })
+            </div>
+                <div class="form-group mb-3">
+                    <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                    @Html.TextBoxFor(model => model.Name, new { @class = "form-control", @id="name", @required = "required", @maxlength="80", onkeyup="Validate();" })
+                </div>
+                <div class="form-group mb-3">
+                    <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                    @Html.TextAreaFor(model => model.Description, new { @class = "form-control", @id="description", @rows="2",@maxlength="250" })
+                </div>               
+               
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitRole()" id="btnsubmit" disabled="disabled">
+                        @if (Model.Id > 0)
+                        {
+                        <span>@_localization.Getkey("Update")</span>
+                        }
+                        else
+                        {
+                    <span>@_localization.Getkey("Save")</span>
+                        }
+                    </button>
+                    <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+                </div>
+            </form>
+            <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+                <div class="loader">
+                    <div class="loader-inner line-scale">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                </div>
+            </div>            
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+    function chkFields(){
+      var isvalid=true;
+    
+        if ($("#name").val() == "") {
+           isvalid =false;
+        }
+        if ($("#ddlsessionyear").val() == "" || $("#ddlsessionyear").val()=="-1") {
+            isvalid = false;
+        }
+        if ($("#ddlbranch").val() == "" || $("#ddlbranch").val() == "-1") {
+            isvalid = false;
+        }
+      return isvalid;
+  }
+
+    function Validate(){
+      if (chkFields()){
+          $('#btnsubmit').prop('disabled', false);
+      }
+      else{
+          $('#btnsubmit').prop('disabled', true);
+      }
+
+  }
+        function selectedSessionyearIndexChanged() {
+            Validate();
+        }
+    function selectedBranchIndexChanged(){
+        Validate();
+    }
+
+    function submitRole(){
+
+        $("#loaderDiv1").show("slow", function () {
+             var myformdata = $("#myForm").serialize();
+           $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Save","Roles")',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            data: myformdata,
+            success: function (response) {
+               if (response != null) {
+                      var serviceresult = JSON.parse(response);
+                      if (serviceresult === true) {
+                          $("#loaderDiv1").hide();
+                          toastr.error(`@_localization.Getkey("RoleExists")`);
+                      }
+                      else {
+                          actionAfterResponse('RoleGrid', serviceresult.recordId, serviceresult.statusId, '18');
+                      }
+                      } else {
+                           toastr.error(`@_localization.Getkey("Error")`);
+                      }
+            },
+            error: function (response) {
+                     toastr.error(`@_localization.Getkey("Error")`);
+
+            }
+        })
+        })
+    }
+    Validate();
+    </script>

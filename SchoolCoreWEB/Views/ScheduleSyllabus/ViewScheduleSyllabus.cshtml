@@ -1,0 +1,407 @@
+﻿@model SchoolCoreWEB.Models.ScheduleSyllabusDetail
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="container-fluid">
+    @Html.HiddenFor(m => m.Id, new { @id = "hfschedulesyllabusdetailid" })
+
+
+
+    <div class="row">
+        <div class="col-2">
+            <div class="list-group list-group-vertical">
+                <a href="#" class="list-group-item list-group-item-action" data-id=@Model.Id onclick="getSyllabusInfo()"><i class="ri-pencil-line"></i>Exam Syllabus</a>
+                <a href="#" class="list-group-item list-group-item-action" data-id=@Model.Id onclick="getExaminationInfo()"><i class="ri-pencil-line"></i>Exam Question Papers</a>
+
+            </div>
+        </div>
+        <div class="col-10">
+            <div class="row" id="divsyllabusinfo" style="display:none">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("Examination Syllabus")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("SyllabusInfo")</h4>
+                            </div>
+                            <div>
+                                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblsyllabusinfo"></table>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="divexaminfo" style="display:none">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.ReportSettings.AFourHeaderType == "1")
+                            {
+                                <img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+                            }
+                            else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+                            {
+                                var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+                                <div style="height:@percent"></div>
+                            }
+                        </div>
+                        <hr />
+                        <div class="row g-3">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("Examination Syllabus")</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Title") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Title</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Type") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.ExamType</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("StartDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.StartDate</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("EndDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.EndDate</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("Branch") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@Model.Branch</strong>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <label>@_localization.Getkey("PrintDate") : </label>
+                                    </div>
+                                    <div class="col-7">
+                                        <strong>@DateTime.Now.ToShortDateString()</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div style="text-align:center">
+                                <h4 class="header-title">@_localization.Getkey("QuestionPapers")</h4>
+                            </div>
+                            <div>
+                                <table class="table table-hover table-sm table-bordered table-centered mb-0" style="width:100%" id="tblexaminfo">
+                                    <thead>
+                                        <tr>
+                                            <th style="display:none;">@_localization.Getkey("Id")</th>
+                                            <th>@_localization.Getkey("Class")</th>
+                                            <th>@_localization.Getkey("Subject")</th>
+                                            <th>@_localization.Getkey("ExamDate")</th>
+                                            <th>@_localization.Getkey("ExamTime")</th>
+                                            <th>@_localization.Getkey("Marks")</th>
+                                            <th>@_localization.Getkey("Lessons")</th>
+                                            <th>@_localization.Getkey("QPaper")</th>
+                                            <th>@_localization.Getkey("Actions")</th>
+                                            @*<th>Download</th>
+                                                <th>View</th> *@
+                                        </tr>
+                                    </thead>
+
+                                </table>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" onclick="onPrintSyllabus()">
+                    <i class="ri-printer-line"></i> @_localization.Getkey("Print")
+                </button>
+
+            </div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script>
+    var printsyllabustype= '1';
+    $(document).ready(function () {
+        $('.list-group-item').click(function () {
+                    $('.list-group-item').removeClass('active');
+                    $(this).addClass('active');
+        });
+        getSyllabusInfo();
+    });
+
+       function getSyllabusInfo(){
+           printsyllabustype='1';
+          $("#loaderDiv1").show();
+              $.ajax({
+              type: 'GET',
+              async : false,
+              url: '@Url.Action("GetSyllabusInfo", "ScheduleSyllabus")?Id=' + $("#hfschedulesyllabusdetailid").val(),
+              Accept: 'application/json, text/javascript',
+              contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+              success: function (response) {
+                  if (response != null) {
+                      var result = response;
+                               $("#divsyllabusinfo").show("slow", function() {
+                                   $("#divexaminfo").hide();
+                             });
+                      var jsonData = JSON.parse(result.strResult);
+                                    fillPivotSyllabusTable(jsonData);
+
+                      } else {
+                              toastr.error(`@_localization.Getkey("Error")`);
+                      }
+              },
+              error: function (response) {
+                          toastr.error(`@_localization.Getkey("Error")`);
+              }
+          })
+     }
+    function fillPivotSyllabusTable(data){
+
+          var columns=[];
+
+              var rowData = data[0];
+                  Object.keys(rowData).forEach( function (key, index){
+                      columns.push( {data: [key],
+                               title: key,
+                               render: function (data, type, row) {
+                                   if(row[key]==0){
+                                       return  '';
+                                   }
+                                   else{
+                                        return '<p>'+row[key]+'</p';
+                                   }
+
+                                   }
+                           });
+                  //columns.push({data: key,
+                  //                    title: key,
+                  //                });
+              })
+              $("#tblsyllabusinfo").DataTable({
+                  "bDestroy": true,
+                  "searching": false,
+                  "bLengthChange": false,
+                  paging: false,
+                  "info": false,
+                  "ordering": false,
+                  data : data,
+                 // "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                  columns: columns
+                  //dom: 'Bfrtip'
+              })
+              $("#loaderDiv1").hide();
+
+     }
+       function getExaminationInfo(){
+            printsyllabustype ='2';
+          $("#loaderDiv1").show();
+         $.ajax({
+                         type: "post",
+                         async : false,
+                         url: '@Url.Action("GetExaminationByScheduleId","ScheduleSyllabus")',
+                         data: { Id: $("#hfschedulesyllabusdetailid").val() },
+                             dataType: 'json',
+                         traditional: true,
+                         success: function (response) {
+                             if(response != null){
+                                 $("#divexaminfo").show("slow", function() {
+                                   $("#divsyllabusinfo").hide();
+                             });
+                                 var examData=[];
+
+                                 $.each(response,function(key,value){
+                                             var btnview = "";
+                                             var btndownload= "";
+                                           //  console.log(value.photoPath)
+                                             if(value.filePath != "" && value.filePath != null){
+                                                 btnview ='<a href="#" onclick="viewQPaper('+value.id+')"><i class="ri-eye-line"></i>&nbsp;</a>'
+                                                 btndownload = '<a href="#" onclick="ondownloadQPaper('+value.id+')"><i class="ri-download-2-line"></i>&nbsp;</a>'
+                                             }
+                                             var btnexmtopic ='<a href="#" onclick="addEditExamTopic('+value.classSubjectId+','+value.id+')">'+value.topicCount+'</a>'
+                                             var btnupload =' <div class="upload-btn-wrapper"> '+
+                                                        ' <a class="dropdown-item" href="#"> '+
+                                                           '  <i class="ri-upload-2-line"></i>&nbsp;'+
+                                                           '  <input type="file" name="myfile" accept="application/pdf" onchange="onuploadQPaper('+value.id+', this)" /> '+
+                                                        ' </a> '+
+                                                     '</div>'
+                                            var btnaction ='<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,tblexaminfo);"> '+
+                                                     '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>'+
+                                                     '<div class="dropdown-menu dropdown-menu-end">'+
+                                                         '<a class="dropdown-item" href="#" onclick="onReportClick('+value.id+')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("QuestionPaper")</a>'+
+
+                                                     '</div>'+
+                                                 '</div>'
+
+                                            var rpt=createReportButton(value.id,value.qPaperType,value.qPaperStatusId);
+                                            var icon= setIcon(value.qPaperType,value.qPaperStatusId);
+                                             //var btnaction =  btnupload + btnview + btndownload;
+                                             examData.push([value.id,value.className,value.subjectName, value.strExamDate,value.examTime,value.marks,value.lessonCount,icon,rpt])
+                                         })
+
+
+                                         $("#tblexaminfo").DataTable({
+                                             "bDestroy": true,
+                                             data : examData,
+                                             "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                                             "bLengthChange": false,
+                                              paging: false
+                                             // dom: 'Bfrtip'
+                                         })
+                                         $("#loaderDiv1").hide();
+                             }
+                         }
+                     });
+     }
+      function createReportButton(id,type,status) {
+         var html="";
+         if(type !=null && status !=null){
+             html = '<button type="button" class="btn btn-sm btn-info" onclick="onReportClick('+id+')"><i class="ri-printer-line"></i></button>';
+         }
+         else{
+             html = '<button type="button" class="btn btn-sm btn-info" onclick="onReportClick('+id+')" disabled="disabled"><i class="ri-printer-line"></i></button>';
+         }
+         return html;
+    }
+    var onReportClick=function(examid){
+          if(examid > 0 ){
+              document.getElementById('primary-header-modalLabel2').innerHTML =`@_localization.Getkey("QuestionPaper")`;
+          }
+           var url = '@Url.Action("GetQuestionPaper", "ScheduleSyllabus")?examId=' + examid;
+          $("#myModalBodyDiv2").load(url,function(){
+              $("#primary-header-modal2").modal("show");
+          })
+      }
+    function setIcon(type,status){
+        var html="";
+        if(type !=null && status !=null){
+            //html = '<span class="text-success me-2"><i class="ri-check-line"></i></span>'
+              html = '<span class="badge bg-success"><i class="ri-check-line"></i></span>'
+        }
+        else{
+            //html = '<span class="text-danger me-2"><i class="ri-close-line"></i></span>'
+            html = '<span class="badge bg-danger"><i class="ri-close-line"></i></span>'
+        }
+        return html;
+    }
+    function onPrintSyllabus(){
+         if(printsyllabustype == '1'){
+             printDiv('divsyllabusinfo');
+         }
+         else if(printsyllabustype == '2'){
+             printDiv('divexaminfo');
+         }
+
+     }
+</script>

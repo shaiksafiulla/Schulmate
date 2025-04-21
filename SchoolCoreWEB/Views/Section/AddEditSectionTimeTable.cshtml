@@ -1,0 +1,355 @@
+﻿@model SchoolCoreWEB.Models.SectionTimeTableVM
+@using Localization.Services
+@inject LanguageService _localization
+@{
+    string cultur = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string locale = System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "ar" : "en";
+}
+<style type="text/css">
+   
+</style>
+
+
+<div class="row">
+    <div class="row">
+        @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+        @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+        @Html.HiddenFor(m => m.BranchClassId, new { @id = "hfbranchclassid" })
+        @Html.HiddenFor(m => m.ClassId, new { @id = "hfclassid" })
+        @Html.HiddenFor(m => m.SectionId, new { @id = "hfsectionid" })
+        <div class="col-2">
+            <div id="leftdiv">
+                <p>
+                    <strong>Subjects</strong>
+                </p>
+                <table>
+                    <tbody>
+                        @for (int i = 0; i < @Model.LstCastSubjectTeacherTimeTable.Count(); i++)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="item" style="background-color:@Model.LstCastSubjectTeacherTimeTable[i].SubjectColor" data-color="@Model.LstCastSubjectTeacherTimeTable[i].SubjectColor"
+                                     data-id="@Model.LstCastSubjectTeacherTimeTable[i].Id"
+                                     data-classsubjectid="@Model.LstCastSubjectTeacherTimeTable[i].ClassSubjectId"
+                                     data-subjectactivityid="@Model.LstCastSubjectTeacherTimeTable[i].SubjectId"
+                                     data-timetabletype="1"
+                                     data-personnelid="@Model.LstCastSubjectTeacherTimeTable[i].TeacherId">
+                                        @Model.LstCastSubjectTeacherTimeTable[i].SubjectName - @Model.LstCastSubjectTeacherTimeTable[i].TeacherName
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div id="leftactivitydiv">
+                <p>
+                    <strong>Activities</strong>
+                </p>
+                <table>
+                    <tbody>
+                        @for (int i = 0; i < @Model.LstCastActivityPersonnelTimeTable.Count(); i++)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="item" style="background-color:@Model.LstCastActivityPersonnelTimeTable[i].ActivityColor" data-color="@Model.LstCastActivityPersonnelTimeTable[i].ActivityColor"
+                                     data-id="@Model.LstCastActivityPersonnelTimeTable[i].Id"
+                                     data-classsubjectid=""
+                                     data-subjectactivityid="@Model.LstCastActivityPersonnelTimeTable[i].ActivityId"
+                                     data-timetabletype="2"
+                                     data-personnelid="@Model.LstCastActivityPersonnelTimeTable[i].PersonnelId">
+                                        @*data-custom-value3="@Model.LstCastActivityPersonnelTimeTable[i].TeacherId" *@
+                                        @Model.LstCastActivityPersonnelTimeTable[i].ActivityName - @Model.LstCastActivityPersonnelTimeTable[i].PersonnelName
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="rightdiv" class="col-10">
+            <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="tbltimetable">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        @foreach (var period in Model.timetable.Periods)
+                        {
+                            <th>
+                                @period.StartTime.ToString(@"hh\:mm") - @period.EndTime.ToString(@"hh\:mm")
+                                @if (period.IsBreak)
+                                {
+                                    @*<br />
+                                        <small>@period.Description</small>*@
+                                }
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.timetable.Weekdays.Count; i++)
+                    {
+                        var day = Model.timetable.Weekdays[i];
+
+                        <tr>
+                            <td>@day.Name</td>
+                            @for (int j = 0; j < day.PeriodSlots.Count; j++)
+                            {
+                                var slot = day.PeriodSlots[j];
+                                if (slot.Period.IsBreak)
+                                {
+                                    // Only render the cell for the first weekday to apply rowspan
+                                    if (i == 0)
+                                    {
+                                        <td class="lunch rotatetext" rowspan="@Model.timetable.Weekdays.Count">@slot.Period.Description</td>
+                                    }
+                                }
+                                else
+                                {
+                                    <td class="drop" data-day=@Model.timetable.Weekdays[i].Name
+                            data-starttime=@day.PeriodSlots[j].Period.StartTime.ToString()
+                            data-endtime=@day.PeriodSlots[j].Period.EndTime.ToString()>
+                                        @slot.Subject
+                                    </td>
+                                }
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div>
+
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btnsubmit" onclick="submitTimeTable()">@_localization.Getkey("Update")</button>
+            <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+   
+    $(document).ready(function () {
+        var jsmodel = @Html.Raw(Json.Serialize(Model));
+        if (jsmodel != null){
+
+            $("#loaderDiv1").show("slow", function () {
+                getTimeTableFromDB(jsmodel.sectionId,jsmodel.sessionYearId);
+            })
+        }
+    });
+
+        $('#leftdiv .item').draggable({
+            revert:true,
+            proxy:'clone'
+        });
+         $('#leftactivitydiv .item').draggable({
+            revert:true,
+            proxy:'clone'
+        });
+        $('#rightdiv td.drop').droppable({
+            accept: '.item',
+            onDragEnter:function(){
+                $(this).addClass('over');
+
+            },
+            onDragLeave:function(){
+                $(this).removeClass('over');
+
+            },
+            onDrop:function(e,source){
+                $(this).removeClass('over');
+                if ($(source).hasClass('assigned')){
+                    $(this).append(source);
+
+
+                } else {
+                    var c = $(source).clone().addClass('assigned');
+                    $(this).empty().append(c);                   
+
+                    c.draggable({
+                        revert:true
+                    });
+                }
+            }
+        });
+        $('#leftdiv').droppable({
+            accept:'.assigned',
+            onDragEnter:function(e,source){
+                // console.log($(source).text(),'addClass-trash');
+                $(source).addClass('trash');
+            },
+            onDragLeave:function(e,source){
+                  console.log($(source).text(),'removeClass-trash');
+                $(source).removeClass('trash');
+            },
+            onDrop:function(e,source){
+                 // console.log($(source).text(),'onDrop');
+                $(source).remove();
+            }
+        });
+         $('#leftactivitydiv').droppable({
+            accept:'.assigned',
+            onDragEnter:function(e,source){
+                // console.log($(source).text(),'addClass-trash');
+                $(source).addClass('trash');
+            },
+            onDragLeave:function(e,source){
+                  console.log($(source).text(),'removeClass-trash');
+                $(source).removeClass('trash');
+            },
+            onDrop:function(e,source){
+                 // console.log($(source).text(),'onDrop');
+                $(source).remove();
+            }
+        });
+
+         function submitTimeTable() {
+
+            $("#loaderDiv1").show("slow", function () {
+                var obj = {};
+                obj.SessionYearId = $("#hfsessionyearid").val();
+                obj.BranchId = $("#hfbranchid").val();
+                obj.BranchClassId = $("#hfbranchclassid").val();
+                obj.ClassId = $("#hfclassid").val();
+                obj.SectionId = $("#hfsectionid").val();
+                obj.LstTimeTable = getTimeTableData();
+
+                var jdata = JSON.stringify(obj);
+                $.ajax({
+                    type: 'POST',
+                    async: false,
+                    url: '@Url.Action("UpdateSectionTimeTable", "Section")',
+                    data: { model: jdata },
+                    dataType: 'json',
+                    traditional: true,
+                    success: function (response) {
+                        if (response != null) {
+                            var serviceresult = JSON.parse(response);
+                            actionAfterResponse('SectionGrid', serviceresult.recordId, serviceresult.statusId, '5');
+                        } else {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    },
+                    error: function (response) {
+                        toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+            })
+
+        }
+        function getTimeTableData(){
+            var timetableData = [];
+
+            $('#tbltimetable .drop').each(function() {
+                 var params = {};
+                var subjectElement = $(this).find('.assigned');
+                if (subjectElement.length > 0){
+                    params.ClassSubjectId=$(this).find('.assigned').data('classsubjectid');
+                    params.SubjectActivityId=$(this).find('.assigned').data('subjectactivityid');
+                    params.PersonnelId=$(this).find('.assigned').data('personnelid');
+                    params.TimeTableType=$(this).find('.assigned').data('timetabletype');
+                    params.DayOfWeek=dayOfWeekToInt($(this).data('day'));
+                    params.FromTime=$(this).data('starttime');
+                    params.ToTime=$(this).data('endtime');
+                    params.SessionYearId = $("#hfsessionyearid").val();
+                    params.BranchId = $("#hfbranchid").val();
+                    params.BranchClassId = $("#hfbranchclassid").val();
+                    params.ClassId = $("#hfclassid").val();
+                    params.SectionId = $("#hfsectionid").val();
+                    timetableData.push(params);
+                }
+
+            });
+            return timetableData;
+        }
+       
+        function getTimeTableFromDB(sectionId,sessionYearId) {
+            $.ajax({
+                type: 'GET',
+                async: false,
+                url: '@Url.Action("GetTimeTableFromDB", "Section")?sectionId=' + sectionId+'&sessionyearId='+sessionYearId,
+                Accept: 'application/json, text/javascript',
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                success: function (response) {
+                    if (response != null) {           
+                       
+                                // Clear all timetable cells before loading new data
+                                $('#tbltimetable .drop').html('');
+
+                                // Loop through the response and fill the cells with subjects
+                                $.each(JSON.parse(response), function (key, value) {
+                                    var strday = getDayOfWeekString(value.dayOfWeek);                                   
+
+
+                                    // Set the subject text in the appropriate cell
+                                    //var objsubactivity = value.timeTableType == "1"
+                                    //? jsmodel.lstCastSubjectTeacherTimeTable.filter(x=> x.classSubjectId==value.classSubjectId
+                                    //    && x.subjectId==value.subjectActivityId &&  x.teacherId==value.personnelId)
+                                    //    : jsmodel.lstCastActivityPersonnelTimeTable.filter(x=> x.activityId==value.subjectActivityId &&  x.personnelId==value.personnelId);
+
+
+                                    //    var displayText = value.timeTableType == "1" ? (objsubactivity[0].subjectName + ' - '+ objsubactivity[0].teacherName)
+                                    //    : (objsubactivity[0].activityName + ' - '+ objsubactivity[0].personnelName);
+
+                                    //     var displayColor = value.timeTableType == "1" ? objsubactivity[0].subjectColor : objsubactivity[0].activityColor;
+                                    //    var dataid=objsubactivity[0].id;
+                                       
+                                    var displayText =value.subjectActivityName + ' - ' +value.personnelName;
+                                   // Find the corresponding table cell based on day and timeslot
+                                   let cell = $('td[data-day="' + strday + '"][data-starttime="' + value.fromTime + '"][data-endtime="' + value.toTime + '"]');
+                                              
+                                    // Fill the cell with the subject if it exists
+                                    if (cell.length) {
+                                        cell.html('<div class="item assigned" style="background-color: '+value.subjectActivityColor+';" data-id="'+value.id+'"  data-color="'+value.subjectActivityColor+'" data-classsubjectid="' + value.classSubjectId + '" data-subjectactivityid="' + value.subjectActivityId + '" data-timetabletype="' + value.timeTableType + '" data-personnelid="' + value.personnelId + '">'+displayText+'</div>');                  
+                                    }
+                                    
+                                });
+                                makeCellsDraggable();
+                        $("#loaderDiv1").hide();
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        }
+        function makeCellsDraggable() {
+                $(".assigned").draggable({
+                    revert: "invalid",  // Revert the subject if it's not dropped in a valid area
+                    helper: "clone",    // Make a clone of the element while dragging
+                    start: function(event, ui) {
+                        //console.log("Dragging subject:", $(this).text());
+                    }
+                });
+    }
+
+
+
+
+
+
+
+
+
+</script>

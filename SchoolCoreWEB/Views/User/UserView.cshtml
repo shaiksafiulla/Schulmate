@@ -1,0 +1,74 @@
+﻿@model SchoolCoreWEB.Models.VUserInfo
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+           <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Name") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.FullName)
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("EmployeeNumber") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.EmployeeNo)
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("UserName") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.UserName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("LastLoggedIn") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.LastLoggedIn)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("LoginPermission") : </label>
+                </div>
+                <div class="col-7">
+                     @if(Model.HasLogin == "1")
+                    {
+                        <i class="ri-check-line"></i>
+                    }
+                    else
+                    {
+                         <i class="ri-close-line"></i>
+                    }              
+                  
+                </div>
+            </div>
+              <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Branch") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.BranchName)
+                </div>
+            </div>
+              <div class="row">
+                <div class="col-5">
+                    <label>@_localization.Getkey("Designation") : </label>
+                </div>
+                <div class="col-7">
+                    @Html.DisplayFor(model => model.UserTypeName)
+                </div>
+            </div>
+        </div>
+    </div>   
+</div>

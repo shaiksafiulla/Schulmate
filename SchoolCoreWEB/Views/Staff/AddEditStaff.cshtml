@@ -1,0 +1,311 @@
+﻿@model SchoolCoreWEB.Models.Personnel
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string struserid = string.Empty;
+    string strtoken;
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+    var userInfokey = @HttpContextAccessor.HttpContext.Session.GetString("UserInfo");
+    if (userInfokey != null)
+    {
+        var userInfo = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+        struserid = userInfo.Id.ToString();
+    }
+    strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+}
+<form id="personForm" class="forms-sample">
+
+    @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.PersonnelType, new { @id = "hfpersonneltype" })
+    @Html.HiddenFor(m => m.PersonnelAdmission.PersonnelType, new { @id = "hfadmissionpersonneltype" })
+    @Html.HiddenFor(m => m.PersonnelOtherDetail.PersonnelType, new { @id = "hfotherdetailpersonneltype" })
+    @Html.HiddenFor(m => m.PersonnelAdmission.SessionYearId)
+    <div class="row">
+        <div class="col-8">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("BasicInfo")</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group required mb-3">
+                                    <label for="firstName" class="form-label">@_localization.Getkey("FirstName")</label>
+                                    @Html.TextBoxFor(model => model.FirstName, new { @class = "form-control form-control-sm", @id = "firstName", @required = "required", @maxlength = "50", onkeyup = "Validate();" })
+                                </div>
+                                <div class="form-group required mb-3">
+                                    <label for="lastName" class="form-label">@_localization.Getkey("LastName")</label>
+                                    @Html.TextBoxFor(model => model.LastName, new { @class = "form-control form-control-sm", @id = "lastName", @required = "required", @maxlength = "50", onkeyup = "Validate();" })
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <img id="emp_img" src="@(Model.FilePath)" alt="@_localization.Getkey("AltProfileImage")" width="200" height="100" />
+                                    <div class="input-group">
+                                        <input type="file" id="photo" name="postedFile1" accept="image/*" class="form-control" onchange="uploadFile(2,1,this)">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group required mb-3">
+                                    <label for="startdate" class="form-label">@_localization.Getkey("DateOfBirth")</label>
+                                    @Html.EditorFor(model => model.DateOfBirth, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @required = "required", @id = "dateofbirth", onChange = "Validate();" } })
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">@_localization.Getkey("Gender")</label>
+                                    @Html.RadioButtonFor(model => model.Gender, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Male")</label> &nbsp;
+                                    @Html.RadioButtonFor(model => model.Gender, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Female")</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label for="class" class="form-label">@_localization.Getkey("BloodGroup")</label>
+                                    @Html.DropDownListFor(model => model.BloodGroupId, Model.BloodGroupSheet, "Please select", new { @class = "form-select form-select-sm", @id = "ddlbloodgroup", onChange = "selectedBloodGroupIndexChanged()" })
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label for="designation" class="form-label">@_localization.Getkey("Designation")</label>
+                                    @Html.TextBoxFor(model => model.Designation, new { @class = "form-control form-control-sm", @id = "designation", @maxlength = "80", onkeyup = "Validate();" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label for="designation" class="form-label">@_localization.Getkey("Qualification")</label>
+                                    @Html.TextBoxFor(model => model.Qualification, new { @class = "form-control form-control-sm", @id = "qualification", @maxlength = "80", onkeyup = "Validate();" })
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label for="designation" class="form-label">@_localization.Getkey("EmailAddress")</label>
+                                    @Html.TextBoxFor(model => model.EmailAddress, new { @class = "form-control form-control-sm", @id = "emailaddress", @maxlength = "80", onkeyup = "Validate();" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Admission")</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group required mb-3">
+                                    <label for="class" class="form-label">@_localization.Getkey("Branch")</label>
+                                    @if (Model.Id > 0 && Model.BranchId > 0)
+                                    {
+                                        @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, "Please select", new { @class = "form-select form-select-sm", @id = "ddlbranch", @required = "required", @disabled = "disabled" })
+                                    }
+                                    else
+                                    {
+                                        @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, "Please select", new { @class = "form-select form-select-sm", @id = "ddlbranch", @required = "required", onChange = "selectedBranchIndexChanged()" })
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group required mb-3">
+                                    <label for="admissiondate" class="form-label">@_localization.Getkey("AdmissionDate")</label>
+                                    @if (Model.Id > 0 && Model.PersonnelAdmission.AdmissionDate != null)
+                                    {
+                                        @Html.EditorFor(model => model.PersonnelAdmission.AdmissionDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @id = "admissiondate", @disabled = "disabled" } })
+                                    }
+                                    else
+                                    {
+                                        @Html.EditorFor(model => model.PersonnelAdmission.AdmissionDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @required = "required", @class = "form-control form-control-sm datetimepicker", @id = "admissiondate", onChange = "Validate();" } })
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("OtherDetails")</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="form-group mb-3">
+                                <label for="mobileno" class="form-label">@_localization.Getkey("FatherName")</label>
+                                @Html.TextBoxFor(model => model.PersonnelOtherDetail.FatherName, new { @class = "form-control form-control-sm", @id = "fathername", @maxlength = "100", onkeyup = "Validate();" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="mobileno" class="form-label">@_localization.Getkey("MotherName")</label>
+                                @Html.TextBoxFor(model => model.PersonnelOtherDetail.MotherName, new { @class = "form-control form-control-sm", @id = "mothername", @maxlength = "100", onkeyup = "Validate();" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="mobileno" class="form-label">@_localization.Getkey("MobileNumber")</label>
+                                @Html.TextBoxFor(model => model.PersonnelOtherDetail.DefaultMobileNo, new { @class = "form-control form-control-sm", @id = "mobileno", @maxlength = "10", onkeyup = "Validate();", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="mobileno" class="form-label">@_localization.Getkey("OtherMobileNumber")</label>
+                                @Html.TextBoxFor(model => model.PersonnelOtherDetail.OtherMobileNo, new { @class = "form-control form-control-sm", @id = "othermobileno", @maxlength = "10", onkeyup = "Validate();", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="address" class="form-label">@_localization.Getkey("CurrentAddress")</label>
+                                @Html.TextAreaFor(model => model.PersonnelOtherDetail.CurrentAddress, new { @class = "form-control form-control-sm", @id = "currentaddress", @rows = "2", onkeyup = "Validate();" })
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="address" class="form-label">@_localization.Getkey("PermanentAddress")</label>
+                                @Html.TextAreaFor(model => model.PersonnelOtherDetail.PermanentAddress, new { @class = "form-control form-control-sm", @id = "permanentaddress", @rows = "2", onkeyup = "Validate();" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnsubmit" onclick="submitStaff()" disabled="disabled">
+            @if (Model.Id > 0)
+            {
+                <span>@_localization.Getkey("Update")</span>
+            }
+            else
+            {
+                <span>@_localization.Getkey("Save")</span>
+            }
+        </button>
+        <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    function uploadFile(type, filetype, file) {
+        if (validateuploadFile(type, filetype, file) == "") {
+            $("#emp_img").attr("src", URL.createObjectURL(file.files[0]));
+        }
+        else {
+            $("#emp_img").attr("src", "");
+        }
+    }
+
+    function selectedBloodGroupIndexChanged() {
+        Validate();
+    }
+    function selectedBranchIndexChanged() {
+        Validate();
+    }
+    function chkFields() {
+        var isvalid = true;
+        var validNumber = new RegExp(/^\d+$/);
+
+        if ($('#firstName').val() == "") {
+            isvalid = false;
+        }
+        if ($('#lastName').val() == "") {
+            isvalid = false;
+        }
+        if ($('#age').val() == "") {
+            isvalid = false;
+        }
+        var mobile = $('#mobileno').val();
+        if (mobile !== "" & !mobile.match(validNumber)) {
+            isvalid = false;
+        }
+        var othermobile = $('#othermobileno').val();
+        if (othermobile !== "" & !othermobile.match(validNumber)) {
+            isvalid = false;
+        }
+        if ($('#ddlbranch').val() == "") {
+            isvalid = false;
+        }
+        if ($('#admissiondate').val() == "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function selectedBranchIndexChanged() {
+        Validate();
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function submitStaff() {
+
+        $("#loaderDiv1").show("slow", function () {
+
+            var personType = $('#hfpersonneltype').val();
+            $('#hfadmissionpersonneltype').val(personType);
+            $('#hfotherdetailpersonneltype').val(personType);
+
+            var postData = new FormData($('#personForm')[0]);
+            postData.append("File", $("input[name=postedFile1]")[0].files[0]); // file
+            $.ajax({
+                type: 'POST',
+                url: '@Configuration["WebApi:ClientBaseUrl"]' + '/api/Staff/save',
+                 headers: {
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                   },
+                data: postData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                //headers: {
+                //    'Authorization': 'Bearer ' + `@strtoken`,
+                //    'UserId': @struserid
+                //                                    },
+                //data: postData,
+                //cache: false,
+                //processData: false,
+                //contentType: false,
+                success: function (response) {
+                    if (response != null) {                       
+                        var serviceresult = response;
+                        actionAfterResponse('StaffGrid', serviceresult.recordId, serviceresult.statusId, '41');
+                        // if (serviceresult === true) {
+                        //     $("#loaderDiv1").hide();
+                        //     toastr.error(`@_localization.Getkey("AdminExists")`);
+                        // }
+                        // else {
+
+                        // }
+
+                    } else {
+                         toastr.error(`@_localization.Getkey("Error")`);
+                       
+                    }
+                },
+                error: function (response) {
+                     toastr.error(`@_localization.Getkey("Error")`);
+                   
+                }
+            });
+        })
+
+    }
+    Validate();
+</script>

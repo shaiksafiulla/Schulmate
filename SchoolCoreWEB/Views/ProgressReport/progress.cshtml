@@ -1,0 +1,544 @@
+﻿@using SchoolCoreWEB.Models
+@model ProgressReport
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+
+<div class="container-fluid p-0" style="max-width: 100%; page-break-before: always;">
+    @Html.HiddenFor(m => m.StudentId, new { @id = "hfprogressstudentid" })
+    @Html.HiddenFor(m => m.ReportCardId, new { @id = "hfprogressreportcardid" })
+    @Html.HiddenFor(m => m.BranchClassId, new { @id = "hfprogressbranchclassid" })
+    <div class="row" id="a4headdiv">
+
+        <img id="imgafourheader" class="img-fluid" alt="header image" style="padding:0;display:none" />
+        <div id="divafourheaderspace"></div>
+    </div>
+    <div class="row" style="padding:3%">
+        <table style="margin-left: auto; margin-right: auto; width: 100%;" border="0" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <td style="word-break: break-all;">
+
+                        <div class="text-center">
+                            <strong>@_localization.Getkey("ReportCard")</strong>
+                            <hr />
+                            <div class="row">
+
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("ReportFor"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong><label id="lblReportCardName"></label></strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("Academic Year"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong><label id="lblSessionYear"></label></strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("Examinations"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong><label id="lblScheduleCount"></label></strong>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label>@_localization.Getkey("PrintDate"):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>@DateTime.Now.ToShortDateString()</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <hr />
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row">
+                                        <div class="col-12 text-center">
+                                            <img id="imgPhoto" class="rounded-circle avatar-lg img-thumbnail" alt="profile-image">
+                                            <h4 class="mb-0 mt-2" id="lblName"></h4>
+                                        </div>
+                                    </div>
+                                    <br />
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("FatherName"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblFatherName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("MotherName"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblMotherName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Age"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblAge"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Gender"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblGenderName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("MobileNumber"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblMobileNo"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Branch"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblBranchName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Class"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblAdmissionClassName"></label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <label>@_localization.Getkey("Section"):</label>
+                                        </div>
+                                        <div class="col-7">
+                                            <label id="lblSectionName"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div id="divschedulegraph">
+                                        <canvas id="rptlineScheduleChart" height="500" width="600" />
+                                    </div>
+
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h4 class="mb-0 mt-2">@_localization.Getkey("FinalResult")</h4>
+                                </div>
+                                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblrccpstudent">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:center">@_localization.Getkey("RollNo")</th>
+                                            <th style="text-align:center">@_localization.Getkey("MaxMarks")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Marks")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Percentage")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Grade")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Rank")</th>
+                                        </tr>
+
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><label id="lblRollNo"></label></td>
+                                            <td><label id="lblMaxMarks"></label></td>
+                                            <td><label id="lblMarks"></label></td>
+                                            <td><label id="lblPercentage"></label></td>
+                                            <td><label id="lblGrade"></label></td>
+                                            <td><label id="lblRank"></label></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h4 class="mb-0 mt-2">@_localization.Getkey("Attendence")</h4>
+                                </div>
+                                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblattendence">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:center">@_localization.Getkey("Name")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Jan")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Feb")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Mar")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Apr")</th>
+                                            <th style="text-align:center">@_localization.Getkey("May")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Jun")</th>
+
+                                            <th style="text-align:center">@_localization.Getkey("Jul")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Aug")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Sep")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Oct")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Nov")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Dec")</th>
+                                            <th style="text-align:center">@_localization.Getkey("Total")</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                            <div class="row" id="divscheduleresult">
+                                <div class="col-12 text-center">
+                                    <h4 class="mb-0 mt-2">@_localization.Getkey("ResultDetails")</h4>
+                                </div>
+                                <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblprogressdetail">
+                                    @*<thead>
+                                        <tr>
+                                        <th style="text-align:center; width:33%">@_localization.Getkey("ExamInfo")</th>
+                                        <th style="text-align:center; width:33%">@_localization.Getkey("Marks")</th>
+                                        <th style="text-align:center; width:33%">@_localization.Getkey("Performance")</th>
+                                        </tr>
+                                        </thead>*@
+                                    <tbody id="tblprogressdetailbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+            @* <tfoot>
+                <tr>
+                <td>
+                <div class="text-center">
+                <strong>*** @_localization.Getkey("EndOfReport") ***</strong>
+                </div>
+                </td>
+                </tr>
+                </tfoot>*@
+        </table>
+    </div>
+    <div class="row" id="a4footdiv">
+        <img id="imgafourfooter" class="img-fluid" alt="header image" style="padding:0;display:none" />
+        <div id="divafourfooterspace"></div>
+        @* @if (Model.ReportSettings.AFourFooterType == "1")
+        {
+            <img src="@(Model.ReportSettings.AFourFooterPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+        }
+        else if (@Model.ReportSettings.AFourFooterSpace > 0)
+        {
+            var percent = @Model.ReportSettings.AFourFooterSpace + "px";
+            <div style="height:@percent"></div>
+        } *@
+    </div>
+</div>
+
+
+
+
+<link href="~/assets/css/reportprintstyle.css" rel="stylesheet" type="text/css" />
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script src="~/assets/vendor/chart.js/chart.min.js"></script>
+@* <script src="~/assets/js/action.js"></script> *@
+
+<script>
+    $(document).ready(function () {
+        // Show header and footer dynamically
+        $('#a4headdiv').show();
+        $('#a4footdiv').show();
+
+        // Fetch progress report data
+        getProgressReport();
+    });
+
+    function getProgressReport() {
+        const rptcardId = $("#hfprogressreportcardid").val();
+        const studentId = $("#hfprogressstudentid").val();
+        const branchclassId = $("#hfprogressbranchclassid").val();
+        const url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/ProgressReport/${rptcardId},${branchclassId},${studentId}`;
+
+        // Fetch data from API and process it
+        getOperation(url, `@strtoken`, `@Html.Raw(@userParamkey)`)
+            .then(response => {
+                if (response.schedulePerformance.lstStudentScheduleResult.length > 0) {
+                    response.schedulePerformance.lstStudentScheduleResult.forEach((item) => {
+                        fillTable(item);
+                    });
+                    setGraph(response.schedulePerformance.lstStudentScheduleResult);
+                }
+
+                // Fill data in sections dynamically
+                FillPerformanceGraph(response.schedulePerformance.studentScheduleGraph);
+                fillReport(response.studentReport);
+                fillAttendence(response.lstAttendenceMetric);
+
+            })
+            .catch(error => {
+                console.log(error);
+                toastr.error(`@_localization.Getkey("Error")`);
+            });
+    }
+
+    function FillPerformanceGraph(data) {
+        const chartStatus = Chart.getChart("rptlineScheduleChart");
+        if (chartStatus != undefined) {
+            chartStatus.destroy();
+        }
+
+        const ctx_linechart = document.getElementById('rptlineScheduleChart');
+        new Chart(ctx_linechart, {
+            type: 'line',
+            data: data,
+            options: {
+                parsing: {
+                    xAxisKey: 'strlabel',
+                    yAxisKey: 'percent'
+                },
+                maintainAspectRatio: true,
+                responsive: true,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: Math.round,
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function fillReport(data) {
+        // Populate fields dynamically
+        $("#lblRegisterNo").html(data.rollNo);
+        $("#lblName").html(data.fullName);
+        $("#lblFatherName").html(data.fatherName);
+        $("#lblMotherName").html(data.motherName);
+        $("#lblAge").html(data.age);
+        $("#lblGenderName").html(data.genderName);
+        $("#lblMobileNo").html(data.defaultMobileNo);
+        $("#lblAdmissionClassName").html(data.className);
+        $("#lblBranchName").html(data.branchName);
+        $("#lblSectionName").html(data.sectionName);
+
+        // Set profile photo
+        const imgPath = '@Configuration["WebApi:ClientBaseUrl"]';
+        $("#imgPhoto").attr("src", imgPath + "/" + data.filePath);
+
+        // Handle header photo visibility
+        if (data.aFourHeaderType == "1") {
+            $("#imgafourheader").show().attr("src", imgPath + data.aFourHeaderPhotoPath);
+        } else {
+            $('#divafourheaderspace').css("height", data.aFourHeaderSpace);
+        }
+
+        // Set report details
+        $("#lblRollNo").html(data.rollNo);
+        $("#lblMaxMarks").html(data.totalMaxMarks);
+        $("#lblMarks").html(data.totalMarks);
+        $("#lblPercentage").html(data.mrkPercent);
+        $("#lblGrade").html(data.grade);
+        $("#lblRank").html(data.pRank);
+        $("#lblScheduleCount").html(data.scheduleCount);
+        $("#lblReportCardName").html(data.reportCardName);
+        $("#lblSessionYear").html(data.sessionYearName);
+    }
+
+    function fillAttendence(data) {
+        const attData = data.map(value => [
+            value.metric, value.jan, value.feb, value.mar, value.apr, value.may, value.jun,
+            value.jul, value.aug, value.sep, value.oct, value.nov, value.dec, value.total
+        ]);
+
+        $("#tblattendence").DataTable({
+            "bDestroy": true,
+            data: attData,
+            "aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+            "searching": false,
+            "bLengthChange": false,
+            paging: false,
+            "info": false,
+            "ordering": false
+        });
+    }
+
+    function fillTable(data) {
+        const tblbdy = document.getElementById("tblprogressdetailbody");
+        const rowIndex = tblbdy.rows.length > 0 ? (tblbdy.rows.length) - tblbdy.rows.length : tblbdy.rows.length;
+        const newRow = tblbdy.insertRow(rowIndex);
+
+        const parentTbl = createTable(data);
+        let cell1 = newRow.insertCell(0);
+        cell1.appendChild(parentTbl);
+        cell1.colSpan = 2;
+
+        const newRow2 = tblbdy.insertRow(rowIndex + 1);
+        const childTbl = createSubTableMarkList(data.lstStudentMarkResult);
+        cell1 = newRow2.insertCell(0);
+        cell1.appendChild(childTbl);
+
+        const childTbl2 = createSubTableGraph(data.studentMarkGraph, data.id);
+        const cell2 = newRow2.insertCell(1);
+        cell2.appendChild(childTbl2);
+    }
+
+    function createTable(data) {
+        const tbl = document.createElement('table');
+        tbl.className = "table table-sm table-bordered table-centered mb-0";
+
+        // Table Header
+        const tblHead = document.createElement('thead');
+        const trHead = document.createElement('tr');
+        const headers = ['Exam Type', 'Exam Month', 'Max Marks', 'Marks Obtained', 'Percentage', 'Grade'];
+        headers.forEach((headerText) => {
+            const th = document.createElement('th');
+            th.innerText = headerText;
+            th.style.textAlign = 'center';
+            trHead.appendChild(th);
+        });
+
+        tblHead.appendChild(trHead);
+
+        // Table Body
+        const tblBody = document.createElement('tbody');
+        const newRow = tblBody.insertRow(tblBody.rows.length);
+        const cells = [
+            data.examTypeName, data.scheduleMonth, data.maxMarks, data.marks, data.mrkPercent, data.gradeName
+        ];
+
+        cells.forEach((cellData) => {
+            const cell = newRow.insertCell();
+            cell.innerHTML = cellData;
+            cell.style.textAlign = 'center';
+        });
+
+        tbl.appendChild(tblHead);
+        tbl.appendChild(tblBody);
+        return tbl;
+    }
+
+    function createSubTableMarkList(data) {
+        const tbl = document.createElement('table');
+        tbl.className = "table table-sm table-bordered table-centered mb-0";
+
+        const tblHead = document.createElement('thead');
+        const trHead = document.createElement('tr');
+        const headers = ['Subject', 'Marks', 'Max Marks'];
+        headers.forEach((headerText) => {
+            const th = document.createElement('th');
+            th.innerText = headerText;
+            th.style.textAlign = 'center';
+            trHead.appendChild(th);
+        });
+
+        tblHead.appendChild(trHead);
+
+        const tblBody = document.createElement('tbody');
+        data.forEach((item) => {
+            const newRow = tblBody.insertRow(tblBody.rows.length);
+            const cells = [item.subjectName, item.marks, item.maxMarks];
+            cells.forEach((cellData) => {
+                const cell = newRow.insertCell();
+                cell.innerHTML = cellData;
+                cell.style.textAlign = 'center';
+            });
+        });
+
+        tbl.appendChild(tblHead);
+        tbl.appendChild(tblBody);
+        return tbl;
+    }
+
+    function createSubTableGraph(data, uniqueId) {
+        const tbl = document.createElement('table');
+        const tblBody = document.createElement('tbody');
+        const newRow = tblBody.insertRow(tblBody.rows.length);
+
+        const canvas = document.createElement("canvas");
+        canvas.setAttribute("id", "myChart" + uniqueId);
+        canvas.width = "500";
+        canvas.height = "300";
+
+        const cell1 = newRow.insertCell(0);
+        cell1.appendChild(canvas);
+
+        tbl.appendChild(tblBody);
+        return tbl;
+    }
+
+    function setGraph(data) {
+        data.forEach((e) => {
+            const chartID = "myChart" + e.id;
+            const chartStatus = Chart.getChart(chartID);
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            }
+
+            const ctx_barchart = document.getElementById(chartID);
+            new Chart(ctx_barchart, {
+                type: 'bar',
+                data: e.studentMarkGraph,
+                options: {
+                    indexAxis: 'y',
+                    elements: { bar: { borderWidth: 2 } },
+                    maintainAspectRatio: true,
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'Results' }
+                    }
+                }
+            });
+        });
+    }
+</script>
+
+
+
+
+
+
+
+
+
+
+

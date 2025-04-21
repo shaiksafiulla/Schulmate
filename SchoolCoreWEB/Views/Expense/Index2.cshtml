@@ -1,0 +1,148 @@
+﻿@using SchoolCoreWEB.Models
+@model SearchExpenseParams
+@using Localization.Services
+@inject LanguageService _localization
+
+@using (Html.BeginForm())
+{
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ExpenseInfo")</div>
+            <button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('36','0')"><i class="ri-add-line"></i></button>
+            <div class="ribbon-content">
+                <table class="table table-sm table-bordered dt-responsive nowrap w-100" id="ExpenseGrid">
+                    <thead>
+                        <tr>
+                            <th style="display:none;">Id</th>
+                            <th>@_localization.Getkey("Branch")</th>
+                            <th>@_localization.Getkey("SessionYear")</th>
+                            <th>@_localization.Getkey("Category")</th>
+                            <th>@_localization.Getkey("ReferenceNo")</th>
+                            <th>@_localization.Getkey("Description")</th>
+                            <th>@_localization.Getkey("ExpenseDate")</th>
+                            <th>@_localization.Getkey("Amount")</th>
+                            <th>@_localization.Getkey("Actions")</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+    <div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header modal-colored-header bg-info">
+                    <h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="myModalBodyDiv1">
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#loaderDiv").show("slow", function () {
+          //  getExpense();
+
+            var resObj = setResourceObj();
+            getResourceObj(JSON.stringify(resObj));
+        })
+    });
+    function setResourceObj() {
+        var msgobj = {};
+        msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+        msgobj.yes = `@_localization.Getkey("Yes")`;
+        msgobj.no = `@_localization.Getkey("No")`;
+        msgobj.error = `@_localization.Getkey("Error")`;
+        msgobj.added = `@_localization.Getkey("Added")`;
+        msgobj.updated = `@_localization.Getkey("Updated")`;
+
+        msgobj.deleted = `@_localization.Getkey("Deleted")`;
+        msgobj.delete = `@_localization.Getkey("Delete")`;
+        msgobj.view = `@_localization.Getkey("View")`;
+        msgobj.edit = `@_localization.Getkey("Edit")`;
+        msgobj.expense = `@_localization.Getkey("Expense")`;
+        msgobj.viewexpense = `@_localization.Getkey("ViewExpense")`;
+        msgobj.editexpense = `@_localization.Getkey("EditExpense")`;
+        msgobj.addexpense = `@_localization.Getkey("AddExpense")`;
+
+        return msgobj;
+    }
+    function getExpense() {
+        $("#loaderDiv").show();
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: '@Url.Action("GetAll", "Expense")',
+            Accept: 'application/json, text/javascript',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function (response) {
+                if (response != null) {
+
+                    var expenseData = [];
+                    $.each(JSON.parse(response), function (key, value) {
+                        var btndelete = "";
+                        btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`36`,`ExpenseGrid`, ' + value.id + ')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+                        // if (value.isDelete == "1") {
+
+                        // }
+                        var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,ExpenseGrid);"> ' +
+                            '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+                            '<div class="dropdown-menu dropdown-menu-end">' +
+                            '<a class="dropdown-item" href="#" onclick="viewAction(`36`, ' + value.id + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("View")</a>' +
+                            '<a class="dropdown-item" href="#" onclick="addEditAction(`36`, ' + value.id + ')"><i class="ri-pencil-line"></i>&nbsp; @_localization.Getkey("Edit")</a>' + btndelete +
+                            '</div>' +
+                            '</div>'
+
+                        expenseData.push([value.id, value.branchName, value.sessionYearName, value.categoryName, value.referenceNo, value.description, value.strExpenseDate, value.amount, btnaction])
+                    })
+
+                    $("#ExpenseGrid").DataTable({
+                        "bDestroy": true,
+                        data: expenseData,
+                        order: [[0, "desc"]],
+                        "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                        dom: 'lBfrtip',
+                        buttons: [
+                            {
+                                extend: 'csvHtml5',
+                                text: '<i class="ri-file-excel-line"></i>',
+                                titleAttr: 'csv',
+                                filename: `@_localization.Getkey("Expense")`,
+                                className: 'btn btn-outline-light btn-sm',
+                                exportOptions: {
+                                    columns: [1, 2, 3, 4, 5, 6,7]
+                                }
+                            }
+                        ]
+                    })
+                    $("#loaderDiv").hide();
+
+                } else {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+                toastr.error(`@_localization.Getkey("Error")`);
+            }
+        })
+    }
+
+</script>
+
+

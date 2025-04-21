@@ -1,0 +1,181 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<AdminNotification>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("AdminNotificationInfo")</div>
+		<button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('48','0')"><i class="ri-add-line"></i></button>
+		<div class="ribbon-content">
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="AdminNotificationGrid">
+				<thead>
+					<tr>
+						<th style="display:none;">Id</th>
+						<th>@_localization.Getkey("Title")</th>
+						<th>@_localization.Getkey("Message")</th>
+						<th>@_localization.Getkey("Attachment")</th>
+						<th>@_localization.Getkey("SentTo")</th>
+						<th>@_localization.Getkey("SentDate")</th>
+						@* <th>@_localization.Getkey("Actions")</th> *@
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+</div>
+<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+	<div class="loader">
+		<div class="loader-inner line-scale">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+
+	</div>
+</div>
+<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header modal-colored-header bg-info">
+				<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="myModalBodyDiv1">
+			</div>
+		</div>
+	</div>
+</div>
+
+
+@section Scripts {
+
+	<script>
+		$(document).ready(function () {
+			$("#loaderDiv").show("slow", function () {
+				getAdminNotification();
+
+				var resObj = setResourceObj();
+				getResourceObj(JSON.stringify(resObj));
+			})
+		});
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.adminnotification = `@_localization.Getkey("AdminNotification")`;
+			msgobj.viewadminnotification = `@_localization.Getkey("ViewAdminNotification")`;
+			msgobj.editadminnotification = `@_localization.Getkey("EditAdminNotification")`;
+			msgobj.addadminnotification = `@_localization.Getkey("AddAdminNotification")`;
+
+			msgobj.all = `@_localization.Getkey("All")`;
+			msgobj.students = `@_localization.Getkey("Students")`;
+			msgobj.teachers = `@_localization.Getkey("Teachers")`;
+			msgobj.staff = `@_localization.Getkey("Staff")`;
+			msgobj.drivers = `@_localization.Getkey("Drivers")`;
+
+			return msgobj;
+		}
+		function getAdminNotification() {
+
+			 getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/AdminNotification/GetAll`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+							  .then(response => {
+								   setBindingValues(response);
+							  })
+							  .catch(error => {
+								   toastr.error(`@_localization.Getkey("Error")`);
+							  });
+
+
+		}
+		function setBindingValues(data){
+
+						var adminNotificationData = [];
+						$.each(data, function (key, value) {
+							var strSentTo = "";
+							if (value.userTypeId != null){
+								 if (value.userTypeId == "7") {
+									strSentTo = `@_localization.Getkey("All")`;
+								}
+								if (value.userTypeId == "4") {
+									strSentTo = `@_localization.Getkey("Students")`;
+								}
+								if (value.userTypeId == "3") {
+									strSentTo = `@_localization.Getkey("Teachers")`;
+								}
+								if (value.userTypeId == "5") {
+									strSentTo = `@_localization.Getkey("Staff")`;
+								}
+								if (value.userTypeId == "6") {
+									strSentTo = `@_localization.Getkey("Drivers")`;
+								}
+							}
+							else if (value.userTypeId == null){
+							   strSentTo = `@_localization.Getkey("Students")`;
+							}
+
+							var btnpath = "";
+
+							if (value.filePath != null && value.fileName != null) {
+								let img1path ='@Configuration["WebApi:ImageBaseUrl"]' + "/"+ value.filePath;
+								btnpath = '<a href="' + img1path + '">' + value.fileName + '</a>'
+							}
+							// var btndelete = "";
+							// btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`48`,`AdminNotificationGrid`, ' + value.Id + ')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+							var btnaction = '<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,AdminNotificationGrid);"> ' +
+								'<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>' +
+								'<div class="dropdown-menu dropdown-menu-end">' +
+								// btndelete +
+								'</div>' +
+								'</div>'
+							adminNotificationData.push([value.id, value.title, value.message, btnpath, strSentTo, value.strCreatedDate])
+						})
+
+						$("#AdminNotificationGrid").DataTable({
+							"bDestroy": true,
+							data: adminNotificationData,
+							order: [[0, "desc"]],
+							"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+							dom: 'lBfrtip',
+							buttons: [
+								{
+									extend: 'csvHtml5',
+									text: '<i class="ri-file-excel-line"></i>',
+									titleAttr: 'csv',
+									filename: `@_localization.Getkey("AdminNotifications")`,
+									className: 'btn btn-outline-light btn-sm',
+									exportOptions: {
+										columns: [1, 2, 3, 4,5]
+									}
+								}
+							]
+						})
+						$("#loaderDiv").hide();
+
+		  }
+
+	</script>
+}
+
+
+
+
+

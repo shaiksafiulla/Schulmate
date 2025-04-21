@@ -1,0 +1,355 @@
+﻿@model SchoolCoreWEB.Models.QuestionBank
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="card">
+    <div class="card-body">
+        <form id="myForm" class="forms-sample">
+            @Html.HiddenFor(m=>m.Id, new { id="hfquestionbankid"})            
+            <div class="row">
+                <div class="col-4">
+                    <div class="form-group required mb-3">
+                        <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                        @Html.DropDownListFor(model => model.ClassId, Model.ClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlclass", @required = "required", onChange = "selectedClassIndexChanged()" })
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group required mb-3">
+                        <label for="subject" class="form-label">@_localization.Getkey("Subject")</label>
+                        @Html.DropDownListFor(model => model.SubjectId, Model.SubjectSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlsubject", @required = "required", onChange = "selectedsubjectIndexChanged()" })
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group required mb-3">
+                        <label for="subject" class="form-label">@_localization.Getkey("Lesson")</label>
+                        @Html.DropDownListFor(model => model.LessonId, Model.LessonSheet, @_localization.Getkey("PleaseSelect"), new { @class = "selectTop form-control form-control-sm", @id = "ddllesson", @required = "required", onChange = "selectedtopicIndexChanged()" })
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <div class="form-group required mb-3">
+                        <label for="subject" class="form-label">@_localization.Getkey("QuestionType")</label>
+                        @Html.DropDownListFor(model => model.QuestionTypeId, Model.QuestionTypeSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltype", @required = "required", onChange = "selectedquesttypeIndexChanged()" })
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group required mb-3">
+                        <label for="subject" class="form-label">@_localization.Getkey("DifficultyLevel")</label>
+                        @Html.DropDownListFor(model => model.QuestionDifficultyId, Model.QuestionDifficultySheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddldifficulty", @required = "required", onChange = "selecteddifflevelIndexChanged()" })
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group required mb-3">
+                        <label for="category" class="form-label">@_localization.Getkey("Category")</label>
+                        @Html.DropDownListFor(model => model.QuestionCategoryId, Model.QuestionCategorySheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlcategory", @required = "required", onChange = "selectedcatIndexChanged()" })
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <div class="form-group mb-3">
+                        <label for="marks" class="form-label">@_localization.Getkey("Marks")</label>
+                        @Html.TextBoxFor(model => model.Marks, new { @class = "form-control form-control-sm", @id = "marks", @maxlength = "4" })
+                    </div>
+                </div>
+                <div class="col-8">
+                    <div class="form-group mb-3">
+                        <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                        @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "description", @rows = "1", @maxlength = "250" })
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <button type="button" id="mathjax">@_localization.Getkey("AddMath")</button>
+                </div>               
+            </div>
+            <div class="row">
+                <div id="editor-container" style="height:200px"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitQuestionBank()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                    <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+    var quill = new Quill('#editor-container', {
+         // placeholder: 'Click the MathJax button to insert a formula.',
+          theme: 'snow',
+          modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline', 'strike'],
+                ['link'],
+                ['blockquote'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                ['align', { 'align': 'center' }, { 'align': 'right' }, { 'align': 'justify' }],
+                ['link', 'image']
+               ]
+            },
+        });
+        document.getElementById('mathjax').onclick = () => {
+            var latex = prompt("Enter a LaTeX formula:", "e=mc^2");
+            var range = quill.getSelection(true);
+            quill.deleteText(range.index, range.length);
+            quill.insertEmbed(range.index, 'mathjax', latex);
+            quill.insertText(range.index + range.length + 1 , ' ');
+            quill.setSelection(range.index + range.length + 1);
+        }
+
+
+        if (typeof Parchment == 'undefined') {
+
+                // Import parchment and delta for creating custom module
+            const Parchment = Quill.imports.parchment;
+            const Delta = Quill.imports.delta;
+
+            // Extend the embed
+            class Mathjax extends Parchment.Embed {
+
+	            // Create node
+  	            static create(value)
+  	            {
+    	            const node = super.create(value);
+		            if (typeof value === 'string') {
+      		            node.innerHTML = "&#65279;" + this.tex2svg(value) + "&#65279;";
+	  		            node.contentEditable = 'false';
+      		            node.setAttribute('data-value', value);
+    	            }
+    	            return node;
+  	            }
+
+	            // Return the attribute value (probably for Delta)
+  	            static value(domNode)
+	            {
+    	            return domNode.getAttribute('data-value');
+  	            }
+
+
+	            // Manually render a MathJax equation until version 3.0.2 is not released
+	            static tex2svg(latex)
+	            {
+		            // Create a hidden node and render the formula inside
+		            let MathJaxNode = document.createElement("DIV");
+		            MathJaxNode.style.visibility = "hidden";
+		            MathJaxNode.innerHTML = '\\(' + latex + '\\)';
+		            document.body.appendChild(MathJaxNode);
+		            MathJax.typeset();
+		            let svg = MathJaxNode.innerHTML;
+		            document.body.removeChild(MathJaxNode);
+		            return svg;
+	            }
+	            /*
+	            //	Never called ? See : https://stackoverflow.com/questions/60935100/html-method-in-quill-formula-js
+	            html() {
+		            const { mathjax } = this.value();
+		            return `<span>${mathjax}</span>`;
+	              }
+	             */
+            }
+
+            // Set module properties
+            Mathjax.blotName = 'mathjax';
+            Mathjax.className = 'ql-mathjax';
+            Mathjax.tagName = 'SPAN';
+
+
+            try{
+                // Register the module
+                Quill.register(Mathjax);
+            }
+            catch(e){
+
+            }
+
+        }
+
+
+
+
+       function chkFields(){
+        var isvalid=true;
+
+        if($("#ddlclass").val() == ""){
+             isvalid =false;
+        }
+        if($("#ddlsubject").val() == ""){
+             isvalid =false;
+        }
+        if ($("#ddllesson").val() == "") {
+             isvalid =false;
+        }
+         if($("#ddltype").val() == ""){
+             isvalid =false;
+        }
+        if($("#ddldifficulty").val() == ""){
+             isvalid =false;
+        }
+        if($("#ddlcategory").val() == ""){
+             isvalid =false;
+        }
+       return isvalid;
+    }
+    function Validate(){
+        if (chkFields()){
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else{
+            $('#btnsubmit').prop('disabled', true);
+        }
+
+
+    }
+    function selectedClassIndexChanged(){
+          $('#ddlsubject')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+                   $.ajax({
+                        type: "post",
+                         url: '@Url.Action("GetSubjectsByClass","QuestionBank")',
+                        data: { classId: $('#ddlclass').val() },
+                         dataType: 'json',
+                        traditional: true,
+                       success: function (response) {
+                           var result = response;
+                           var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                           for (var i = 0; i < result.length; i++) {
+                               s += '<option value="' + result[i].value + '">' + result[i].text + '</option>';
+                       }                      
+                       $("#ddlsubject").html(s);                      
+
+                        }
+                    });
+                    Validate();
+     }
+      function selectedsubjectIndexChanged(){
+        $('#ddllesson')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+                   $.ajax({
+                        type: "post",
+                         url: '@Url.Action("GetTopicsBySubject","QuestionBank")',
+                       data: { classId: $('#ddlclass').val(), subjectId: $('#ddlsubject').val() },
+                         dataType: 'json',
+                        traditional: true,
+                       success: function (response) {
+                           var result = response;
+                           var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                           for (var i = 0; i < result.length; i++) {
+                               s += '<option value="' + result[i].value + '">' + result[i].text + '</option>';
+                       }
+                       $('.selectTop').selectpicker('destroy')
+                $("#ddllesson").html(s);
+                       $('.selectTop').selectpicker({
+                            liveSearch: true,
+                            showSubtext: true
+                        });
+
+                        }
+                    });
+                    Validate();
+     }
+     function selectedtopicIndexChanged(){
+         Validate();
+     }
+      function selectedquesttypeIndexChanged(){
+         Validate();
+     }
+     function selecteddifflevelIndexChanged(){
+         Validate();
+     }
+       function selectedcatIndexChanged(){
+         Validate();
+     }
+
+      function submitQuestionBank(){
+          $("#loaderDiv1").show("slow", function () {
+           var obj={};
+           obj.Id=$("#hfquestionbankid").val();
+            obj.LessonId = $("#ddllesson").val();
+           obj.QuestionTypeId=$("#ddltype").val();
+           obj.QuestionDifficultyId=$("#ddldifficulty").val();
+           obj.QuestionCategoryId=$("#ddlcategory").val();
+           obj.Marks=$("#marks").val();
+           obj.Description=$("#description").val();
+           obj.DeltaQuestion = JSON.stringify(quill.getContents());
+           obj.Question = quill.getText();
+             var jdata = JSON.stringify(obj);
+                $.ajax({
+                type: 'POST',
+                    url: '@Url.Action("Save","QuestionBank")',
+                    dataType: "JSON",
+                data: {model :jdata },
+                success: function (response) {
+                      if (response != null) {
+                      var serviceresult = JSON.parse(response);
+                      if (serviceresult === true) {
+                          $("#loaderDiv1").hide();
+                          toastr.error(`@_localization.Getkey("QuestionExists")`);
+                      }
+                      else {
+                          actionAfterResponse('QuestionBankGrid', serviceresult.recordId, serviceresult.statusId, '17');
+                      }
+
+                      } else {
+                           toastr.error(`@_localization.Getkey("Error")`);
+                      }
+                },
+                error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+                })
+          })
+      }
+      function setQuillEditor(htmldata){
+          if(htmldata !="undefined"){
+            var deltaStr = JSON.parse(htmldata);
+            quill.setContents(deltaStr);
+          }
+      }
+       $(document).ready(function() {
+           Validate();
+        var jsmodel = @Html.Raw(Json.Serialize(Model));
+        if (jsmodel != null) {
+            var strDelta = jsmodel.deltaQuestion;            
+                setQuillEditor(strDelta);
+           }
+        });
+
+      //setQuillEditor(JSON.parse(@Model.DeltaQuestion));
+</script>

@@ -1,0 +1,596 @@
+﻿@model SchoolCoreWEB.Models.FeeStructure
+@using Localization.Services
+@inject LanguageService _localization
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Http
+
+<form id="feeForm" class="forms-sample">
+    @Html.HiddenFor(m => m.Id, new { @id = "hffeestructureid" })
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+    @* @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" }) *@
+    @* @Html.HiddenFor(m => m.ClassIds, new { @id = "hfsectionids" }) *@
+    <div class="row">
+        <div class="col-6">
+
+            <div class="card ribbon-box">
+                <div class="card-body">
+                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("BasicInfo")</div>
+                    <div class="ribbon-content">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label for="title" class="form-label">@_localization.Getkey("Title")</label>
+                                    @Html.TextBoxFor(model => model.Title, new { @class = "form-control form-control-sm", @id = "title", @required = "required", @maxlength = "100", onkeyup = "Validate();" })
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                    @Html.DropDownListFor(model => model.BranchId, Model.BranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlbranch", @required = "required", onChange = "selectedBranchIndexChanged()" })
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label for="class" class="form-label">@_localization.Getkey("Classes")</label>
+                                    <div>
+                                        @Html.ListBoxFor(model => model.ClassIds, Model.ClassSheet, new { @class = "form-select form-select-sm", @id = "ddlclass", @style = "width:100%", @multiple = "multiple" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label class="form-label">@_localization.Getkey("DiscountType")</label>
+                                    <div>
+                                        @Html.RadioButtonFor(model => model.DiscountType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Percentage")</label> &nbsp;
+                                        @Html.RadioButtonFor(model => model.DiscountType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Fixed")</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label for="discount" class="form-label">@_localization.Getkey("Discount")</label>
+                                    @Html.TextBoxFor(model => model.Discount, new { @class = "form-control form-control-sm", @id = "discount", @maxlength = "80", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+                                </div>
+                            </div>
+                            <div class="col-4"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label class="form-label">@_localization.Getkey("DueChargeType")</label>
+                                    <div>
+                                        @Html.RadioButtonFor(model => model.DueChargeType, "1", new { @class = "form-check-input" }) <label>@_localization.Getkey("Percentage")</label> &nbsp;
+                                        @Html.RadioButtonFor(model => model.DueChargeType, "2", new { @class = "form-check-input" })  <label>@_localization.Getkey("Fixed")</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label for="duecharge" class="form-label">@_localization.Getkey("DueCharge")</label>
+                                    @Html.TextBoxFor(model => model.DueCharge, new { @class = "form-control form-control-sm", @id = "duecharge", @maxlength = "5", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group required mb-3">
+                                    <label for="duedate" class="form-label">@_localization.Getkey("DueDate")</label>
+                                    @Html.EditorFor(model => model.DueDate, "{0:dd-MM-yyyyTHH:mm:ss}", new { htmlAttributes = new { @type = "date", @class = "form-control form-control-sm datetimepicker", @required = "required", @id = "compduedate", onChange = "Validate();" } })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group mb-3">
+                                <label for="description" class="form-label">@_localization.Getkey("Description")</label>
+                                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", @id = "address", @rows = "2", @maxlength = "250" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="col-6">
+            <div class="row">
+                <div class="card ribbon-box">
+                    <div class="card-body">
+                        <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("FeeDetail")</div>
+                        <button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="insertintotbl('1')"><i class="ri-add-line"></i></button>
+                        <div class="ribbon-content">
+                            <div class="row">
+                                <div class="form-group required mb-3">
+
+                                    <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblfeedetail">
+                                        <thead>
+                                            <tr>
+                                                <th>@_localization.Getkey("FeeType")</th>
+                                                <th>@_localization.Getkey("Amount")</th>
+                                                <th>@_localization.Getkey("Action")</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="feedetailbody">
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td>Total</td>
+                                                <td><label id="lblCompFeeTotal"></label></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="card ribbon-box">
+                    <div class="card-body">
+                        <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("Installment")</div>
+                        <div class="row text-center">
+                            <div class="form-group required mb-3">
+                                @Html.RadioButtonFor(model => model.HasInstallment, "1", new { @class = "form-check-input", @onclick = "oninstallclick('1')" }) <label>@_localization.Getkey("Yes")</label> &nbsp;
+                                @Html.RadioButtonFor(model => model.HasInstallment, "2", new { @class = "form-check-input", @onclick = "oninstallclick('2')" })  <label>@_localization.Getkey("No")</label>
+                            </div>
+                        </div>
+                        <div class="ribbon-content">
+
+                            <div class="row" id="divinstall">
+                                <div class="form-group mb-3">
+                                    <button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="insertintotblinstall()"><i class="ri-add-line"></i></button>
+                                    <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblfeeinstall">
+                                        <thead>
+                                            <tr>
+                                                <th>@_localization.Getkey("Name")</th>
+                                                <th>@_localization.Getkey("DueDate")</th>
+                                                <th>@_localization.Getkey("DueChargeType")</th>
+                                                <th>@_localization.Getkey("DueCharge")</th>
+                                                <th>@_localization.Getkey("InstallmentAmount")</th>
+                                                <th>@_localization.Getkey("Action")</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="feeinstallbody">
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td>Total</td>
+                                                <td><label id="lblInstFeeTotal">0</label></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="submitFeeStructure()" id="btnsubmit">
+            @if (Model.Id > 0)
+            {
+                <span>@_localization.Getkey("Update")</span>
+            }
+            else
+            {
+                <span>@_localization.Getkey("Save")</span>
+            }
+        </button>
+        <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+
+<script type="text/javascript">
+    var arrFeeType = [];
+    $(document).ready(function () {
+        Validate();
+
+        $('#ddlclass').select2({
+            dropdownParent: $('#myModalBodyDiv1'),
+            placeholder: "select teacher",
+            tags: true
+        });
+        $('#ddlclass').on('select2:select', function (e) {
+            var selectElements = document.querySelectorAll('.select2-selection__choice');
+            selectElements.forEach(function (selectElement) {
+                selectElement.style.backgroundColor = '#0d6efd';
+            });
+        });
+        $('#ddlclass').on('select2:unselect', function (e) {
+            var unselectElements = document.querySelectorAll('.select2-selection__choice');
+            unselectElements.forEach(function (unselectElement) {
+                unselectElement.style.backgroundColor = '#0d6efd';
+            });
+        });
+
+        var jsmodel = @Html.Raw(Json.Serialize(Model));
+
+        if (jsmodel != null && jsmodel.feeTypeSheet.length > 0) {
+            for (var i = 0; i < jsmodel.feeTypeSheet.length; i++) {
+                arrFeeType.push(jsmodel.feeTypeSheet[i]);
+            }
+            insertintotbl('1');      
+
+            $('#tblfeedetail').on('change', 'input[type="text"]', function (event) {
+                calculateTotal('1');
+            });
+            $('#tblfeeinstall').on('change', 'input[name="installamount"]', function (event) {
+                calculateTotal('3');
+            });
+        }
+        if (jsmodel != null && jsmodel.classIds != null) {
+            var dbElements = document.querySelectorAll('.select2-selection__choice');
+            dbElements.forEach(function (dbElement) {
+                dbElement.style.backgroundColor = '#0d6efd';
+            });
+        }
+
+
+    });
+    function selectedBranchIndexChanged() {
+        $('#ddlclass')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+        $.ajax({
+            type: "post",
+            url: '@Url.Action("GetClassesByBranch", "FeeStructure")',
+            data: { branchId: $('#ddlbranch').val(), sessionYearId: $('#hfsessionyearid').val() },
+            dataType: 'json',
+            traditional: true,
+            success: function (response) {
+                var lstdata = JSON.parse(response);
+                var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                for (var i = 0; i < lstdata.length; i++) {
+                    s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                }
+                $("#ddlclass").html(s);
+                $('#ddlclass').select2({
+                    dropdownParent: $('#myModalBodyDiv1'),
+                    placeholder: "select teacher",
+                    tags: true
+                });
+            }
+        });
+        Validate();
+    }
+    function oninstallclick(val) {
+        if (val == "1") {
+            $("#divinstall").show();
+        }
+        else {
+            $("#feeinstallbody").empty();
+            $("#divinstall").hide();
+
+        }
+    }
+    function chkFields() {
+        var isvalid = true;
+
+        if ($("#title").val() == "") {
+            isvalid = false;
+        }
+        var selectedIds = $('#ddlclass').val();
+        if (selectedIds.length == 0) {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function calculateTotal(type) {
+        var table = ''; var total = 0; var cellindex = 1;
+        if (type == "1") {
+            table = document.getElementById("feedetailbody");
+            cellindex = 1;
+        }
+        // if (type == "2") {
+        //     table = document.getElementById("optionalfeebody");
+        //     cellindex = 1;
+        // }
+        if (type == "3") {
+            table = document.getElementById("feeinstallbody");
+            cellindex = 4;
+        }
+        for (var i = 0; i < table.rows.length; i++) {
+            var cellValue = parseInt(table.rows[i].cells[cellindex].querySelector('input').value);
+            total += isNaN(cellValue) ? 0 : cellValue;
+        }
+        if (type == "1") {
+            $("#lblCompFeeTotal").html(total);
+        }       
+        if (type == "3") {
+            $("#lblInstFeeTotal").html(total);
+        }
+    }
+
+    function insertintotbl(type) {
+        var tblbdy = '';
+        if (type == "1") {
+            tblbdy = document.getElementById("feedetailbody");
+        }
+        // if (type == "2") {
+        //     tblbdy = document.getElementById("optionalfeebody");
+        // }
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        var ddlfeetype = document.createElement('select');
+        ddlfeetype.className = "form-select form-select-sm";
+        for (var i = 0; i < arrFeeType.length; i++) {
+            var opt = document.createElement('option');
+            opt.text = arrFeeType[i].text;
+            opt.value = arrFeeType[i].value;
+            ddlfeetype.appendChild(opt);
+        }
+
+        cell1 = newRow.insertCell(0);
+        cell1.appendChild(ddlfeetype);
+
+        var txtinput = document.createElement('input');
+        txtinput.className = "form-control form-control-sm";
+        if (type == "1") {
+            txtinput.id = "compamount" + rowIndex;
+            txtinput.name = "compamount";
+        }
+        if (type == "2") {
+            txtinput.id = "optamount" + rowIndex;
+            txtinput.name = "optamount";
+        }
+        txtinput.type = "text";
+        txtinput.value = 0;
+        //if (type == "1") {
+        //    txtinput.addEventListener('change', calculateTotal('1')); // Add event listener for onchange event
+        //}
+        //if (type == "2") {
+        //    txtinput.addEventListener('change', calculateTotal('2')); // Add event listener for onchange event
+        //}
+
+
+        cell2 = newRow.insertCell(1);
+        cell2.appendChild(txtinput);
+        if (type == "1") {
+            txtinput.addEventListener('change', calculateTotal('1')); // Add event listener for onchange event
+        }
+        // if (type == "2") {
+        //     txtinput.addEventListener('change', calculateTotal('2')); // Add event listener for onchange event
+        // }
+
+        var ic = document.createElement('i');
+        ic.className = "ri-delete-bin-line";
+
+        var delbtn = document.createElement('button');
+        delbtn.className = "btn btn-outline-danger btn-sm";
+        delbtn.type = "button";
+        delbtn.onclick = (function () { return function () { removeRow(type, delbtn); } })();
+        delbtn.appendChild(ic);
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(delbtn);
+
+    }
+    function insertintotblinstall() {
+        var tblbdy = document.getElementById("feeinstallbody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        var txtinput = document.createElement('input');
+        txtinput.className = "form-control form-control-sm";
+        txtinput.type = "text";
+        cell1 = newRow.insertCell(0);
+        cell1.appendChild(txtinput);
+
+        var dtinput = document.createElement('input');
+        dtinput.className = "form-control form-control-sm datetimepicker";
+        dtinput.type = "date";
+        cell2 = newRow.insertCell(1);
+        cell2.appendChild(dtinput);
+
+        var maindiv = document.createElement('div');
+        var fulldiv = document.createElement('div');
+        var fullelem = document.createElement('input');
+        fullelem.className = "form-check-input";
+        fullelem.type = 'radio';
+        fullelem.name = 'duechargeType' + rowIndex;
+        fullelem.checked = true;
+        fullelem.value = '1';
+
+        var fulllabel = document.createElement('label');
+        fulllabel.innerHTML = 'Percentage';
+        fulllabel.className = "form-label";
+
+        fulldiv.appendChild(fullelem);
+        fulldiv.appendChild(fulllabel);
+
+        var firstHalfdiv = document.createElement('div');
+        var firstHalfelem = document.createElement('input');
+        firstHalfelem.className = "form-check-input";
+        firstHalfelem.type = 'radio';
+        firstHalfelem.name = 'duechargeType' + rowIndex;
+        firstHalfelem.checked = false;
+        firstHalfelem.value = '2';
+
+        var firstHallabel = document.createElement('label');
+        firstHallabel.innerHTML = 'Fixed';
+        firstHallabel.className = "form-label";
+
+        firstHalfdiv.appendChild(firstHalfelem);
+        firstHalfdiv.appendChild(firstHallabel);
+
+
+        maindiv.appendChild(fulldiv);
+        maindiv.appendChild(firstHalfdiv);
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(maindiv);
+
+        var dueinput = document.createElement('input');
+        dueinput.className = "form-control form-control-sm";
+        dueinput.id = "due" + rowIndex;
+        dueinput.type = "text";
+        dueinput.value = 0;
+
+        cell4 = newRow.insertCell(3);
+        cell4.appendChild(dueinput);
+
+        var amtinput = document.createElement('input');
+        amtinput.className = "form-control form-control-sm";
+        amtinput.name = "installamount";
+        amtinput.id = "amount" + rowIndex;
+        amtinput.type = "text";
+        amtinput.value = 0;
+
+        cell5 = newRow.insertCell(4);
+        cell5.appendChild(amtinput);
+        amtinput.addEventListener('keydown', calculateTotal('3')); // Add event listener for onchange event
+
+        var ic = document.createElement('i');
+        ic.className = "ri-delete-bin-line";
+
+        var delbtn = document.createElement('button');
+        delbtn.className = "btn btn-outline-danger btn-sm";
+        delbtn.type = "button";
+        delbtn.onclick = (function () { return function () { removeRow('3', delbtn); } })();
+        delbtn.appendChild(ic);
+
+        cell6 = newRow.insertCell(5);
+        cell6.appendChild(delbtn);
+    }
+    function removeRow(type, btn) {
+        calculateTotal(type);
+        btn.parentNode.parentNode.remove();
+    }
+    function getFeeInstallment() {
+        var chkClsArray = [];
+        $("#tblfeeinstall tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+
+            var FirstCol = tr.find("input").eq(0).val();
+            var SecondCol = tr.find("input").eq(1).val();
+            var ThirdCol = $("input[name='duechargeType" + tr.index() + "']:checked").val();
+            var FourthCol = $("input[id='due" + tr.index() + "']").val();
+            var FifthCol = $("input[id='amount" + tr.index() + "']").val();
+
+            paramcls.Id = 0;           
+            paramcls.FeeStructureId = 0;
+            paramcls.BranchId = $("#ddlbranch").val();
+            paramcls.SessionYearId = $("#hfsessionyearid").val();
+            paramcls.InstallmentName = FirstCol;
+            paramcls.DueDate = SecondCol;
+            paramcls.DueChargeType = ThirdCol;
+            paramcls.DueCharge = FourthCol;
+            paramcls.Amount = FifthCol;
+            chkClsArray.push(paramcls);
+
+        });
+        return chkClsArray;
+    }
+
+    function getFeeDetail() {
+        var chkClsArray = [];
+        $("#tblfeedetail tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+            var FirstCol = tr.find("select").val();
+            var SecondCol = tr.find("input").val();
+
+            paramcls.Id = 0;           
+            paramcls.FeeStructureId = 0;
+            paramcls.BranchId = $("#ddlbranch").val();
+            paramcls.SessionYearId = $("#hfsessionyearid").val();
+            paramcls.FeeTypeId = FirstCol;
+            paramcls.Amount = SecondCol;
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    } 
+
+    function submitFeeStructure() {
+        $("#loaderDiv1").show("slow", function () {
+            
+            var obj = {};
+            obj.Id = $("#hffeestructureid").val();
+            obj.BranchId = $("#ddlbranch").val();
+            obj.SessionYearId = $("#hfsessionyearid").val();
+            obj.ClassIds = $('#ddlclass').val();
+            obj.Title = $("#title").val();
+            obj.Description = $("#description").val();
+            obj.TotalAmount = $("#lblCompFeeTotal").html();
+            obj.DueDate = $("#compduedate").val();
+            obj.DueChargeType = $('input[name="DueChargeType"]:checked').val();
+            obj.DueCharge = $("#duecharge").val();
+            obj.HasInstallment = $('input[name="HasInstallment"]:checked').val();
+            obj.DiscountType = $('input[name="DiscountType"]:checked').val();
+            obj.Discount = $("#discount").val();
+            obj.TotalAmountAfterDiscount = 0;
+            
+            obj.LstFeeStructureDetail = getFeeDetail();
+            obj.LstFeeStructureInstallment = getFeeInstallment();           
+
+            var jdata = JSON.stringify(obj);
+            // console.log(jdata);
+            $.ajax({
+                type: 'POST',
+                async: false,
+                url: '@Url.Action("Save", "FeeStructure")',
+                data: { model: jdata },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('FeeStructureGrid', serviceresult.recordId, serviceresult.statusId, '44');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+
+        })
+    }
+
+</script>

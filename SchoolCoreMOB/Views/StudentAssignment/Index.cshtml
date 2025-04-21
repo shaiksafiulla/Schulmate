@@ -1,0 +1,88 @@
+﻿@using SchoolCoreMOB.Models
+@model IEnumerable<VStudentAssignment>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<div class="page-title page-title-small">
+   @* <h2><a href="#" onclick="setNewChildNavigation(`@Url.Content("/Home")`)"><i class="fa fa-arrow-left"></i></a>Back To Home</h2>*@
+   <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+<a href="#" onclick="setNewChildNavigation(`@Url.Content("/AddStudentAssignment?Id=0")`)" class="card card-style mb-3">
+    <div class="d-flex pt-3 pb-3">
+        <div class="mt-2 ps-3 ms-2">
+            <h1 class="center-text">
+                <i data-feather="heart"
+                   data-feather-line="1"
+                   data-feather-size="50"
+                   data-feather-color="red-dark"
+                   data-feather-bg="red-fade-light">
+                </i>
+            </h1>
+        </div>
+        <div class="pt-2 mt-1 ps-4">
+            <h4 class="color-theme font-600">Student Assignments</h4>
+            <p class="mt-n2 font-11 color-highlight mb-2">
+                Post Student Assignments
+            </p>
+        </div>
+        <div class="ms-auto align-self-center me-3">
+            <span class="badge bg-highlight color-white font-10 py-1 px-2">NEW</span>
+        </div>
+    </div>
+</a>
+
+<div class="card card-style">
+    <div class="content mt-0 mb-0">
+        <div class="accordion" id="assignment-container">
+        </div>
+    </div>
+</div>
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        showLoading();
+          getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/StudentAssignment/GetAll`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                        .then(response => {
+                             setBindingValues(response);
+                            // setfooterActiveAfterNavigation();
+                              hideLoading();
+                        })
+                        .catch(error => {
+                             showToast('2', `@_localization.Getkey("Error")`);
+                        });
+    });
+     function setBindingValues(data){
+         $('#assignment-container').empty();
+         var anchors = "";
+        for (var i = 0; i < data.length; i++) {
+
+                anchors+=`<div class="mb-0">
+                    <button class="btn accordion-btn no-effect color-theme"  data-bs-toggle="collapse" data-bs-target="#collapse`+data[i].id+`">
+                        <i class="fa fa-star color-yellow-dark me-2"></i>
+                        ` + data[i].className + ' ' + data[i].sectionName + ' - '  + data[i].subjectName + `
+                        <i class="fa fa-chevron-down font-10 accordion-icon"></i>
+                    </button>
+                    <div id="collapse`+data[i].id+`" class="collapse"  data-bs-parent="#announcement-container">
+                        <div class="pt-1 pb-2 ps-3 pe-3">
+                        <p>` + data[i].title + `</p>
+                            <p>` + data[i].description + `</p>
+                        </div>
+                    </div>
+                </div>`;
+        }
+       $('#assignment-container').append(anchors);
+    }
+
+
+</script>
+
+

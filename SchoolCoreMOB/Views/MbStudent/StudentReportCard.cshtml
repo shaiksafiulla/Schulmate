@@ -1,0 +1,466 @@
+﻿@model MbReportCard
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+@Html.HiddenFor(m => m.Id, new{ @id="hfstudentreportcardid"})
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Report Cards</h2>
+</div>
+
+<div class="content">
+    <div class="input-style has-borders input-style-always-active no-icon mb-4">
+        <select id="reportcard-dropdown">
+            <option value="default" disabled>Select Report Card</option>
+        </select>
+        <span><i class="fa fa-chevron-down"></i></span>
+        <i class="fa fa-check disabled valid color-green-dark"></i>
+        <i class="fa fa-check disabled invalid color-red-dark"></i>
+        <em></em>
+    </div>
+   @*  <div class="card card-style mb-2 custom-card rounded-2" id="tblrccpstudent">
+        <div class="content mt-2 mb-2">
+            <div class="d-flex justify-content-around">
+                <span>@_localization.Getkey("M.Marks") :</span><strong id="spfinalmaxmark"></strong>
+                <span>@_localization.Getkey("Marks") :</span> <strong id="spfinalmark"></strong>
+                <span>@_localization.Getkey("Percent") :</span><strong id="spfinalpercent"></strong>
+            </div>
+            <div class="d-flex justify-content-around">
+                <span>@_localization.Getkey("Grade") :</span><strong id="spfinalgrade"></strong>
+                <span>@_localization.Getkey("Rank") :</span><strong id="spfinalrank"></strong>
+            </div>
+        </div>
+    </div> *@
+    @* <table class="table table-borderless text-center rounded-sm shadow-l" style="overflow: hidden;" id="tblrccpstudent">
+        <thead>
+        <tr class="bg-gray-light">
+        <th scope="col" class="color-theme py-3 font-14">@_localization.Getkey("M.Marks")</th>
+        <th scope="col" class="color-theme py-3 font-14">@_localization.Getkey("Marks")</th>
+        <th scope="col" class="color-theme py-3 font-14">@_localization.Getkey("Percent")</th>
+        <th scope="col" class="color-theme py-3 font-14">@_localization.Getkey("Grade")</th>
+        <th scope="col" class="color-theme py-3 font-14">@_localization.Getkey("Rank")</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <th scope="row" id="spfinalmaxmark"></th>
+        <td id="spfinalmark"></td>
+        <td id="spfinalpercent"></td>
+        <td id="spfinalgrade"></td>
+        <td id="spfinalrank"></td>
+        </tr>
+        </tbody>
+        </table>*@
+    @*slider-no-arrows slider-no-dots*@
+    <div class="splide single-slider slider-no-arrows" id="single-slider-1">
+        <div class="splide__track">
+            <div class="splide__list" id="sliderList">
+                <!-- Dynamically generated slides will go here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@*<div class="card card-style">
+    <div class="content mt-0 mb-0">
+    <p>
+    Report Cards
+    </p>
+
+    <div class="divider mb-0"></div>
+    <div class="list-group list-custom-large list-icon-0" id="reportcard-container">
+    </div>
+    <a href="#" data-menu="divprogressreport" id="ancprogreporttrigger" style="display:none"></a>
+    </div>
+    </div>*@
+
+
+
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+
+<script>
+     let splide;
+    $(document).ready(function () {
+        setActiveNav("@Url.Action("Index", "Home")");
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/student/ReportCard/`+$("#hfstudentreportcardid").val()+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                            .then(response => {
+                                            // Fill the dropdown with the data
+                                    if(response !==null && response.length > 0){
+                                            var dropdown = $('#reportcard-dropdown');
+                                            dropdown.empty();
+                                            dropdown.append('<option value="">Select Option</option>');
+                                            $.each(response, function(i, item) {
+                                                dropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                                            });
+
+                                            var defaultValue = response[0].id;
+                                            dropdown.val(defaultValue);
+                                            generateProgressReport(defaultValue,$("#hfstudentreportcardid").val());
+                                    }                                 
+
+                                    hideLoading();
+                            })
+                            .catch(error => {
+                                    showToast('2', `@_localization.Getkey("Error")`);
+                            });
+
+                                // Event listener for dropdown change to load new chart data
+                            $('#reportcard-dropdown').change(function() {
+                                var selectedValue = $(this).val();
+                                if (selectedValue) {
+                                    generateProgressReport(selectedValue,$("#hfstudentreportcardid").val());
+                                        $("#tblrccpstudent").show();
+                                }
+                                else{
+                                    $("#tblrccpstudent").hide();
+                                }
+                            });
+    });
+    function generateProgressReport(reportcardid, studentid){
+      //  getRCCP_Student(reportcardid,studentid)
+        getStudentSchedule(reportcardid,studentid);
+    }
+    function getRCCP_Student(reportcardid,studentid){
+
+        $("#spfinalmaxmark").html('');
+        $("#spfinalmark").html('');
+        $("#spfinalpercent").html('');
+        $("#spfinalgrade").html('');
+        $("#spfinalrank").html('');
+
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/ReportCard/RCCPStudent/`+reportcardid+`,`+studentid+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+                .then(response => {
+                        var strResponse =JSON.parse(response.strResult)[0];
+                        $("#spfinalmaxmark").html(strResponse.MaxMarks);
+                        $("#spfinalmark").html(strResponse.Marks);
+                        $("#spfinalpercent").html(strResponse.MrkPercent);
+                        $("#spfinalgrade").html(strResponse.Grade);
+                        $("#spfinalrank").html(strResponse.PRank);
+                        hideLoading();
+
+                })
+                .catch(error => {
+                        showToast('2', `@_localization.Getkey("Error")`);
+                });
+    }
+    function initializeSplide() {
+        splide = new Splide('#single-slider-1', {
+           // type: 'fade', // or any other type like 'slide'
+          //  heightRatio: 0.5,
+            arrows: false,
+            pagination: true
+        });
+        splide.mount();
+        splide.refresh();
+    }
+    function getStudentSchedule(reportcardid,studentid){
+        showLoading();
+        getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Student/ScheduleResult/`+studentid+`,`+reportcardid+``,`@strtoken`,`@Html.Raw(@userParamkey)`)
+            .then(response => {
+                var data = response.lstStudentScheduleResult;
+                // Destroy the current Splide instance before updating the slides
+                if (splide) {
+                    splide.destroy();
+                }
+                $('#sliderList').empty();
+                for (var i = 0; i < data.length; i++){
+                    var slide = appendSlidesToSlider(data[i].lstStudentMarkResult);
+                   // $('#sliderList').appendChild(slide);
+                     document.querySelector('.splide__list').appendChild(slide);
+                }
+                hideLoading();
+                // Reinitialize the Splide slider if needed (optional)
+                initializeSplide();
+            })
+            .catch(error => {
+                    showToast('2', `@_localization.Getkey("Error")`);
+            });
+    }
+    function appendTableToSlider(data) {
+                // Create a new slide div
+                var newSlide = document.createElement('div');
+                newSlide.className = "splide__slide";
+
+                // Construct the table using a template literal for direct binding
+                var tableHtml = `
+                    <table class="table table-borderless text-center rounded-sm shadow-l" style="overflow:hidden;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center;">Subject</th>
+                                <th style="text-align: center;">Max Marks</th>
+                                <th style="text-align: center;">Marks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(item => `
+                                <tr>
+                                    <td>${item.subjectName}</td>
+                                    <td>${item.maxMarks}</td>
+                                    <td style="background-color:${item.gradeColor};">${item.marks}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                // Set the inner HTML of the new slide
+                newSlide.innerHTML = tableHtml;
+                return newSlide;
+    }
+    // Function to append slides to the slider as cards
+    function appendSlidesToSlider(data) {
+        //const slideList = document.querySelector('.splide__list');
+         const newSlide = document.createElement('div');
+            newSlide.className = "splide__slide"; // Add the class for each slide
+
+        data.forEach(item => {
+
+
+           // Create a card for each subject
+                const card = document.createElement('div');
+                card.className = "card card-style mb-2 custom-card rounded-2 d-flex flex-column"; // Apply card styling
+
+                  const subcard = document.createElement('div');
+                subcard.className = "content mt-2 mb-2 flex-grow-1"; // Apply card styling
+
+                 const subsubcard = document.createElement('div');
+                subsubcard.className = "d-flex justify-content-start align-items-center"; // Apply card styling
+
+
+                // Subject
+                const subjectDiv = document.createElement('span');
+               // subjectDiv.className="badge";
+                subjectDiv.innerHTML = item.subjectName;
+                subjectDiv.className = "me-3";
+                subjectDiv.style.width = "100px";  // Fixed width for student name
+                subjectDiv.style.overflow = "hidden";  // Hide any overflow content
+                subjectDiv.style.textOverflow = "ellipsis";  // Show ellipsis when the text overflows
+                subjectDiv.style.whiteSpace = "wrap";  // Prevent the text from wrapping to the next line
+
+
+                // Max Marks
+                const maxMarksDiv = document.createElement('span');
+               //  maxMarksDiv.className="badge";
+                maxMarksDiv.innerHTML = `M.Marks: ${item.maxMarks}`;
+                maxMarksDiv.className = "me-3";
+
+                var marksDiv = document.createElement('span')
+                marksDiv.className="badge font-xl py-2 px-3";
+                marksDiv.style.marginLeft = "auto"; 
+                marksDiv.style.minWidth = "50px";  // Minimum width for the badge
+                marksDiv.style.textAlign = "center";  // Center the text within the badge
+                //marksDiv.style.padding = "6px 12px";  // Adjust padding to give it a consistent look
+                //marksDiv.style.fontSize = "14px";  // Adjust the font size if needed
+                marksDiv.style.backgroundColor=`${item.gradeColor}`;
+                marksDiv.innerHTML=`${item.marks}`;
+
+                // Append the elements to the card
+                subsubcard.appendChild(subjectDiv);
+                subsubcard.appendChild(maxMarksDiv);
+                subsubcard.appendChild(marksDiv);
+
+                subcard.appendChild(subsubcard);
+                card.appendChild(subcard);
+
+            // Append the card to the slide
+            newSlide.appendChild(card);
+
+        });
+        return newSlide;
+    }
+    function generateTableSet(data){
+        var divmain = document.getElementById("divresultset");
+        $("#divresultset").empty();
+        for (var i = 0; i < data.length; i++){
+                var tableset = document.createElement('div');
+            var examTbl = createTable(data[i]);
+            var marklistTbl = createSubTableMarkList(data[i].lstStudentMarkResult);
+            tableset.appendChild(examTbl);
+            tableset.appendChild(marklistTbl);
+            divmain.appendChild(tableset);
+        }
+    }
+    function fillTable(data){
+        var tblbdy = document.getElementById("tbldetailbody");
+        var rowIndex = tblbdy.rows.length > 0 ? (tblbdy.rows.length)-(tblbdy.rows.length) : tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        var parenttbl = createTable(data);
+        cell1 = newRow.insertCell(0);
+        cell1.appendChild(parenttbl);
+
+        var newRow2 = tblbdy.insertRow(rowIndex+1);
+        var childtbl = createSubTableMarkList(data.lstStudentMarkResult);
+        cell1 = newRow2.insertCell(0);
+        cell1.appendChild(childtbl);
+    }
+    function createTable(data){
+        var tbl = document.createElement('table');
+        tbl.className ="table table-borderless text-center rounded-sm shadow-l";
+        tbl.style="overflow:hidden;";
+        var tblhead = document.createElement('thead');
+        var trhead = document.createElement('tr');
+
+        var th1 = document.createElement('th');
+        th1.innerText ='Exam';
+        th1.style.textAlign = 'center';
+        th1.setAttribute("scope", "row");
+        trhead.appendChild(th1);
+
+        var th2 = document.createElement('th');
+        th2.innerText ='Month';
+        th2.style.textAlign = 'center';
+        trhead.appendChild(th2);
+
+        var th3 = document.createElement('th');
+        th3.innerText ='M.Marks';
+        th3.style.textAlign = 'center';
+        trhead.appendChild(th3);
+
+        var th4 = document.createElement('th');
+        th4.innerText ='Marks';
+        th4.style.textAlign = 'center';
+        trhead.appendChild(th4);
+
+        var th5 = document.createElement('th');
+        th5.innerText ='Percent';
+        th5.style.textAlign = 'center';
+        trhead.appendChild(th5);
+
+        var th6 = document.createElement('th');
+        th6.innerText ='Grade';
+        th6.style.textAlign = 'center';
+        trhead.appendChild(th6);
+
+        tblhead.appendChild(trhead);
+
+        var tblbody = document.createElement('tbody');
+        var rowIndex= tblbody.rows.length;
+        var newRow = tblbody.insertRow(rowIndex);
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.examTypeName;
+        cell1.style.textAlign = 'center';
+
+        cell2 = newRow.insertCell(1);
+        cell2.innerHTML = data.scheduleMonth;
+        cell2.style.textAlign = 'center';
+
+        cell3 = newRow.insertCell(2);
+        cell3.innerHTML = data.maxMarks;
+        cell3.style.textAlign = 'center';
+
+        cell4 = newRow.insertCell(3);
+        cell4.innerHTML = data.marks;
+        cell4.style.textAlign = 'center';
+
+        cell5 = newRow.insertCell(4);
+        cell5.innerHTML = data.mrkPercent;
+        cell5.style.textAlign = 'center';
+
+        var spgrade = document.createElement('span')
+        spgrade.className="badge";
+        spgrade.style.backgroundColor=data.gradeColor;
+        spgrade.innerHTML=data.gradeName;
+
+        cell6 = newRow.insertCell(5);
+        //cell6.innerHTML = data.gradeName;
+        cell6.appendChild(spgrade);
+        cell6.style.textAlign = 'center';
+
+        tbl.appendChild(tblhead);
+        tbl.appendChild(tblbody);
+        return tbl;
+    }
+    function createSubTableMarkList(data){
+        var tbl = document.createElement('table');
+        tbl.className ="table table-borderless text-center rounded-sm shadow-l";
+        tbl.style="overflow:hidden;";
+        var tblhead = document.createElement('thead');
+        var trhead = document.createElement('tr');
+        var th1 = document.createElement('th');
+        th1.innerText ='Subject';
+        th1.style.textAlign = 'center';
+        trhead.appendChild(th1);
+
+        var th2 = document.createElement('th');
+        th2.innerText ='Marks';
+        th2.style.textAlign = 'center';
+        trhead.appendChild(th2);
+
+        var th3 = document.createElement('th');
+        th3.innerText ='Max Marks';
+        th3.style.textAlign = 'center';
+        trhead.appendChild(th3);
+
+        tblhead.appendChild(trhead);
+
+        var tblbody = document.createElement('tbody');
+        for (i = 0; i < data.length; i++) {
+            var rowIndex= tblbody.rows.length;
+            var newRow = tblbody.insertRow(rowIndex);
+            cell1 = newRow.insertCell(0);
+            cell1.innerHTML = data[i].subjectName;
+            cell1.style.textAlign = 'center';
+
+            var spgrade = document.createElement('span')
+            spgrade.className="badge";
+            spgrade.style.backgroundColor=data[i].gradeColor;
+            spgrade.innerHTML=data[i].marks;
+
+            cell2 = newRow.insertCell(1);
+            //cell2.innerHTML = data[i].marks;
+            cell2.appendChild(spgrade);
+            cell2.style.textAlign = 'center';
+
+            cell3 = newRow.insertCell(2);
+            cell3.innerHTML = data[i].maxMarks;
+            cell3.style.textAlign = 'center';
+        }
+        tbl.appendChild(tblhead)
+        tbl.appendChild(tblbody);
+        return tbl;
+    }
+    function setBindingValues(data){
+        $('#reportcard-container').empty();
+        var anchors = "";
+        for (var i = 0; i < data.length; i++) {
+                anchors += `<a href="#" onclick="generateProgressReport(`+data[i].id+`,`+data[i].studentId+`)"><i class="fa fa-calendar-alt color-blue-dark"></i>`+
+                ` <span> ` + data[i].name +  `</span>`+
+
+                `<i class="fa fa-angle-right"></i> `+
+                `</a>`;
+        }
+        $('#reportcard-container').append(anchors);
+    }
+    //function createSubTableGraph(data, uniqueid){
+
+    //    var tbl = document.createElement('table');
+    //     var tblbody = document.createElement('tbody');
+    //     var rowIndex= tblbody.rows.length;
+    //      var newRow = tblbody.insertRow(rowIndex);
+
+    //       var canvas = document.createElement("canvas");
+    //       canvas.setAttribute("id", "myChart"+uniqueid);
+    //       canvas.width="500";
+    //       canvas.height="300";
+
+    //        cell1 = newRow.insertCell(0);
+    //        cell1.appendChild(canvas);
+
+    //         tbl.appendChild(tblbody);
+    //            return tbl;
+
+    //}
+
+</script>

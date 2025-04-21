@@ -1,0 +1,587 @@
+﻿@model SchoolCoreWEB.Models.VSchedule
+@using Localization.Services
+@inject LanguageService _localization
+
+<div class="row">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="header-title">@_localization.Getkey("ExaminationInfo")</h4>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("Title") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.Title)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("ExamType") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.ExamTypeName)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("StartDate") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.StrStartDate)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="row">
+                        <div class="col-5">
+                            <label>@_localization.Getkey("EndDate") : </label>
+                        </div>
+                        <div class="col-7">
+                            @Html.DisplayFor(model => model.StrEndDate)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hfbranchclassid" />
+<input type="hidden" id="hfxlclassname" />
+@Html.HiddenFor(m=>m.Id, new { @id ="hfscheduleresultid"})
+<div class="row">
+    <div class="col-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="header-title">@_localization.Getkey("Classes")</h4>
+                </div>
+                <ul class="list-group list-group-vertical" id="ulist">
+                    @foreach (var item in Model.LstScheduleBranchClass)
+                    {                                      
+                        <li class="list-group-item" onclick="onSelectedClass(@item.BranchClassId,'@item.ClassName')" style="background-color:@item.ResultStatusColor; margin:2px">
+                            <a href="#" class="nav-link">@item.ClassName</a>
+                            <input style="display:none" value="@item.BranchClassId" />
+                        </li>
+
+                    }
+                </ul>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-10">
+        <div class="row" id="divoptions" style="display:none">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="header-title">@_localization.Getkey("ExamResults")</h4>
+                    </div>
+                    <div class="text-center">
+                        <input type="radio" id="rdbupload" name="type" class="form-check-input" onclick="onuploadclick(this)">
+                        <label for="rdbupload">@_localization.Getkey("UploadExcel")</label>
+                       @* <input type="radio" id="rdbmanual" name="type" class="form-check-input" onclick="onmanualclick(this)">
+                        <label for="rdbmanual">@_localization.Getkey("EnterManually")</label>*@
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="divupload" style="display:none">
+            <div class="row">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center">                            
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <input type="file" class="form-control" id="file_upload" />
+                                </div>
+                                <div class="col-sm-6">
+                                    <button type="button" class="btn btn-primary" onclick="onuploadExcel()">@_localization.Getkey("Upload")</button>
+                                </div>
+                            </div>
+                            <label id="selectedheaderclass"></label>
+                            <br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="divxlupload" style="display:none">
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblexamresult"></table>
+                        <div class="modal-footer" id="divmfupload" style="display:none">
+                            <button type="button" class="btn btn-primary" onclick="submituploadResult()" id="btnsubmit">@_localization.Getkey("Post")</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="row" id="diventer" style="display:none">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblenterexamresult">
+                        <thead>
+                        </thead>
+                    </table>
+                    <div class="modal-footer" id="divmfmanual" style="display:none">
+                        <button type="button" class="btn btn-primary" onclick="submitmanualResult()" id="btnsubmitresult">@_localization.Getkey("Post")</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+ <script src="~/assets/js/xlsx.min.js"></script>
+<script type="text/javascript">
+    var columns = [];
+    var precolumns = [];
+    var jsonArray=[];
+    $(document).ready(function () {
+        if (@Html.Raw(Json.Serialize(Model)) != null) {
+            var objSchedule = @Html.Raw(Json.Serialize(Model));
+            if(objSchedule.id > 0){
+                $("#hfscheduleresultid").val(objSchedule.id);
+            }
+        }
+
+    });
+     $("#ulist li").click(function(){
+        if (!$(this).hasClass("active")) {
+            $("#ulist li").removeClass("active");
+            $(this).addClass("active");
+        }
+    });
+
+    function onSelectedClass(branchclassid,classname){
+        $("#hfbranchclassid").val(branchclassid);
+        $("#hfxlclassname").val(classname);
+       
+
+         //$("#divoptions").show("slow", function() {
+         //            $("#rdbupload").prop('checked', true);
+         //           $("#divupload").show();
+         //            $("#diventer").hide();
+         //   })
+            $("#loaderDiv1").show("slow", function() {
+                 $("#divoptions").hide();
+                    $("#divoptions").show();
+                     $("#rdbupload").prop('checked', true);
+                    $("#divupload").show();
+                     $("#diventer").hide();
+                     $("#divxlupload").hide();
+                       $("#loaderDiv1").hide();
+                        $("#selectedheaderclass").html('');
+                        $("#file_upload").val('');
+            })
+
+    }
+    function onuploadclick(rbdchk){
+        if(rbdchk.checked){
+            $("#divupload").show("slow", function() {
+                 $("#diventer").hide();
+                $("#divxlupload").hide();
+                $("#divmfupload").hide();
+                $("#divmfmanual").hide();
+            })
+        }
+    }
+    function onmanualclick(rbdchk){
+         if(rbdchk.checked){
+
+              $("#divupload").hide("slow", function() {
+                  $("#diventer").show();
+                  $("#divmfupload").hide();
+                 $("#divmfmanual").hide();
+                  getSPExamResult();
+            })
+        }
+    }
+     function onuploadExcel() {
+         $("#selectedheaderclass").html('');
+          var files = document.getElementById('file_upload').files;
+          if(files.length==0){
+            toastr.error("Please choose XL file...");
+            return;
+          }
+          var filename = files[0].name;
+          var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+          if (extension == '.XLS' || extension == '.XLSX') {
+
+               //$("#divxlupload").show();
+               excelFileToJSON(files[0]);
+                   //$("#divmfupload").show();
+          }else{
+              alert(`@_localization.Getkey("SelectValidExcelFile")`);
+          }
+        }
+        
+     function excelFileToJSON(file){
+        try {
+                var reader = new FileReader();
+                reader.readAsBinaryString(file);
+                reader.onload = function(e) {
+
+                    var data = e.target.result;
+                    var workbook = XLSX.read(data, {
+                        type : 'binary'
+                    });
+                    var result = {};                  
+                    var columns=[];
+                    var sheetArray=[];   
+                    var xlsheetName = $("#hfxlclassname").val();
+                   // var first_sheet_name = workbook.SheetNames[0];                                     
+                   // var worksheet = workbook.Sheets[first_sheet_name];
+                   var worksheet = workbook.Sheets[xlsheetName];
+                  // console.log(worksheet);
+                  if(worksheet == null || worksheet == undefined){
+                     $('#selectedheaderclass').css("color", "red");
+                     toastr.error('Selected Class does not match the Excel Sheet');
+                     return;
+                  }
+
+                  $("#selectedheaderclass").html('Selected Class : '+ xlsheetName);
+                  $('#selectedheaderclass').css("color", "green");
+                    //var excelRows = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[first_sheet_name]);
+                  //   var excelRowsJson = XLSX.utils.sheet_to_json(workbook.Sheets[first_sheet_name], {raw: true});
+                    //var excelRowsJson = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {raw: true});
+                    var excelRowsJson = XLSX.utils.sheet_to_json(workbook.Sheets[xlsheetName], {raw: true});
+                 // console.log(excelRowsJson);
+                     var header = Object.keys(excelRowsJson[0]);
+                    for (var i = 0; i < header.length; i++) {
+                            columns.push({data: header[i],
+                                        title: header[i],
+                                    });
+                        }                  
+                    var rowArray=[];
+                    sheetArray = XLSX.utils.sheet_to_json(worksheet);
+
+                    for(var j=0; j< sheetArray.length;j++){
+                             rowArray.push(sheetArray[j]);
+                    }
+                    jsonArray=[];
+                    rowArray.forEach(function callback(value, index) {
+                        Object.keys(rowArray[index]).forEach( function (key, colindex){
+
+                            if(colindex >1){
+                                var obj ={};
+                                obj.RollNo = value.RollNo;
+                                obj.StudentName = value.StudentName;
+                                obj.Subject = key;
+                                obj.Marks = rowArray[index][key];
+                                jsonArray.push(obj);
+                            }
+                        })
+
+                    });                   
+                     $("#tblexamresult").DataTable({
+                    "bDestroy": true,
+                    data : sheetArray,
+                    columns: columns,
+                    'rowCallback': function(row, data, index){
+
+                        $(row).find('td').each (function(colindex,cell) {
+                            if(cell.innerHTML=='A'){
+                                $(row).find('td:eq('+colindex+')').css('color', 'red');
+                                // $('td:eq('+colindex+')', row).css('background-color', 'red');
+                            }
+                            else{
+                                //$('td:eq('+colindex+')', row).css('background-color', '');
+                                $(row).find('td:eq('+colindex+')').css('color', '');
+                            }
+                        });
+                        }
+                    })
+                    $("#divxlupload").show();
+                    $("#divmfupload").show();
+                }
+            }catch(e){
+                console.error(e);
+            }
+     }
+     function excelFileToJSON2(file){
+         try {
+                var reader = new FileReader();
+                reader.readAsBinaryString(file);
+                reader.onload = function(e) {
+
+                    var data = e.target.result;
+                    var work_book = XLSX.read(data, {
+                        type : 'binary'
+                    });
+                    var sheet_name = work_book.SheetNames;
+                    var sheet_data = XLSX.utils.sheet_to_json(work_book.Sheets[sheet_name[0]], {header:1});
+
+                    if(sheet_data.length > 0){
+
+                        //for(var row = 0; row < sheet_data.length; row++)
+                        //{
+                        //    table_output += '<tr>';
+                        //    for(var cell = 0; cell < sheet_data[row].length; cell++)
+                        //    {
+                        //        if(row == 0)
+                        //        {
+                        //            table_output += '<th>'+sheet_data[row][cell]+'</th>';
+                        //        }
+                        //        else
+                        //        {
+                        //            table_output += '<td>'+sheet_data[row][cell]+'</td>';
+                        //        }
+                        //    }
+                        //    table_output += '</tr>';
+                        //}
+                    }
+                }
+            }catch(e){
+                console.error(e);
+            }
+     }
+    function getSPExamResult(){
+
+                $.ajax({
+                        type: "post",
+                        async : false,
+                        url: '@Url.Action("GetSPExamResult","ScheduleResult")',
+                        data: { branchclassId: $("#hfbranchclassid").val(), schedId : $("#hfscheduleresultid").val() },
+                            dataType: 'json',
+                        traditional: true,
+                        success: function (response) {
+
+                            var preResultArray=[];
+                            var postResultArray=[];
+                            if(response != null){
+                                var result = response;
+
+                                if (result.postResult ==""){
+
+                                }
+                                else{
+                                    var jsonpostData = JSON.parse(result.postResult);
+                                    postResultArray.push(jsonpostData);
+                                }
+                                var jsonpreData = JSON.parse(result.preResult);
+                                preResultArray.push(jsonpreData);
+
+                                if(preResultArray[0].length > 0){
+                                    onLoadData(preResultArray,postResultArray);
+                                    $("#divmfmanual").show();
+                                }
+                            }
+                        },
+                        error: function (response) {
+                            toastr.error(`@_localization.Getkey("Error")`);
+                        }
+                    });
+
+    }
+    function onLoadData(predata,postdata){
+            columns = [];
+            precolumns = [];
+            //1.Get first row data to build columns from predata.
+            var rowData = predata[0];
+            if(rowData.length > 0){
+                Object.keys(rowData[0]).forEach( function (key, index){
+                if (key == 'Id' || key == 'Name'  || key == 'RollNo') {
+
+                    columns.push({data: key,
+                                    title: key,
+                                });
+                                precolumns.push({data: key,
+                                    title: key,
+                                });
+
+                }
+                else{
+
+                    precolumns.push({data: rowData[0][key],
+                                    title: key,
+                                });
+                }
+            })
+            if(postdata[0].length == 0)  {
+            Object.keys(rowData[0]).forEach( function (key, index){
+                if (key == 'Id' || key == 'Name'  || key == 'RollNo') {
+
+                }
+                else{
+                    columns.push( {data: rowData[0][key],
+                            title: key,
+                            render: function (data, type, row) {
+                                return '<input type="text"  class="form-control" required = "required" value="">';
+                                }
+                        });
+                }
+            })
+            }
+            else if(postdata[0].length > 0){
+                var postrowData = postdata[0];
+                Object.keys(postrowData[0]).forEach( function (key, index){
+                if (key == 'Id' || key == 'Name'  || key == 'RollNo') {
+
+                }
+                else{
+                    columns.push( {data: postrowData[0][key],
+                            title: key,
+                            render: function (data, type, row) {
+                                if(row[key]==0){
+                                    return  '<input type="text"  class="form-control" required = "required" value="">';
+                                }
+                                else{
+                                    return '<input type="text"  class="form-control" required = "required" value="'+row[key]+'">';
+                                }
+
+                                }
+                        });
+                }
+            })
+            }
+
+                $("#tblenterexamresult").DataTable({
+                "bDestroy": true,
+                data : postdata[0].length == 0 ? predata[0] : postdata[0],
+                "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+                columns: columns,
+                // dom: 'Bfrtip'
+            })
+            $("#loaderDiv1").hide();
+            }
+    }
+    function submituploadResult(){
+            $("#loaderDiv1").show();
+            var obj={};
+            obj.ScheduleId = $("#hfscheduleresultid").val();
+            obj.BranchClassId = $("#hfbranchclassid").val();
+            obj.LstExcelParams=jsonArray;
+                          var jdata = JSON.stringify(obj);
+                                 $.ajax({
+                                 type: 'POST',
+                                     url: '@Url.Action("UploadStudentResult","ScheduleResult")',
+                                     dataType: "JSON",
+                                 data: {model :jdata },
+                                 success: function (response) {
+                                     if (response != null) {
+                                         
+                                             getBranchClassResultStatus();
+                                              $("#loaderDiv1").hide();
+                                             $("#divoptions").hide();
+                                             $("#diventer").show();
+                                              $("#divmfupload").hide();
+                                             $("#divmfmanual").hide();
+                                             $('#file_upload'). val('')
+                                             toastr.success('Saved Succesfully');
+
+
+                                         } else {
+                                                 toastr.error(`@_localization.Getkey("Error")`);
+                                         }
+                                 },
+                                 error: function (response) {
+                                             toastr.error(`@_localization.Getkey("Error")`);
+
+                                 }
+                             })
+     }
+
+    function getStudentMarkArray(){
+        var lststdMark = new Array();
+
+        var tbldata = $("#tblenterexamresult").DataTable();
+        jQuery(tbldata.rows().nodes()).each(function (item) {
+            var tr =this;
+            var tblFirstCol = tbldata.row(tr).data();
+
+            $(this).find('input').each (function(cellindex) {
+                //var objcol = columns[cellindex +3];
+               var objcol = precolumns[cellindex +3];
+
+                var stdMark ={};
+                 stdMark.StudentId = parseInt(tblFirstCol.Id);
+                  stdMark.Marks = $(this).val();
+                 stdMark.ExamId =objcol.data;
+                 lststdMark.push(stdMark);
+
+            });
+        });
+        return lststdMark;
+    }
+    function submitmanualResult(){
+        var lstresult = getStudentMarkArray();
+
+                var obj={};
+                obj.LstStudentResult=lstresult;
+                 var jdata = JSON.stringify(obj);
+                 $.ajax({
+                    type: 'POST',
+                     url: '@Url.Action("SaveStudentResult","ScheduleResult")',
+                     dataType: "JSON",
+                    data: {model :jdata },
+                    success: function (response) {
+                        if (response != null) {
+
+                                getBranchClassResultStatus();
+                               $("#loaderDiv1").hide();
+                                $("#divoptions").hide();
+                                toastr.success('Saved Succesfully');
+
+                            } else {
+
+                                 toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                    },
+                    error: function (response) {
+
+                             toastr.error(`@_localization.Getkey("Error")`);
+
+                    }
+                })
+    }
+     function getBranchClassResultStatus(){
+                 $.ajax({
+                             type: "post",
+                             async : false,
+                             url: '@Url.Action("GetBranchClassResultStatus","ScheduleResult")',
+                             data: { scheduleId: $("#hfscheduleresultid").val(),branchclassId: $("#hfbranchclassid").val() },
+                              dataType: 'json',
+                             traditional: true,
+                             success: function (response) {
+                                 
+                                 if (response != null) {
+                                     var result = response;
+                                    
+                                     $("#ulist li").each((id, elem) => {                                        
+                                      if (elem.children[1].value == $('#hfbranchclassid').val()) {
+                                          $(elem).css("background-color", result);
+                                         // elem.style.backgroundColor = result;                                          
+                                        }
+                                    });
+                                 }
+                             },
+                            error: function (response) {
+                                toastr.error(`@_localization.Getkey("Error")`);
+                            }
+                         });
+      }
+</script>

@@ -1,0 +1,157 @@
+﻿@using Localization.Services
+@inject LanguageService _localization
+@model SchoolCoreWEB.Models.Branch
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<div class="card">
+    <div class="card-body">
+        <form id="addeditbranchForm" class="forms-sample">
+            @Html.HiddenFor(m => m.Id, new { @id = "hfbranchid" })
+            <div class="form-group required mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Name")</label>
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm", @id = "name", @required = "required", @maxlength = "80", onkeyup = "Validate();" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="name" class="form-label">@_localization.Getkey("Theme")</label>
+                @Html.TextBoxFor(model => model.Theme, new { @class = "form-control form-control-sm", @id = "theme", @maxlength = "80" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="phoneno" class="form-label">@_localization.Getkey("PhoneNo")</label>
+                @Html.TextBoxFor(model => model.PhoneNo, new { @class = "form-control form-control-sm", @id = "phoneno", @maxlength = "20", @onkeypress = @"return event.charCode === 0 || /\d/.test(String.fromCharCode(event.charCode));" })
+            </div>
+            <div class="form-group mb-3">
+                <label for="emailaddress" class="form-label">@_localization.Getkey("EmailAddress")</label>
+                @Html.TextBoxFor(model => model.EmailAddress, new { @class = "form-control form-control-sm", @id = "emailaddress", @maxlength = "80" })
+            </div>
+            @if (Model.Id > 0)
+            {
+                <div class="form-group mb-3">
+                    <label for="class" class="form-label">@_localization.Getkey("Admin")</label>
+                    @Html.DropDownListFor(model => model.AdminId, Model.AdminSheet, "Please select", new { @class = "form-select form-select-sm", @id = "ddladmin", onChange = "selectedAdminIndexChanged()" })
+                </div>
+            }
+            <div class="form-group mb-3">
+                <label for="description" class="form-label">@_localization.Getkey("Address")</label>
+                @Html.TextAreaFor(model => model.Address, new { @class = "form-control form-control-sm", @id = "address", @rows = "2", @maxlength = "250" })
+            </div>
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitBranch()" id="btnsubmit" disabled="disabled">
+                    @if (Model.Id > 0)
+                    {
+                        <span>@_localization.Getkey("Update")</span>
+                    }
+                    else
+                    {
+                        <span>@_localization.Getkey("Save")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-light" id="btncancel" onclick="cancel()">@_localization.Getkey("Cancel")</button>
+            </div>
+        </form>
+        <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+            <div class="loader">
+                <div class="loader-inner line-scale">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+    function selectedAdminIndexChanged() {
+        Validate();
+    }
+    function chkFields() {
+        var isvalid = true;
+        var fname = document.getElementById("name");
+        if (fname.value === "") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+
+    function submitBranch() {
+        $("#loaderDiv1").show("slow", function () {
+            var myformdata = $("#addeditbranchForm").serialize();
+            // $.ajax({
+            //     type: 'POST',
+            //     url: '@Url.Action("Save", "Branch")',
+            //     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            //     data: myformdata,
+            //     success: function (response) {
+            //         if (response != null) {
+            //             var serviceresult = JSON.parse(response);
+            //             if (serviceresult === true) {
+            //                 $("#loaderDiv1").hide();
+            //                 toastr.error(`@_localization.Getkey("BranchExists")`);
+            //             }
+            //             else {
+            //                 actionAfterResponse('BranchGrid', serviceresult.recordId, serviceresult.statusId, '1');
+            //             }
+
+            //         } else {
+            //             toastr.error(`@_localization.Getkey("Error")`);
+            //         }
+            //     },
+            //     error: function (response) {
+            //         toastr.error(`@_localization.Getkey("Error")`);
+
+            //     }
+            // })
+            fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/Branch/Save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'Authorization': 'Bearer ' + `@strtoken`,
+                            'UserParam': `@Html.Raw(@userParamkey)`
+                        },
+                        body: myformdata
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if(result !=null){
+                            var serviceresult = result;
+                                  if (serviceresult === true) {
+                                    $("#loaderDiv1").hide();
+                                    toastr.error(`@_localization.Getkey("BranchExists")`);
+                                }
+                                else {
+                                    actionAfterResponse('BranchGrid', serviceresult.recordId, serviceresult.statusId, '1');
+                                }
+                        }                        
+
+                    })
+                    .catch(error => {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    });
+        })
+
+    }
+
+    Validate();
+</script>

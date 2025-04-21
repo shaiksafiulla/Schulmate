@@ -1,0 +1,101 @@
+﻿@using SchoolCoreWEB.Models
+@using Localization.Services
+@using Newtonsoft.Json
+@inject IConfiguration Configuration
+
+@{
+	VUserInfo user = new VUserInfo();
+	var userInfokey = @Context.Session.GetString("UserInfo");
+	var notifycount = @Context.Session.GetString("noticount");
+	if (userInfokey != null)
+	{
+		user = JsonConvert.DeserializeObject<VUserInfo>(userInfokey);
+	}
+	string strtoken = @Context.Session.GetString("strtoken");
+}
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script>
+	if ('serviceWorker' in navigator && 'PushManager' in window) {
+						navigator.serviceWorker.register('/_service-worker.js').then(function (registration) {
+						   // console.log('Service Worker registered successfully:', registration);
+							Notification.requestPermission().then(function (permission) {
+								if (permission === "granted") {
+									subscribeUserToPush(registration);
+								}
+							});
+				}).catch(function (error) {
+					console.error('Service Worker registration failed:', error);
+				});
+				 // Listen for messages from the service worker
+				navigator.serviceWorker.addEventListener('message', function(event) {
+					if (event.data && event.data.type === 'UPDATE_NOTIFICATION_COUNT') {
+						// Increment notification count when the service worker sends the message
+						updateNotificationCount();
+					}
+				});
+				function subscribeUserToPush(registration) {
+						registration.pushManager.subscribe({
+							userVisibleOnly: true,
+							applicationServerKey: urlB64ToUint8Array(`@user.Vapidkey`) // Public Key from the server
+						}).then(function (subscription) {
+						   // console.log('User is subscribed:', subscription);
+							var p256dh = subscription.getKey('p256dh');
+							var auth = subscription.getKey('auth');
+
+							var p256dhBase64 = arrayBufferToBase64(p256dh);
+							var authBase64 = arrayBufferToBase64(auth);
+
+							var subObj ={};
+							subObj.Id=0;
+							subObj.EndPoint=subscription.endpoint;
+							subObj.P256dh= p256dhBase64;
+							subObj.Auth= authBase64;
+							 subObj.CreatedByUserId=@user.Id;
+							var jdata = JSON.stringify(subObj);
+							// Send subscription to the server
+							fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/PushSubscription/Subscribe', {
+								method: 'POST',
+								headers: {
+									  'Authorization': 'Bearer ' + `@strtoken`,
+									'Content-Type': 'application/json'
+								},
+								body:jdata,
+								 success: function (response){
+									  toastr.success("User is subscribed Successfully");
+								 },
+								 error: function (response){
+									 toastr.error("Error while subscribing");
+								 }
+							});
+						}).catch(function (error) {
+							console.error('Failed to subscribe the user:', error);
+						});
+				}
+
+			}
+			// Function to update the notification count
+			function updateNotificationCount() {
+				var currentCount = parseInt(document.getElementById('lblNoticount').innerText) || 0;
+				currentCount += 1; // Increment the notification count by 1 (you can modify this logic as per your needs)
+				document.getElementById('lblNoticount').innerHTML = currentCount;
+			}
+			function urlB64ToUint8Array(base64String) {
+				var padding = '='.repeat((4 - base64String.length % 4) % 4); // Add padding
+				var base64 = (base64String + padding).replace(/\-/g, '+').replace(/\_/g, '/'); // Convert to regular base64
+				var rawData = atob(base64); // Decode base64 string
+				var outputArray = new Uint8Array(rawData.length); // Create an array
+				for (var i = 0; i < rawData.length; ++i) {
+					outputArray[i] = rawData.charCodeAt(i); // Convert each char code
+				}
+				return outputArray;
+		}
+			function arrayBufferToBase64(buffer) {
+			var binary = '';
+			var bytes = new Uint8Array(buffer);
+			var length = bytes.byteLength;
+			for (var i = 0; i < length; i++) {
+				binary += String.fromCharCode(bytes[i]);
+			}
+			return window.btoa(binary);
+		}
+</script>

@@ -1,0 +1,303 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<VSchedule>
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<input type="hidden" id="hfscheduleid">
+<input type="hidden" id="hfbranchclassid">
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("SchedulesInfo")</div>
+		<button type="button" class="btn btn-sm btn-light float-end mt-0" onclick="addEditAction('8','0')"><i class="ri-add-line"></i></button>
+		<div class="ribbon-content">
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="ScheduleGrid">
+				<thead>
+					<tr>
+						<th style="display:none;">Id</th>
+						<th>@_localization.Getkey("Title")</th>
+						<th>@_localization.Getkey("Type")</th>
+						<th>@_localization.Getkey("StartDate")</th>
+						<th>@_localization.Getkey("EndDate")</th>
+						<th>@_localization.Getkey("ExamHalls")</th>
+						<th>@_localization.Getkey("Classes")</th>
+						<th>@_localization.Getkey("Teachers")</th>
+						<th>@_localization.Getkey("Students")</th>
+						<th>@_localization.Getkey("Progress")</th>
+						<th>@_localization.Getkey("Status")</th>
+						<th>@_localization.Getkey("Actions")</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+
+	<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-full-width modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+				</div>
+				<div class="modal-body" id="myModalBodyDiv1">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="primary-header-modal2" class="modal fade" tabindex="-1" data-bs-keyboard="false" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h4 class="modal-title" id="primary-header-modalLabel2">Modal Heading</h4>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="myModalBodyDiv2">
+				</div>
+
+			</div>
+		</div>
+	</div>
+	<div id="staticBackdrop" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog  modal-full-width modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header modal-colored-header bg-info">
+					<h5 class="modal-title" id="staticBackdropLabel">Modal Heading</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true" onclick="onModalClose()"></button>
+				</div>
+				<div class="modal-body" id="myStaticModalBodyDiv1">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Styles {
+	<link href="~/assets/css/seat.css" rel="stylesheet" type="text/css" />
+}
+
+@section Scripts {
+	<script>
+		 $(document).ready(function(){
+			 $("#loaderDiv").show("slow", function () {
+				 getSchedules();
+
+				 var resObj = setResourceObj();
+				 getResourceObj(JSON.stringify(resObj));
+			 })
+		 });
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.classes = `@_localization.Getkey("Classes")`;
+			msgobj.viewschedule = `@_localization.Getkey("ViewSchedule")`;
+			msgobj.editschedule = `@_localization.Getkey("EditSchedule")`;
+			msgobj.addschedule = `@_localization.Getkey("AddSchedule")`;
+
+			return msgobj;
+		}
+		 function getSchedules(){
+
+									$.ajax({
+									 type: 'POST',
+									 async : false,
+									 url: '@Url.Action("GetAll", "Schedule")',
+									 Accept: 'application/json, text/javascript',
+									 contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+									 success: function (response) {
+										 if (response != null) {
+
+												 var scheduleData=[];
+
+											 $.each(JSON.parse(response),function(key,value){
+													 //var prval = value.statusId > 6 ? 6 : value.statusId;
+													 //var pr = Math.floor((prval/6)*100);
+													 //var per = pr.toString();
+													 var compl="";
+													  var stat="";
+
+													 var vdetail = "";
+													 if(value.statusId >=6){
+														 vdetail='<a class="dropdown-item" href="#" onclick="viewAction(`8`, ' + value.id + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("View")</a>';
+													 }
+													 var edit = "";
+													 if(value.statusId < 6){
+														 edit='<a class="dropdown-item" href="#" onclick="addEditAction(`8`, '+value.id+')"><i class="ri-pencil-line"></i>&nbsp; Edit</a>';
+													 }
+													  if(value.resultPercent == 0){
+														 compl = 'progress-lg bg-info';
+														 stat = '<span class="badge bg-info">'+value.statusName+'</span>'
+													 }
+													 if(value.resultPercent == 100){
+														 compl = 'progress-lg bg-success';
+														  stat = '<span class="badge bg-success">'+value.statusName+'</span>'
+													 }
+													 else if(value.resultPercent > 0 && value.resultPercent < 100){
+														  compl = 'progress-lg bg-warning';
+														   stat = '<span class="badge bg-warning">'+value.statusName+'</span>'
+													 }
+													 var prog='<div class="progress progress-sm"> '+
+														 '<div class="progress-bar '+compl+'" role="progressbar" id="divprogress" style="width:'+value.resultPercent+'%" aria-valuenow='+value.resultPercent+' aria-valuemin="0" aria-valuemax="100"></div>'+
+
+													 '</div>'
+
+													 var btndelete="";
+														 btndelete = '<a class="dropdown-item" href="#" onclick="deleteAction(`8`, '+value.id+')"><i class="ri-delete-bin-line"></i>&nbsp; @_localization.Getkey("Delete")</a>'
+
+												 var btnaction ='<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,ScheduleGrid);"> '+
+														 '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>'+
+														 '<div class="dropdown-menu dropdown-menu-end">'+
+
+															vdetail +
+															edit +
+														 '</div>'+
+													 '</div>'
+												 scheduleData.push([value.id,value.title,value.examTypeName,value.strStartDate,value.strEndDate,
+														 value.examHallCount,value.classCount,value.teacherCount,value.studentCount, prog,stat, btnaction])
+												 })
+
+												 $("#ScheduleGrid").DataTable({
+													 "bDestroy": true,
+													 data: scheduleData,
+													 order: [[0, "desc"]],
+														"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+														dom: 'lBfrtip',
+														buttons: [
+															{
+																extend: 'csvHtml5',
+																text: '<i class="ri-file-excel-line"></i>',
+																titleAttr: 'csv',
+																filename: `@_localization.Getkey("Schedules")`,
+																className: 'btn btn-outline-light btn-sm',
+																exportOptions: {
+																	columns: [1, 2, 3,4,5,6,7,8,9,10]
+																}
+															}
+														]
+												 })
+												 $("#loaderDiv").hide();
+
+											 } else {
+												  toastr.error(`@_localization.Getkey("Error")`);
+
+											 }
+									 },
+									 error: function (response) {
+											  toastr.error(`@_localization.Getkey("Error")`);
+
+									 }
+								 })
+		 }
+
+
+
+
+
+		 function getStudentAllocation(){
+			  $("#divstudentinfo").show("slow", function() {
+											   $("#divscheduleinfo").hide();
+											  $("#divsubjectinfo").hide();
+											   $("#divtimetableinfo").hide();
+											   $("#divteacherinfo").hide();
+										 });
+										 getSPScheduleSection();
+		 }
+		 function getSPScheduleSection(){
+			  $("#loaderDiv").show();
+				  $.ajax({
+				  type: 'GET',
+				  async : false,
+				  url: '@Url.Action("GetSPScheduleSection", "Schedule")?Id=' + $("#hfscheduleid").val(),
+				  Accept: 'application/json, text/javascript',
+				  contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+				  success: function (response) {
+					  if (response != null) {
+
+						  $("#divspsection").show("slow", function() {
+									   $("#diveticket").hide();
+								 });
+							  var jsonData = JSON.parse(response.strResult);
+								  fillPivotSectionTable(jsonData);
+
+						  } else {
+								  toastr.error(`@_localization.Getkey("Error")`);
+						  }
+				  },
+				  error: function (response) {
+							  toastr.error(`@_localization.Getkey("Error")`);
+				  }
+			  })
+		 }
+		 function fillPivotSectionTable(data){
+
+			  var columns=[];
+				  var rowData = data[0];
+					  Object.keys(rowData).forEach( function (key, index){
+					  //columns.push({data: key,
+					  //                    title: key,
+					  //                });
+					  if (key == 'ScheduleId' || key == 'ClassName'){
+								 columns.push({data: key,
+												title: key
+											});
+							 }
+							 else{
+								  columns.push( {data: rowData[key],
+									title: key,
+									render: function (data, type, row) {
+										if(row[key]!= null && row[key]!=""){
+														var tbl = createTable(row[key]);
+														 return  tbl;
+													  }
+													  else{
+														   return '';
+													  }
+
+										}
+									});
+							 }
+
+				  })
+				  $("#tblspsectioninfo").DataTable({
+					  "bDestroy": true,
+					  "searching": false,
+					  "bLengthChange": false,
+					  paging: false,
+					  "info": false,
+					  "ordering": false,
+					  data : data,
+					  "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+					  columns: columns
+					  //dom: 'Bfrtip'
+				  })
+				  $("#loaderDiv").hide();
+
+		 }
+
+
+
+	</script>
+}
+
+

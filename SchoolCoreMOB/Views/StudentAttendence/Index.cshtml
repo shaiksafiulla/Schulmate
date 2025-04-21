@@ -1,0 +1,169 @@
+﻿@model IEnumerable<AttendenceVM>
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+}
+<link rel="stylesheet" type="text/css" href="~/styles/dailyattendance.css">
+
+<style>
+    .fab {
+        background-color: #6C63FF;
+        color: #fff;
+        border-radius: 50%;
+        width: 40px; /* Adjust size of the button */
+        height: 40px; /* Adjust size of the button */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        font-size: 20px; /* Adjust icon size */
+        cursor: pointer;
+         position: absolute; /* Position it absolutely within the parent container */
+    right: 10px; /* Adjust the right distance from the edge */
+    bottom: 10px; /* Adjust the bottom distance from the edge */
+    }
+
+        .fab:hover {
+            background-color: #388E3C;
+        }
+</style>
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Attendance</h2>
+</div>
+
+<div id="divaddAttendence" style="display: flex; justify-content: flex-end; width: 100%; position: relative;">
+    <div class="content mb-2">
+        <div class="fab" onclick="setNewChildNavigation('@Url.Content("/StudentAttendence/AddStudentAttendence?Id=0")')">
+            <i class="fa fa-plus"></i>
+        </div>
+    </div>
+</div>
+
+@*<div style="display:flex; justify-content:flex-end;" id="divaddAttendence">
+    <div class="content mb-2">
+        <div class="fab" onclick="setNewChildNavigation('@Url.Content("/StudentAttendence/AddStudentAttendence?Id=0")')">
+            <i class="fa fa-plus"></i>
+        </div>
+    </div>
+</div>*@
+
+<div class="card card-style mb-2 custom-card rounded-2">
+    <div class="content mb-0">
+        <div id="grandAttendanceSummary" class="attendance-summary"></div>
+        <hr />
+        <div class="calendar-header">
+            <button class="prev-month">&#60;</button>
+            <span id="monthYear" class="cal-title text-center text-uppercase font-700 font-15 bg-theme color-theme">August 2024</span>
+            <button class="next-month">&#62;</button>
+        </div>
+        <div class="calendar-days">
+            <div class="day">Sun</div>
+            <div class="day">Mon</div>
+            <div class="day">Tue</div>
+            <div class="day">Wed</div>
+            <div class="day">Thu</div>
+            <div class="day">Fri</div>
+            <div class="day">Sat</div>
+        </div>
+        <div class="calendar-dates" id="dates"></div>
+        <hr />
+
+        <div id="attendanceDetails">
+            <div id="attendanceSummary" class="attendance-summary"></div>
+        </div>
+    </div>
+</div>
+
+@*<div class="content mb-0" style="display: flex; justify-content: flex-end;"> <!-- This div wraps the button and ensures it aligns to the right -->
+    <a href="#"
+    onclick="setNewChildNavigation('@Url.Content("/StudentAttendence/AddStudentAttendence?Id=0")')"
+    class="btn btn-border btn-m btn-full mb-3 rounded-sm text-uppercase font-900 border-blue-dark color-blue-dark bg-theme right-align small-btn">
+    <i class="fa fa-plus font-10"></i> Take Attendance
+    </a>
+    </div>
+
+
+    <div class="card card-style">
+    <div class="content mt-0 mb-0">
+    <div class="list-group list-custom-large list-icon-0" id="studattendence-container">
+    </div>
+    </div>
+    </div>*@
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script src="~/scripts/dailyattendance.js"></script>
+<script>
+     $(document).ready(function () {
+
+         const attendUrl = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/MBDailyAttendance`;
+    const atttoken = `@strtoken`;
+    const struserparam = `@Html.Raw(@userParamkey)`;
+    fetchAttendanceData(new Date().getMonth(), new Date().getFullYear(), attendUrl, atttoken,struserparam);
+
+    document.querySelector(".next-month").addEventListener("click", function () {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear);
+    });
+    document.querySelector(".prev-month").addEventListener("click", function () {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar(currentMonth, currentYear);
+    });
+
+        //showLoading();
+        //  getOperation('@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence`,`@strtoken`,`@Html.Raw(@userParamkey)`)
+        //                .then(response => {
+        //                     if (!response.isAttendenceExist) {
+        //                            $("#btnAddAttendence").show();
+        //                        }
+        //                        else{
+        //                            $("#btnAddAttendence").hide();
+        //                        }
+        //                        setBindingValues(response.lstAttendence);
+        //                       // setfooterActiveAfterNavigation();
+        //                        hideLoading();
+        //                })
+        //                .catch(error => {
+        //                     showToast('2', `@_localization.Getkey("Error")`);
+        //                });
+     });
+    //  function setBindingValues(data){
+    //      $("#studattendence-container").empty();
+    //     var anchors = "";
+    //     var baseUrl = '@Url.Content("/StudentAttendence/AddStudentAttendence")';
+    //    for (var i = 0; i < data.length; i++) {
+    //         var strclass = "";
+
+    //          if (data[i].studentResultPercent == 0) {
+    //                 strclass = '<span class="badge bg-red-dark">' + data[i].studentStatusName + '</span>'
+    //            }
+    //            if (data[i].studentResultPercent == 100) {
+    //                strclass = '<span class="badge bg-green-dark">' + data[i].studentStatusName + '</span>'
+    //            }
+    //            else if (data[i].studentResultPercent > 0 && data[i].studentResultPercent < 100) {
+    //                strclass = '<span class="badge bg-yellow-dark">' + data[i].studentStatusName + '</span>'
+    //            }
+    //            //var url = '@Url.Action("AddStudentAttendence", "StudentAttendence", new { Id = "__Id__" })';
+    //            //url = url.replace('__Id__', data[i].id);
+    //              // anchors += `<a href="#" onclick="setChildNavigation('${url}')"><span> ` + data[i].strWorkingDate + `</span>`+ strclass +`<i class="fa fa-ellipsis-v"></i></a>`;
+
+
+    //            var url = baseUrl + '?Id=' + data[i].id;
+    //            anchors += `<a href="#" onclick="setNewChildNavigation('${url}')"><span> ` + data[i].strWorkingDate + `</span>`+ strclass +`<i class="fa fa-ellipsis-v"></i></a>`;
+    //    }
+    //   $('#studattendence-container').append(anchors);
+    //}
+
+
+</script>

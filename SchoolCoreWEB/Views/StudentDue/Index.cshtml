@@ -1,0 +1,200 @@
+﻿@using SchoolCoreWEB.Models
+@model FeeReceipt
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> Dues</div>
+
+		<div class="ribbon-content">
+			<div class="row">
+				<div class="d-flex align-items-center">
+					<label for="duePercentSlider" class="form-label me-2">Select Due %</label>
+					<input type="range" class="form-range flex-grow-1" id="duePercentSlider" min="0" max="100" value="0" step="1">
+					<span id="duePercentValue">0%</span>
+				</div>
+
+			</div>
+			<hr />
+			<div class="row">
+				<div class="table-responsive-sm">
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="tblStudentDueGrid">
+						<thead>
+							<tr>
+								<th style="display:none;">Id</th>
+								<th>Name</th>
+								<th>Class</th>
+								<th>Due Amount</th>
+								<th>Due Percent</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+
+
+
+@section Scripts {
+	<script>
+			document.addEventListener('DOMContentLoaded', function () {
+			const slider = document.getElementById('duePercentSlider');
+			const duePercentValue = document.getElementById('duePercentValue');
+
+			// Call the API on page load to populate the table with initial data
+			loadStudentData(slider.value);
+
+			// Update duePercentValue when slider changes
+			slider.addEventListener('input', function () {
+				duePercentValue.textContent = `${slider.value}%`;
+				$("#loaderDiv").show();  // Show the loader
+				loadStudentData(slider.value); // Call the API when the slider value changes
+			});
+
+			// Function to load student data
+			function loadStudentData(duePercent) {
+				let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/StudentDue/FeeDue/` + duePercent;
+				fetch(url, {
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+						'Authorization': 'Bearer ' + `@strtoken`,
+						'UserParam': `@Html.Raw(@userParamkey)`
+					}
+				})
+				.then(response => response.json())
+				.then(result => {
+					setBindingValues(result); // Update the DataTable with new data
+				})
+				.catch(error => {
+					toastr.error(`@_localization.Getkey("Error")`);
+				})
+				.finally(() => {
+					$("#loaderDiv").hide(); // Hide loader after request is complete
+				});
+			}
+
+			// Function to bind data to the DataTable
+			function setBindingValues(data) {
+				var dueData = [];
+				$.each(data, function (key, value) {
+					var strduepercent = value.duePercent + ' %';
+					dueData.push([value.id, value.fullName, value.className, value.dueAmount, strduepercent]);
+				});
+
+				// Initialize or update the DataTable
+				$("#tblStudentDueGrid").DataTable({
+					"bDestroy": true, // Destroy the old table before creating a new one
+					data: dueData,
+					order: [],
+					"aoColumnDefs": [{
+						"bVisible": false,
+						"aTargets": [0]
+					}],
+					dom: '<"container-fluid"<"row"<"col"l><"col"Bf>>>rt<"row"<"col"i><"col"p>>',
+					buttons: [{
+						extend: 'csvHtml5',
+						text: '<i class="ri-file-excel-line"></i>',
+						titleAttr: 'csv',
+						filename: 'Fee Dues',
+						className: 'btn btn-outline-light btn-sm',
+						exportOptions: {
+							columns: [1, 2, 3, 4] // Define which columns to export
+						}
+					}]
+				});
+			}
+		});
+		// document.addEventListener('DOMContentLoaded', function () {
+		// 		const slider = document.getElementById('duePercentSlider');
+		// 		const duePercentValue = document.getElementById('duePercentValue');
+		// 		slider.addEventListener('input', function () {
+		// 		duePercentValue.textContent = `${slider.value}%`;
+
+		// 				 $("#loaderDiv").show();
+		// 				const duePercent = parseInt(slider.value);
+		// 				 let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/StudentDue/FeeDue/`+ duePercent +``;
+		// 				 fetch(url, {
+		// 							headers: {
+		// 								'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+		// 								'Authorization': 'Bearer ' + `@strtoken`,
+		// 								'UserParam': `@Html.Raw(@userParamkey)`
+		// 							}
+		// 						})
+		// 						.then(response => response.json())
+		// 						.then(result => {
+		// 									setBindingValues(result);
+		// 						})
+		// 						.catch(error => {
+		// 							toastr.error(`@_localization.Getkey("Error")`);
+		// 						});
+		// 		});
+		// 	});
+		// function setBindingValues(data){
+		// 				var dueData=[];
+		// 				$.each(data,function(key,value){
+		// 					var strduepercent= value.duePercent + ' %';
+		// 						dueData.push([value.id,value.fullName,value.className,value.dueAmount,strduepercent])
+		// 				})
+		// 				$("#tblStudentDueGrid").DataTable({
+		// 				"bDestroy": true,
+		// 					data : dueData,
+		// 				order: [],
+		// 				"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+		// 				dom: '<"container-fluid"<"row"<"col"l><"col"Bf>>>rt<"row"<"col"i><"col"p>>',
+		// 					buttons: [
+		// 						{
+		// 							extend:    'csvHtml5',
+		// 							text:      '<i class="ri-file-excel-line"></i>',
+		// 							titleAttr: 'csv',
+		// 							filename : 'Student Dues',
+		// 							className: 'btn btn-outline-light btn-sm',
+		// 							exportOptions: {
+		// 									columns: [ 1,2,3,4]
+		// 								}
+		// 						}
+		// 					]
+		// 			})
+		// 			$("#loaderDiv").hide();
+
+		// 		 }
+	</script>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

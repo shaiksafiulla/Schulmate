@@ -1,0 +1,211 @@
+﻿@using SchoolCoreWEB.Models
+@model IEnumerable<VScheduleResult>
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<div class="card ribbon-box">
+	<div class="card-body">
+		<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ResultsInfo")</div>
+		<div class="ribbon-content">
+			<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="ScheduleResultGrid">
+				<thead>
+					<tr>
+						<th style="display:none;">Id</th>
+						<th>@_localization.Getkey("Title")</th>
+						<th>@_localization.Getkey("Type")</th>
+						<th>@_localization.Getkey("StartDate")</th>
+						<th>@_localization.Getkey("EndDate")</th>
+						<th>@_localization.Getkey("Progress")</th>
+						<th>@_localization.Getkey("Status")</th>
+						<th>@_localization.Getkey("Actions")</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+</div>
+<div id="primary-header-modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-full-width modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header modal-colored-header bg-info">
+				<h4 class="modal-title" id="primary-header-modalLabel">Modal Heading</h4>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="onModalClose()"></button>
+			</div>
+			<div class="modal-body" id="myModalBodyDiv1">
+			</div>
+		</div>
+	</div>
+</div>
+<div id="primary-header-modal3" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="primary-header-modalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header modal-colored-header bg-info">
+				<h4 class="modal-title" id="primary-header-modalLabel3">Modal Heading</h4>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="myModalBodyDiv3">
+			</div>
+		</div>
+	</div>
+</div>
+<div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+	<div class="loader">
+		<div class="loader-inner line-scale">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		   $(document).ready(function(){
+			   $("#loaderDiv").show("slow", function () {
+				   getScheduleResult();
+
+				   var resObj = setResourceObj();
+				   getResourceObj(JSON.stringify(resObj));
+			   })
+		   });
+		function setResourceObj() {
+			var msgobj = {};
+			msgobj.proceed = `@_localization.Getkey("DeleteProceed")`;
+			msgobj.yes = `@_localization.Getkey("Yes")`;
+			msgobj.no = `@_localization.Getkey("No")`;
+			msgobj.error = `@_localization.Getkey("Error")`;
+			msgobj.added = `@_localization.Getkey("Added")`;
+			msgobj.updated = `@_localization.Getkey("Updated")`;
+
+			msgobj.deleted = `@_localization.Getkey("Deleted")`;
+			msgobj.delete = `@_localization.Getkey("Delete")`;
+			msgobj.view = `@_localization.Getkey("View")`;
+			msgobj.edit = `@_localization.Getkey("Edit")`;
+			msgobj.classes = `@_localization.Getkey("Classes")`;
+
+
+			return msgobj;
+		}
+		   function getScheduleResult(){
+								   $("#loaderDiv").show();
+									  $.ajax({
+									   type: 'POST',
+									   async : false,
+									   url: '@Url.Action("GetAll", "ScheduleResult")',
+									   Accept: 'application/json, text/javascript',
+									   contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+									   success: function (response) {
+										   if (response != null) {
+												   var scheduleData=[];
+
+											   $.each(JSON.parse(response),function(key,value){
+
+													   var compl="";
+														 var stat="";
+														if(value.resultPercent == 0){
+															   compl = 'progress-lg bg-info';
+																stat = '<span class="badge bg-info">'+value.statusName+'</span>'
+														   }
+														   if(value.resultPercent == 100){
+															   compl = 'progress-lg bg-success';
+															   stat = '<span class="badge bg-success">'+value.statusName+'</span>'
+														   }
+														   else if(value.resultPercent > 0 && value.resultPercent < 100){
+																compl = 'progress-lg bg-warning';
+																 stat = '<span class="badge bg-warning">'+value.statusName+'</span>'
+														   }
+															var prog='<div class="progress progress-sm"> '+
+															   '<div class="progress-bar '+compl+'" role="progressbar" id="divprogress" style="width:'+value.resultPercent+'%" aria-valuenow='+value.resultPercent+' aria-valuemin="0" aria-valuemax="100"></div>'+
+
+														   '</div>'
+													  var vdetail = "";
+													 if(value.statusId = 8){
+														 vdetail='<a class="dropdown-item" href="#" onclick="viewDetails('+value.id+')"><i class="ri-eye-line"></i>&nbsp; View Results</a>'
+													 }
+													 var edit = "";
+													 var exp ="";
+													 if(value.statusId = 7){
+														 edit='<a class="dropdown-item" href="#" onclick="onFeedResults('+value.id+')"><i class="ri-pencil-line"></i>&nbsp; Feed Results</a>'
+													 }
+													 if(value.statusId = 7){
+													   //  exp='<button type="submit" class="dropdown-item" href="#" onclick="getExportInfo('+value.id+')"><i class="ri-pencil-line"></i>&nbsp; Export Input File</button>'
+														 exp ='<a href="#" class="dropdown-item" onclick="ondownloadExcel('+value.id+')"><i class="ri-file-excel-line"></i>&nbsp; Export Input File</a>'
+														 //exp= '<a class="dropdown-item" href="<%=Url.Action("GetExportData", "ScheduleResult", new { Id = '+value.id+' })%>">Export Input File</a>'
+													 }
+
+
+												   var btnaction ='<div class="btn-group btn-group-sm dropdown" onclick="onSelect(this,ScheduleResultGrid);">'+
+														   '<a href="#" class="table-action-btn dropdown-toggle arrow-none btn btn-light btn-xs" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a>'+
+														   '<div class="dropdown-menu dropdown-menu-end">'+
+															vdetail +
+															exp +
+															 edit  +
+														   '</div>'+
+													   '</div>'
+
+												   scheduleData.push([value.id,value.title,value.examTypeName,value.strStartDate,value.strEndDate,
+																prog,stat, btnaction])
+												   })
+
+												   $("#ScheduleResultGrid").DataTable({
+													   "bDestroy": true,
+													   data: scheduleData,
+													   order: [[0, "desc"]],
+														"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+														dom: 'lBfrtip',
+														buttons: [
+															{
+																extend: 'csvHtml5',
+																text: '<i class="ri-file-excel-line"></i>',
+																titleAttr: 'csv',
+																filename: `@_localization.Getkey("ExamResults")`,
+																className: 'btn btn-outline-light btn-sm',
+																exportOptions: {
+																	columns: [1, 2, 3,4,5,6]
+																}
+															}
+														]
+												   })
+												   $("#loaderDiv").hide();
+
+											   } else {
+													toastr.error(`@_localization.Getkey("Error")`);
+
+											   }
+									   },
+									   error: function (response) {
+												toastr.error(`@_localization.Getkey("Error")`);
+
+									   }
+								   })
+		}
+
+
+		   var onFeedResults=function(scheduleId){
+					   if(scheduleId > 0){
+						   document.getElementById('primary-header-modalLabel').innerHTML=`@_localization.Getkey("ExcelImport")`;
+					   }
+					   var url = '@Url.Action("GetScheduleResult", "ScheduleResult")?Id=' + scheduleId;
+					   $("#myModalBodyDiv1").load(url,function(){
+						   $("#primary-header-modal").modal("show");
+					   })
+			 }
+
+				  function viewDetails(id){
+					 if(id > 0){
+						  document.getElementById('primary-header-modalLabel').innerHTML=`@_localization.Getkey("ViewResults")`;
+						   var url = '@Url.Action("GetScheduleResultDetail", "ScheduleResult")?Id=' + id;
+						   $("#myModalBodyDiv1").load(url,function(){
+							   $("#primary-header-modal").modal("show");
+						   })
+
+					 }
+				}
+
+	</script>
+
+}

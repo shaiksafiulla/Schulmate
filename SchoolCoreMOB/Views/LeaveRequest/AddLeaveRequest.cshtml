@@ -1,0 +1,616 @@
+﻿@model SchoolCoreMOB.Models.LeaveRequest
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+    string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+<style>
+    #requestcardscontainer {
+    display: flex;
+    flex-wrap: wrap;            /* Allow wrapping of cards */
+    justify-content: flex-start; /* Align cards to the left */
+    gap: 15px;                  /* Add space between cards */
+    margin-bottom: 20px;        /* Optional: space below the cards */
+}
+ /* Each individual card */
+.leavecard {
+    width: 100%;               /* Take full width of the container */
+    max-width: 500px;           /* Optional: max width for cards */
+   /* border: 1px solid #ccc;*/
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin: 0;                  /* No margin here, just the gap from flexbox */
+    display: flex;
+    flex-direction: row;        /* Horizontal layout for card content */
+    justify-content: space-between; /* Distribute content evenly */
+    align-items: center;        /* Center items vertically */
+}
+
+/* Card body content - Horizontal alignment */
+.leavecard-body {
+    display: flex;
+    flex-direction: row;        /* Items arranged horizontally */
+    align-items: center;        /* Align content vertically in the center */
+    justify-content: space-between; /* Distribute content evenly */
+    width: 100%;                 /* Ensure the body takes up the full width of the card */
+}
+
+/* Date and Day section */
+.date-day {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-right: 10px;         /* Space between date/day and leave types */
+}
+
+.date-day .date {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.date-day .day {
+    font-size: 14px;
+    color: #888;
+}
+
+/* Leave type options */
+.leave-types-container {
+    display: flex;
+    gap: 15px;                  /* Space between leave type options */
+}
+
+.leave-types-container div {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.form-check-input {
+    margin-right: 5px;
+}
+
+    /*.leave-types-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+            .leave-types-container div {
+                display: flex;
+                align-items: center;
+            }
+
+
+            .leave-types-container input[type="radio"] {
+                margin-right: 5px;
+            }
+            .leave-types-container label {
+                font-size: 14px;
+                margin: 0;
+            }*/
+
+</style>
+
+<div class="page-title page-title-small">
+    <h2><a href="#" data-back-button><i class="fa fa-arrow-left"></i></a>Back</h2>
+</div>
+
+<div class="card card-style mb-2 custom-card rounded-2">
+    @Html.HiddenFor(m => m.Id, new { @id = "hfleaverequestid" })
+    @Html.HiddenFor(m => m.PersonnelType, new { @id = "hfpersonneltype" })
+    @Html.HiddenFor(m => m.PersonnelId, new { @id = "hfpersonnelid" })
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+    @Html.HiddenFor(m => m.BranchId, new { @id = "hfbranchid" })
+    <div class="content mb-2">      
+            <div class="input-style has-borders no-icon mb-2">
+                @Html.EditorFor(model => model.ToDate, "{0:dd-MM-yyyy}", new { htmlAttributes = new { @type = "date", @class = "form-control validate-text",  @name = "fromdate", @id = "fromdate", @placeholder="Start Date", onChange = "getDatelist();" } })
+                <label for="fromdate" class="color-highlight">Start Date</label>
+                <i class="fa fa-check disabled valid me-4 pe-3 font-12 color-green-dark"></i>
+                <i class="fa fa-check disabled invalid me-4 pe-3 font-12 color-red-dark"></i>
+            </div>
+            <div class="input-style has-borders no-icon mb-2">
+                @Html.EditorFor(model => model.ToDate, "{0:dd-MM-yyyy}", new { htmlAttributes = new { @type = "date", @class = "form-control validate-text",  @name = "todate", @id = "todate", @placeholder="End Date", onChange = "getDatelist();" } })
+                <label for="todate" class="color-highlight">End Date</label>
+                <i class="fa fa-check disabled valid me-4 pe-3 font-12 color-green-dark"></i>
+                <i class="fa fa-check disabled invalid me-4 pe-3 font-12 color-red-dark"></i>
+            </div>
+            <div style="display: flex; justify-content: center; align-items: center; text-align: center;">
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.LeaveRequestType, "1", new { @id="rdocasual", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdocasual">Casual</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+                <div class="form-check icon-check">
+                    @Html.RadioButtonFor(model => model.LeaveRequestType, "2", new { @id="rdosick", @class = "form-check-input" })
+                    <label class="form-check-label" for="rdosick">Sick</label>
+                    <i class="icon-check-1 far fa-circle color-gray-dark font-16"></i>
+                    <i class="icon-check-2 far fa-check-circle font-16 color-highlight"></i>
+                </div>
+            </div>
+
+            <div class="input-style has-borders no-icon mt-3">
+                @Html.TextAreaFor(model => model.Reason, new {  @id = "reason", @placeholder="Enter your Reason",  @maxlength = "300", onkeyup = "Validate()" })
+                <label for="reason" class="color-highlight">Enter your Reason</label>
+                <em class="mt-n3">(required)</em>
+            </div>
+            <div id="requestcardscontainer">
+            </div>
+           
+            @*<div class="form-group required mb-3">
+                <label for="selectdate" class="form-label">@_localization.Getkey("SelectDates")</label>
+
+                <table class="table table-borderless text-center rounded-sm shadow-l" style="overflow: hidden;" id="tblrequestdate">
+                <thead>
+                <tr class="bg-gray-light">
+                <th>@_localization.Getkey("Date")</th>
+                <th>@_localization.Getkey("Day")</th>
+                <th>@_localization.Getkey("Type")</th>
+                </tr>
+                </thead>
+                <tbody id="requestdatebody">
+                </tbody>
+                </table>
+                </div>*@                  
+    </div>
+     <button type="button" class="btn btn-primary" style="border-radius:10px; background-color:#6C63FF" onclick="submitLeaveRequest()" id="btnsubmit">Post</button>
+</div>
+
+<script src="~/scripts/jquery/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        setMinDate('fromdate');
+        setMinDate('todate');
+        getDatelist();
+        Validate();
+        //var objAttendence = @Html.Raw(Json.Serialize(Model));
+    //  setActiveNav("@Url.Action("Index", "LeaveRequest")");
+    // setfooterActiveAfterNavigation();
+    });
+
+    function chkFields() {
+        var isvalid = true;
+        if ($("#fromdate").val() == "") {
+            isvalid = false;
+        }
+        if ($("#todate").val() == "") {
+            isvalid = false;
+        }
+        if ($("#reason").val() == "") {
+            isvalid = false;
+        }
+        if ($("#fromdate").val() !== "" && $("#todate").val() !== ""){
+            var strstartDate = $("#fromdate").val();
+            var strendDate = $("#todate").val();
+            var startDate = new Date(strstartDate);
+            var endDate = new Date(strendDate);
+            if (startDate > endDate){
+                    isvalid = false;
+            }
+        }
+        // var tblbody = document.getElementById("requestdatebody");
+        //var rowCount = tblbody.rows.length;
+        //if(rowCount == 0 || undefined){
+        //    isvalid = false;
+        //}
+        return isvalid;
+    }
+    function Validate() {
+        if (chkFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function getDatelist1() {
+
+        if ($("#fromdate").val() !== "" && $("#todate").val() !== "") {
+
+            const dates = [];
+            var strstartDate = $("#fromdate").val();
+            var strendDate = $("#todate").val();
+            var startDate = new Date(strstartDate);
+            var endDate = new Date(strendDate);
+
+            if (endDate >= startDate) {
+                // Strip hours minutes seconds etc.
+                var currentDate = new Date(
+                    startDate.getFullYear(),
+                    startDate.getMonth(),
+                    startDate.getDate()
+                );
+
+                while (currentDate <= endDate) {
+                    var dtobj = {};
+                    dtobj.strDate = convertDate(currentDate);
+                    dtobj.strDay = currentDate.toLocaleString('en-us', { weekday: 'short' });
+                    dates.push(dtobj);
+
+                    currentDate = new Date(
+                        currentDate.getFullYear(),
+                        currentDate.getMonth(),
+                        currentDate.getDate() + 1, // Will increase month if over range
+                    );
+                }
+                $("#requestdatebody").empty();
+                for (var i = 0; i < dates.length; i++) {
+                    // createHTML(dates[i]);
+                    insertintotbl(dates[i]);
+                }
+                Validate();
+                // console.log(dates);
+                //  return dates;
+            }
+                else{
+                $("#requestdatebody").empty();
+            }
+        }
+    }
+    function getDatelist() {
+        if ($("#fromdate").val() !== "" 
+        && $("#todate").val() !== "") {
+        const dates = [];
+        var strstartDate = $("#fromdate").val();
+        var strendDate = $("#todate").val();
+        var startDate = new Date(strstartDate);
+        var endDate = new Date(strendDate);
+            if (endDate >= startDate) {         
+                var currentDate = new Date(
+                    startDate.getFullYear(),
+                    startDate.getMonth(),
+                    startDate.getDate()
+                );
+                while (currentDate <= endDate) {
+                    var dtobj = {};
+                    dtobj.strDate = convertDate(currentDate);
+                    dtobj.strDay = currentDate.toLocaleString('en-us', { weekday: 'short' });
+                    dates.push(dtobj);
+
+                    currentDate = new Date(
+                        currentDate.getFullYear(),
+                        currentDate.getMonth(),
+                        currentDate.getDate() + 1
+                    );
+                }          
+                $("#requestcardscontainer").empty();
+                for (var i = 0; i < dates.length; i++) {
+                    insertintocard(dates[i]);
+                }
+                Validate();
+            } 
+            else {
+                $("#requestcardscontainer").empty();
+            }
+       }
+    }
+    function convertDate(inputFormat) {
+        function pad(s) { return (s < 10) ? '0' + s : s; }
+        var d = new Date(inputFormat)
+        return [pad(d.getDate()), pad(d.getMonth() + 1), d.getFullYear()].join('-')
+    }
+    function insertintotbl1(data) {
+
+        var tblbdy = document.getElementById("requestdatebody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.strDate;
+
+        cell2 = newRow.insertCell(1);
+        cell2.innerHTML = data.strDay;
+
+        var maindiv = document.createElement('div');
+        var fulldiv = document.createElement('div');
+
+        var fullelem = document.createElement('input');
+        fullelem.className = "form-check-input";
+        fullelem.type = 'radio';
+        fullelem.name = 'leaveType' + data.strDate;
+
+        fullelem.checked = true;
+        fullelem.value = '1';
+
+        var fulllabel = document.createElement('label');
+        fulllabel.innerHTML = 'Full';
+
+        fulldiv.appendChild(fullelem);
+        fulldiv.appendChild(fulllabel);
+
+        var firstHalfdiv = document.createElement('div');
+        var firstHalfelem = document.createElement('input');
+        firstHalfelem.className = "form-check-input";
+        firstHalfelem.type = 'radio';
+        firstHalfelem.name = 'leaveType' + data.strDate;
+        firstHalfelem.checked = false;
+        firstHalfelem.value = '2';
+
+        var firstHallabel = document.createElement('label');
+        firstHallabel.innerHTML = '1st Half';
+        firstHallabel.className = "form-label";
+
+        firstHalfdiv.appendChild(firstHalfelem);
+        firstHalfdiv.appendChild(firstHallabel);
+
+        var secondHalfdiv = document.createElement('div');
+        var secondHalfelem = document.createElement('input');
+        secondHalfelem.className = "form-check-input";
+        secondHalfelem.type = 'radio';
+        secondHalfelem.name = 'leaveType' + data.strDate;
+        secondHalfelem.checked = false;
+        secondHalfelem.value = '3';
+
+        var secondHalflabel = document.createElement('label');
+        secondHalflabel.innerHTML = '2nd Half';
+        secondHalflabel.className = "form-label";
+
+        secondHalfdiv.appendChild(secondHalfelem);
+        secondHalfdiv.appendChild(secondHalflabel);
+
+
+        maindiv.appendChild(fulldiv);
+        maindiv.appendChild(firstHalfdiv);
+        maindiv.appendChild(secondHalfdiv);
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(maindiv);
+    }
+    function insertintotbl(data) {
+        var tblbdy = document.getElementById("requestdatebody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        // Date column
+        cell1 = newRow.insertCell(0);
+        cell1.className = "color-highlight";
+        cell1.innerHTML = data.strDate;
+
+
+        // Day column
+        cell2 = newRow.insertCell(1);
+        cell2.className = "color-highlight";
+        cell2.innerHTML = data.strDay;
+
+        // Leave Type Column (with horizontal layout inside)
+        cell3 = newRow.insertCell(2);
+            cell3.className = "color-highlight";
+        // Container for leave type options (horizontal layout)
+        var maindiv = document.createElement('div');
+        maindiv.className = 'leave-types-container'; // Use a class for horizontal layout
+
+        // Full leave option
+        var fulldiv = document.createElement('div');
+        var fullelem = document.createElement('input');
+        fullelem.className = "form-check-input";
+        fullelem.type = 'radio';
+        fullelem.name = 'leaveType' + data.strDate;
+        fullelem.checked = true;
+        fullelem.value = '1';
+        var fulllabel = document.createElement('label');
+        fulllabel.innerHTML = 'Day';
+
+        fulldiv.appendChild(fullelem);
+        fulldiv.appendChild(fulllabel);
+
+        // 1st Half leave option
+        var firstHalfdiv = document.createElement('div');
+        var firstHalfelem = document.createElement('input');
+        firstHalfelem.className = "form-check-input";
+        firstHalfelem.type = 'radio';
+        firstHalfelem.name = 'leaveType' + data.strDate;
+        firstHalfelem.checked = false;
+        firstHalfelem.value = '2';
+        var firstHallabel = document.createElement('label');
+        firstHallabel.innerHTML = 'AM';
+        firstHallabel.className = "form-label";
+
+        firstHalfdiv.appendChild(firstHalfelem);
+        firstHalfdiv.appendChild(firstHallabel);
+
+        // 2nd Half leave option
+        var secondHalfdiv = document.createElement('div');
+        var secondHalfelem = document.createElement('input');
+        secondHalfelem.className = "form-check-input";
+        secondHalfelem.type = 'radio';
+        secondHalfelem.name = 'leaveType' + data.strDate;
+        secondHalfelem.checked = false;
+        secondHalfelem.value = '3';
+        var secondHalflabel = document.createElement('label');
+        secondHalflabel.innerHTML = 'PM';
+        secondHalflabel.className = "form-label";
+
+        secondHalfdiv.appendChild(secondHalfelem);
+        secondHalfdiv.appendChild(secondHalflabel);
+
+        // Append the options to the main container
+        maindiv.appendChild(fulldiv);
+        maindiv.appendChild(firstHalfdiv);
+        maindiv.appendChild(secondHalfdiv);
+
+        // Insert the container into the cell (third column)
+        cell3.appendChild(maindiv);
+    }
+    function insertintocard(data) {
+        // Create a card container
+        var card = document.createElement("div");
+        card.className = "leavecard";
+
+        // Create the card body
+        var cardBody = document.createElement("div");
+        cardBody.className = "leavecard-body";
+
+        // Left side: Date and Day
+        var dateDayContainer = document.createElement("div");
+        dateDayContainer.className = "date-day";
+
+        var date = document.createElement("div");
+        date.className = "date";
+        date.innerHTML = data.strDate;  // Date
+
+        var day = document.createElement("div");
+        day.className = "day";
+        day.innerHTML = data.strDay;    // Day
+
+        dateDayContainer.appendChild(date);
+        dateDayContainer.appendChild(day);
+
+        // Right side: Leave type options
+        var leaveTypesContainer = document.createElement("div");
+        leaveTypesContainer.className = "leave-types-container";
+
+        // Full day leave option
+        var fullLeaveDiv = document.createElement("div");
+        var fullLeaveInput = document.createElement("input");
+        fullLeaveInput.className = "form-check-input";
+        fullLeaveInput.type = "radio";
+        fullLeaveInput.name = "leaveType" + data.strDate;
+        fullLeaveInput.checked = true;
+        fullLeaveInput.value = "1";
+        var fullLeaveLabel = document.createElement("label");
+        fullLeaveLabel.innerHTML = "Day";
+
+        fullLeaveDiv.appendChild(fullLeaveInput);
+        fullLeaveDiv.appendChild(fullLeaveLabel);
+
+        // Half day AM leave option
+        var firstHalfDiv = document.createElement("div");
+        var firstHalfInput = document.createElement("input");
+        firstHalfInput.className = "form-check-input";
+        firstHalfInput.type = "radio";
+        firstHalfInput.name = "leaveType" + data.strDate;
+        firstHalfInput.checked = false;
+        firstHalfInput.value = "2";
+        var firstHalfLabel = document.createElement("label");
+        firstHalfLabel.innerHTML = "AM";
+
+        firstHalfDiv.appendChild(firstHalfInput);
+        firstHalfDiv.appendChild(firstHalfLabel);
+
+        // Half day PM leave option
+        var secondHalfDiv = document.createElement("div");
+        var secondHalfInput = document.createElement("input");
+        secondHalfInput.className = "form-check-input";
+        secondHalfInput.type = "radio";
+        secondHalfInput.name = "leaveType" + data.strDate;
+        secondHalfInput.checked = false;
+        secondHalfInput.value = "3";
+        var secondHalfLabel = document.createElement("label");
+        secondHalfLabel.innerHTML = "PM";
+
+        secondHalfDiv.appendChild(secondHalfInput);
+        secondHalfDiv.appendChild(secondHalfLabel);
+
+        // Append the leave type options to the container
+        leaveTypesContainer.appendChild(fullLeaveDiv);
+        leaveTypesContainer.appendChild(firstHalfDiv);
+        leaveTypesContainer.appendChild(secondHalfDiv);
+
+        // Append everything to the card body
+        cardBody.appendChild(dateDayContainer);
+        cardBody.appendChild(leaveTypesContainer);
+
+        // Append the card body to the card
+        card.appendChild(cardBody);
+
+        // Append the card to the cards container
+        document.getElementById("requestcardscontainer").appendChild(card);
+    }
+    function getLeaveRequestArray1() {
+        var chkClsArray = [];
+
+        $("#tblrequestdate tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+            var FirstCol = tr.find("td").eq(0).html();
+            var SecondCol = $("input[name='leaveType" + FirstCol + "']:checked").val();
+            paramcls.Id = 0;
+            paramcls.LeaveRequestId = 0;
+            paramcls.LeaveDate = tryParseDateFromString(FirstCol, "dmy");
+            paramcls.LeaveType = SecondCol;
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    }
+    function getLeaveRequestArray() {
+        var chkClsArray = [];
+        // Iterate over each card
+        $("#requestcardscontainer .leavecard").each(function () {
+            var card = $(this);
+
+            // Get the date (which is in the 'date' div inside 'date-day' div)
+            var date = card.find(".date").text().trim();
+
+            // Get the selected leave type (radio button)
+            var selectedLeaveType = card.find("input[name='leaveType" + date + "']:checked").val();
+
+            // Create the object to push to the array
+            var paramcls = {};
+            paramcls.Id = 0;
+            paramcls.LeaveRequestId = 0;
+            paramcls.LeaveDate = tryParseDateFromString(date, "dmy"); // You may need to implement or adjust this function to handle the new date format
+            paramcls.LeaveType = selectedLeaveType;
+
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    }
+    function tryParseDateFromString(dateStringCandidateValue, format = "ymd") {
+        const candidate = (dateStringCandidateValue || ``)
+            .split(/[ :\-\/]/g).map(Number).filter(v => !isNaN(v));
+        const toDate = () => {
+            format = [...format].reduce((acc, val, i) => ({ ...acc, [val]: i }), {});
+            const parts =
+                [candidate[format.y], candidate[format.m] - 1, candidate[format.d]]
+                    .concat(candidate.length > 3 ? candidate.slice(3) : []);
+            const checkDate = d => d.getDate &&
+                ![d.getFullYear(), d.getMonth(), d.getDate()]
+                    .find((v, i) => v !== parts[i]) && d || undefined;
+
+            return checkDate(new Date(Date.UTC(...parts)));
+        };
+
+        return candidate.length < 3 ? undefined : toDate();
+    }
+    function submitLeaveRequest() {
+        var obj = {};
+        obj.Id = $("#hfleaverequestid").val();
+        obj.statusId = "1";
+        obj.PersonnelType = $("#hfpersonneltype").val();
+            obj.LeaveRequestType = $('[name="LeaveRequestType"]:checked').val();
+        obj.PersonnelId = $("#hfpersonnelid").val();
+        obj.SessionYearId = $("#hfsessionyearid").val();
+        obj.BranchId = $("#hfbranchid").val();
+        obj.FromDate = $("#fromdate").val();
+        obj.ToDate = $("#todate").val();
+        obj.Reason = $("#reason").val();
+        obj.LstLeaveRequestDate = getLeaveRequestArray();
+        var jdata = JSON.stringify(obj);
+
+        showLoading();
+        fetch('@Configuration["WebApi:ClientBaseUrl"]' + '/api/leaverequest/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + `@strtoken`,
+                    'UserParam': `@Html.Raw(@userParamkey)`
+                },
+                body: jdata
+            })
+            .then(response => response.json())
+            .then(result => {
+                        showToast('1', `@_localization.Getkey("Success")`);
+                        hideLoading();
+                        window.location.href="@Url.Action("Index", "LeaveRequest")";
+            })
+            .catch(error => {
+                showToast('2', `@_localization.Getkey("Error")`);
+            });
+    }
+</script>

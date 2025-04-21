@@ -1,0 +1,324 @@
+﻿@using SchoolCoreWEB.Models
+@model TeacherTransferVM
+@using Localization.Services
+@inject LanguageService _localization
+
+
+<form id="teacherTransferForm" class="forms-sample">
+    @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+    <div class="card ribbon-box">
+        <div class="card-body">
+            <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("TeacherTransfer")</div>
+            <div class="ribbon-content">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card ribbon-box">
+                            <div class="card-body">
+                                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("From")</div>
+                                <div class="ribbon-content">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <div class="form-group required mb-3">
+                                                <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                                @Html.DropDownListFor(model => model.FromBranchSheet, Model.FromBranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfrombranch", @required = "required", onChange = "selectedFromBranchIndexChanged()" })
+                                            </div>
+                                        </div>
+                                        <div class="col-4 position-relative">
+                                            <button type="button" class="btn btn-primary position-absolute top-50 start-0 translate-middle-y" onclick="searchTeachers()" id="btnsearch" disabled="disabled"><span>@_localization.Getkey("Search")</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card ribbon-box">
+                            <div class="card-body">
+                                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("To")</div>
+                                <div class="ribbon-content">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <div class="form-group required mb-3">
+                                                <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                                @Html.DropDownListFor(model => model.ToBranchSheet, Model.ToBranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltobranch", @required = "required", onChange = "selectedToBranchIndexChanged()" })
+                                            </div>
+                                        </div>
+
+                                        <div class="col-4 position-relative">
+                                            <button type="button" class="btn btn-primary position-absolute top-50 start-0 translate-middle-y" onclick="submitTeacherTransfer()" id="btnsubmit" disabled="disabled"><span>@_localization.Getkey("Submit")</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+
+
+                </div>
+                <div class="row">
+                    <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblteacher">
+                        <thead>
+                            <tr>
+                                <th style="display:none;">TeacherId</th>
+                                <th>
+                                    <div class="form-check form-check-inline">
+                                        <input type="checkbox" class="form-check-input" id="chkteacher">
+                                        <label class="form-check-label" for="chkteacher">@_localization.Getkey("SelectAll")</label>
+                                    </div>
+                                </th>
+                                <th>@_localization.Getkey("EmployeeNo")</th>
+                                <th>@_localization.Getkey("Name")</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+
+    $('#chkteacher').change(function () {
+        $('#tblteacher tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+    });
+
+    function chkSearchFields() {
+        var isvalid = true;
+
+        if ($("#ddlfrombranch").val() == "" || $("#ddlfrombranch").val() == "-1") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function chkSubmitFields() {
+        var isvalid = true;
+        if ($("#ddltobranch").val() == "" || $("#ddltobranch").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlfrombranch").val() != "" && $("#ddltobranch").val() != "") {
+            if ($("#ddlfrombranch").val() == $("#ddltobranch").val()) {
+                isvalid = false;
+            }
+        }
+        var lstTeacher = getTeacherArray();
+        var found2 = lstTeacher.some(el => el.IsSelected == true);
+        if (!found2) {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function validatesearch() {
+        if (chkSearchFields()) {
+            $('#btnsearch').prop('disabled', false);
+        }
+        else {
+            $('#btnsearch').prop('disabled', true);
+        }
+    }
+    function validatesubmit() {
+        if (chkSubmitFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function selectedFromBranchIndexChanged() {
+        validatesearch();
+    }
+
+
+
+    function selectedToBranchIndexChanged() {
+        validatesubmit();
+    }
+
+    function searchTeachers() {
+        $("#loaderDiv").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetTeachers", "TeacherTransfer")',
+                data: { BranchId: $('#ddlfrombranch').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        console.log(response);
+                        var lstdata = JSON.parse(response);
+                        $("#teacherbody").empty();
+                        for (var j = 0; j < lstdata.length; j++) {
+                            insertintotbl(lstdata[j]);
+                        }
+                        // var studData = [];
+                        // $.each(JSON.parse(response), function (key, value) {
+                        //     var chk = '<input type="checkbox" class="form-check-input">'
+                        //     studData.push([value.studentId, chk, value.registerNo, value.studentName])
+                        // })
+                        // const myTable = $("#tblstudent").DataTable({
+                        //     stateSave: true,
+                        //     "bDestroy": true,
+                        //     data: studData,
+
+                        //     order: [[0, "desc"]],
+                        //     "aoColumnDefs": [{
+                        //         "bVisible": false, "aTargets": [0]
+                        //     }],
+                        //     dom: 'lBfrtip',
+                        //     buttons: [
+                        //         {
+                        //             extend: 'csvHtml5',
+                        //             text: '<i class="ri-file-excel-line"></i>',
+                        //             titleAttr: 'csv',
+                        //             filename: `@_localization.Getkey("Students")`,
+                        //             className: 'btn btn-outline-light btn-sm',
+                        //             exportOptions: {
+                        //                 columns: [2, 3]
+                        //             }
+                        //         }
+                        //     ]
+                        // })
+                        // var allPages = myTable.cells().nodes();
+
+                        // $('#selectAll').click(function () {
+                        //     if ($(this).hasClass('allChecked')) {
+                        //         $(allPages).find('input[type="checkbox"]').prop('checked', false);
+                        //     } else {
+                        //         $(allPages).find('input[type="checkbox"]').prop('checked', true);
+                        //     }
+                        //     $(this).toggleClass('allChecked');
+
+                        // })
+
+                        $("#loaderDiv").hide();
+                    }
+                    else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            });
+        })
+    }
+    function insertintotbl(data) {
+
+        var tblbdy = document.getElementById("teacherbody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.teacherId;
+        cell1.style.display = "none";
+
+        var chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "form-check-input";
+        chk.checked = data.isSelected;
+        chk.onclick = (function () { return function () { validatesubmit(); } })();
+
+        cell2 = newRow.insertCell(1);
+        cell2.appendChild(chk);
+
+        var sp = document.createElement("span");
+        sp.innerHTML = data.employeeNo;
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(sp);
+
+        var sp2 = document.createElement("span");
+        sp2.innerHTML = data.teacherName;
+
+        cell4 = newRow.insertCell(3);
+        cell4.appendChild(sp2);
+
+    }
+    function getTeacherArray() {
+        var chkClsArray = [];
+        // var tbldata = $("#tblstudent").DataTable();
+        // jQuery(tbldata.rows().nodes()).each(function (item) {
+        //     var tr = $(this);
+        //     var objRow = tbldata.row(tr).find('input[type="checkbox"]');
+        //     var objRowData = tbldata.row(tr).data();
+        //    // var chkval = objRow[1].is(':checked');
+        //     console.log(tr, objRow, objRowData);
+        //     //var ischecked = $(this).is(':checked');
+        // })
+
+        $("#tblteacher tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+            var FirstCol = tr.find("td").eq(0).html();
+            var SecondCol = tr.find("input").eq(0).is(':checked');
+            paramcls.TeacherId = parseInt(FirstCol);
+            paramcls.IsSelected = SecondCol;
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    }
+    function setTeacherTransfer() {
+        var lsttransfer = [];
+        var lstteacher = getTeacherArray();
+        var lstselected = lstteacher.filter(function (element) { return element.IsSelected == true; })
+        for (var j = 0; j < lstselected.length; j++) {
+            var objtransfer = {};
+            objtransfer.SessionYearId = $("#hfsessionyearid").val();
+            objtransfer.TeacherId = lstselected[j].TeacherId;
+            objtransfer.FromBranchId = $("#ddlfrombranch").val();
+            objtransfer.ToBranchId = $("#ddltobranch").val();
+            lsttransfer.push(objtransfer);
+        }
+        return lsttransfer;
+    }
+    function submitTeacherTransfer() {
+        var lstteacher = setTeacherTransfer();
+        var jdata = JSON.stringify(lstteacher);
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Save", "TeacherTransfer")',
+            dataType: "JSON",
+            data: { model: jdata },
+            success: function (response) {
+                if (response != null) {
+                    $("#teacherbody").empty();
+                    $('#btnsubmit').prop('disabled', true);
+                    toastr.success(`@_localization.Getkey("Saved")`);
+
+                } else {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+                toastr.error(`@_localization.Getkey("Error")`);
+
+            }
+        })
+    }
+
+
+</script>
+
+

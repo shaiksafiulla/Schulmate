@@ -1,0 +1,264 @@
+﻿.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it is above other content */
+}
+
+.spinner {
+    /* Example spinner styles */
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+.weekdaycard {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 5px;
+    display: flex;
+    justify-content: center; /* Centers content horizontally */
+    align-items: center; /* Centers content vertically */
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    border-radius: 5px; /* Rounded corners */
+    flex: 1; /* Makes all cards stretch equally to fill available space */
+    text-align: center; /* Centers the text inside the card */
+    height: 40px; /* Set a fixed height for the cards */
+    max-height: 100px; /* Ensure that cards don't exceed this height */
+    overflow: hidden; /* In case the text overflows, hide it */
+}
+/*.weekdaycard {
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin: 2px;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    border-radius: 5px;*/ /* Rounded corners */
+/*}*/
+    .weekdaycard.selected {
+        background-color: #6C63FF; /* Selected color */
+        color: white;
+        transform: scale(1.05); /* Optional scaling effect */
+    }
+.sectioncard {
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin: 2px;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    border-radius: 15px; /* Rounded corners */
+}
+    .sectioncard.selected {
+        background-color: #6C63FF; /* Selected color */
+        color: white;
+        transform: scale(1.05); /* Optional scaling effect */
+    }
+
+.no-data-card {
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    color: #777;
+    font-size: 16px;
+}
+#charts-container {
+    display: flex;
+    flex-wrap: wrap;
+    /* justify-content:center;*/
+}
+
+canvas {
+    margin: 10px;
+}
+/* Styling for the toggle switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    float: right; /* This moves the toggle to the right */
+    margin-right: 20px; /* Optional, to add space from the right edge */
+}
+/* Optional, style for the indication label */
+#viewToggleLabel {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 15px; /* Space before the toggle switch */
+}
+
+/* Toggle switch styles */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        border-radius: 50%;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+    }
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+.view {
+    padding: 20px;
+}
+.notification-link {
+    position: relative;
+    display: inline-block; /* Ensures proper inline positioning */
+}
+
+    /* Icon styling (bell) */
+    .notification-link i {
+        font-size: 21px; /* Size of the bell icon */
+        position: relative;
+    }
+
+/* Wrapper for the badge */
+.badge-wrapper {
+    position: relative; /* Allows us to position the badge wrapper */
+    top: 0;
+    right: 0;
+    margin-top: -55px; /* Move the badge up  */
+    /*margin-right: 5px;*/ /*  Move the badge to the right  */
+    margin-left: 80px;
+}
+
+/* Notification Badge */
+    #lblNoticount {
+    background-color: red; /* Badge color */
+    color: white; /* Text color */
+    font-size: 12px; /* Badge font size */
+    border-radius: 50%; /* Circular badge */
+    padding: 5px 10px; /* Small padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Custom styles for the smaller switch */
+.small-switch {
+    width: 30px; /* Smaller width */
+    height: 16px; /* Smaller height */
+    border-radius: 10px; /* Rounded corners */
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+    .small-switch input {
+        display: none;
+    }
+
+        .small-switch input:checked + .custom-control-label {
+            background-color: #007bff; /* Color when checked */
+        }
+
+    .small-switch .custom-control-label {
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        background-color: #ccc; /* Color when unchecked */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2px; /* Reduced padding to make the switch more compact */
+        transition: background-color 0.3s ease;
+    }
+
+    .small-switch .fa-check,
+    .small-switch .fa-times {
+        font-size: 8px; /* Reduced font size for the icons */
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .small-switch .fa-check {
+        left: 3px; /* Position the check icon */
+    }
+
+    .small-switch .fa-times {
+        right: 3px; /* Position the times icon */
+    }
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px; /* Space between dot and status text */
+    vertical-align: middle;
+}
+.custom-icon-color {
+    color: #87a96b; /* Example: Change to Tomato color, or any color you want */
+}
+.fab {
+    /* position: relative;
+                      bottom: 10px;
+                      right: 10px;*/
+    background-color: #6C63FF;
+    color: #fff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+    .fab:hover {
+        background-color: #388E3C;
+    }

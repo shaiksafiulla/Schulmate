@@ -1,0 +1,36 @@
+﻿@media print {
+
+   /* @page {
+        size: A4;
+    }*/
+
+    /* Adjust margins for better alignment */
+    /*body {
+        margin: 20mm;
+    }*/
+
+        /* Hide non-printable elements */
+        /*body * {
+            visibility: hidden;
+        }*/
+
+    /* Display only printable elements */
+    table, tfoot {
+        visibility: visible;
+        overflow: visible; /* or overflow: auto; */
+    }
+
+    /* Ensure the table footer is at the bottom of the page */
+    tfoot {
+        position: fixed;
+        bottom: 0;
+    }  
+
+
+}
+
+
+
+
+
+

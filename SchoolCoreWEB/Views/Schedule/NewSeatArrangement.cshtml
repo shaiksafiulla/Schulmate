@@ -1,0 +1,671 @@
+﻿@using SchoolCoreWEB.Models
+@model Schedule
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+
+<link href="~/assets/css/app-modern.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+   @* <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+   
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">*@
+    <style>
+        /* Custom Styles */
+
+        /* Container Styling */
+        .exam-halls-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .exam-hall {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 220px;
+            position: relative;
+            background-color: #f8f9fa;
+        }
+
+        .exam-hall h5 {
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        /* Action Icons */
+        .exam-hall .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .exam-hall .actions i {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #0d6efd;
+        }
+
+        .exam-hall .actions i.rename-icon {
+            color: #ffc107;
+        }
+
+        .exam-hall .actions i.remove-icon {
+            color: #dc3545;
+        }
+
+        /* Seats Container */
+        .seats-container {
+            display: grid;
+            grid-gap: 5px;
+            justify-content: center;
+        }
+
+        .seat {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #999;
+            border-radius: 4px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 60px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            background-color: #f0f0f0; /* Default to available */
+        }
+
+        .seat.allocated {
+            background-color: #90ee90; /* Light green */
+        }
+
+        .seat .student-name {
+            display: none;
+            position: absolute;
+            bottom: 2px;
+            width: 100%;
+            font-size: 12px;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2px 0;
+            border-top: 1px solid #ccc;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .seat.allocated:hover .student-name {
+            display: block;
+        }
+
+        /* Dragging Styles */
+        .dragging {
+            opacity: 0.5;
+            border: 2px dashed #555;
+        }
+
+        /* Highlight Droppable Area */
+        .seat.hovered {
+            border: 2px dashed #0d6efd;
+        }
+
+        /* Rename Input Styling */
+        .rename-input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .exam-hall.editing .rename-input {
+            display: block;
+        }
+
+        .exam-hall.editing h5 {
+            display: none;
+        }
+
+        .exam-hall.editing .save-rename-btn,
+        .exam-hall.editing .cancel-rename-btn {
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .exam-hall .save-rename-btn,
+        .exam-hall .cancel-rename-btn {
+            display: none;
+        }
+
+      
+    </style>
+
+
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Exam Hall Seat Allocation System</h1>
+        <div class="row">
+            <!-- Left Panel: Class Selection -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Select Classes</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group" id="classList">
+                            <li class="list-group-item">
+                                <input class="form-check-input me-1" type="checkbox" value="1" id="class1">
+                                <label class="form-check-label" for="class1">
+                                    Class 1
+                                </label>
+                            </li>
+                            <li class="list-group-item">
+                                <input class="form-check-input me-1" type="checkbox" value="2" id="class2">
+                                <label class="form-check-label" for="class2">
+                                    Class 2
+                                </label>
+                            </li>
+                            <li class="list-group-item">
+                                <input class="form-check-input me-1" type="checkbox" value="3" id="class3">
+                                <label class="form-check-label" for="class3">
+                                    Class 3
+                                </label>
+                            </li>
+                            <!-- Add more classes as needed -->
+                        </ul>
+                        <button class="btn btn-primary mt-3 w-100" id="allocateBtn">Allocate Seats</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Exam Halls and Seats -->
+            <div class="col-md-9">
+                <!-- Exam Hall Creation Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Create Exam Hall</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="examHallName" placeholder="Exam Hall Name" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control" id="rowCount" placeholder="Number of Rows" min="1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control" id="colCount" placeholder="Number of Columns" min="1" required>
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button class="btn btn-success" id="addExamHallBtn">Add Hall</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exam Halls Display -->
+                <div class="exam-halls-container" id="examHallsContainer">
+                    <!-- Exam halls with seats will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Allocations Button -->
+        <div class="text-end mt-4">
+            <button class="btn btn-secondary" id="saveAllocationsBtn">Save Allocations</button>
+        </div>
+    </div>
+
+  
+   <script src="~/assets/js/app.min.js"></script>
+   @* <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>*@
+    <!-- JavaScript Logic -->
+    <script>
+        // Data Structures
+        const classesData = {
+            1: { id: 1, name: 'Class 1', students: [ { id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }, { id: 3, name: 'Charlie' } ] },
+            2: { id: 2, name: 'Class 2', students: [ { id: 4, name: 'David' }, { id: 5, name: 'Eva' }, { id: 6, name: 'Frank' } ] },
+            3: { id: 3, name: 'Class 3', students: [ { id: 7, name: 'Grace' }, { id: 8, name: 'Henry' }, { id: 9, name: 'Ivy' } ] }
+            // Add more classes and students as needed
+        };
+
+        let examHalls = []; // Array to hold exam hall objects
+
+        // Utility Functions
+        function getSeatNumber(row, col) {
+            return String.fromCharCode(65 + row - 1) + col;
+        }
+
+        function createSeatElement(seat) {
+            const seatDiv = document.createElement('div');
+            seatDiv.classList.add('seat');
+            if (seat.allocated) seatDiv.classList.add('allocated');
+            seatDiv.setAttribute('data-seat-id', seat.id);
+            seatDiv.setAttribute('data-exam-hall-id', seat.examHallId);
+            seatDiv.innerHTML = seat.seatNumber;
+
+            if (seat.allocated && seat.student) {
+                const studentNameDiv = document.createElement('div');
+                studentNameDiv.classList.add('student-name');
+                studentNameDiv.textContent = seat.student.name;
+                seatDiv.appendChild(studentNameDiv);
+            }
+
+            return seatDiv;
+        }
+
+        function renderExamHalls() {
+            const container = document.getElementById('examHallsContainer');
+            container.innerHTML = ''; // Clear existing halls
+
+            examHalls.forEach(hall => {
+                const hallDiv = document.createElement('div');
+                hallDiv.classList.add('exam-hall');
+                hallDiv.setAttribute('data-hall-id', hall.id);
+
+                // Hall Header
+                const hallHeader = document.createElement('h5');
+                hallHeader.textContent = hall.name;
+                hallDiv.appendChild(hallHeader);
+
+                // Hall Actions (Rename & Remove)
+                const actionsDiv = document.createElement('div');
+                actionsDiv.classList.add('actions');
+
+                // Rename Icon
+                const renameIcon = document.createElement('i');
+                renameIcon.className="ri-pencil-line";
+               // renameIcon.classList.add('bi', 'bi-pencil-square', 'rename-icon');
+                renameIcon.setAttribute('title', 'Rename Exam Hall');
+                actionsDiv.appendChild(renameIcon);
+
+                // Remove Icon
+                const removeIcon = document.createElement('i');
+                removeIcon.className="ri-delete-bin-line";
+               // removeIcon.classList.add('bi', 'bi-trash', 'remove-icon');
+                removeIcon.setAttribute('title', 'Remove Exam Hall');
+                actionsDiv.appendChild(removeIcon);
+
+                hallDiv.appendChild(actionsDiv);
+
+                // Rename Input (Hidden by Default)
+                const renameInput = document.createElement('input');
+                renameInput.type = 'text';
+                renameInput.classList.add('form-control', 'rename-input');
+                renameInput.value = hall.name;
+                hallDiv.appendChild(renameInput);
+
+                // Save Rename Button
+                const saveRenameBtn = document.createElement('button');
+                saveRenameBtn.classList.add('btn', 'btn-sm', 'btn-success', 'save-rename-btn');
+                saveRenameBtn.innerHTML = '<i class="ri-save-line"></i>';
+                hallDiv.appendChild(saveRenameBtn);
+
+                // Cancel Rename Button
+                const cancelRenameBtn = document.createElement('button');
+                cancelRenameBtn.classList.add('btn', 'btn-sm', 'btn-secondary', 'cancel-rename-btn');
+                cancelRenameBtn.innerHTML = '<i class="ri-delete-back-2-line"></i>';
+                hallDiv.appendChild(cancelRenameBtn);
+
+                // Seats Container
+                const seatsContainer = document.createElement('div');
+                seatsContainer.classList.add('seats-container');
+                seatsContainer.style.gridTemplateColumns = `repeat(${hall.columns}, 60px)`;
+
+                hall.seats.forEach(seat => {
+                    const seatElement = createSeatElement(seat);
+                    seatsContainer.appendChild(seatElement);
+                });
+
+                hallDiv.appendChild(seatsContainer);
+                container.appendChild(hallDiv);
+
+                // Event Listeners for Rename and Remove
+                renameIcon.addEventListener('click', () => {
+                    hallDiv.classList.add('editing');
+                });
+
+                cancelRenameBtn.addEventListener('click', () => {
+                    hallDiv.classList.remove('editing');
+                    renameInput.value = hall.name; // Reset to original name
+                });
+
+                saveRenameBtn.addEventListener('click', () => {
+                    const newName = renameInput.value.trim();
+                    if (!newName) {
+                        alert('Exam Hall name cannot be empty.');
+                        return;
+                    }
+
+                    // Check for duplicate hall names
+                    const duplicate = examHalls.some(h => h.name.toLowerCase() === newName.toLowerCase() && h.id !== hall.id);
+                    if (duplicate) {
+                        alert('Duplicate Exam Hall names are not allowed.');
+                        return;
+                    }
+
+                    hall.name = newName;
+                    hallDiv.classList.remove('editing');
+                    renderExamHalls();
+                });
+
+                removeIcon.addEventListener('click', () => {
+                    const hasAllocations = hall.seats.some(seat => seat.allocated);
+                    if (hasAllocations) {
+                        // Do not allow removal if any seat is allocated
+                        return;
+                    }
+
+                    // Remove the hall from examHalls array
+                    examHalls = examHalls.filter(h => h.id !== hall.id);
+                    renderExamHalls();
+                });
+
+                // Hide Remove Icon if allocations exist
+                const hasAllocations = hall.seats.some(seat => seat.allocated);
+                if (hasAllocations) {
+                    removeIcon.style.display = 'none';
+                } else {
+                    removeIcon.style.display = 'inline';
+                }
+            });
+
+            initializeDragAndDrop(); // Re-initialize drag-and-drop after rendering
+        }
+
+        // Add Exam Hall
+        document.getElementById('addExamHallBtn').addEventListener('click', function () {
+            const name = document.getElementById('examHallName').value.trim();
+            const rows = parseInt(document.getElementById('rowCount').value);
+            const cols = parseInt(document.getElementById('colCount').value);
+
+            if (!name || rows < 1 || cols < 1) {
+                alert('Please enter valid Exam Hall details.');
+                return;
+            }
+
+            // Check for duplicate hall names
+            const duplicate = examHalls.some(hall => hall.name.toLowerCase() === name.toLowerCase());
+            if (duplicate) {
+                alert('Duplicate Exam Hall names are not allowed.');
+                return;
+            }
+
+            // Create Exam Hall Object
+            const hallId = examHalls.length > 0 ? Math.max(...examHalls.map(h => h.id)) + 1 : 1;
+            const seats = [];
+            let seatId = 1;
+            for (let row = 1; row <= rows; row++) {
+                for (let col = 1; col <= cols; col++) {
+                    seats.push({
+                        id: seatId,
+                        examHallId: hallId,
+                        seatNumber: getSeatNumber(row, col),
+                        allocated: false,
+                        student: null
+                    });
+                    seatId++;
+                }
+            }
+
+            const newHall = {
+                id: hallId,
+                name: name,
+                rows: rows,
+                columns: cols,
+                seats: seats
+            };
+
+            examHalls.push(newHall);
+            renderExamHalls();
+
+            // Clear form inputs
+            document.getElementById('examHallName').value = '';
+            document.getElementById('rowCount').value = '';
+            document.getElementById('colCount').value = '';
+        });
+
+        // Allocate Seats
+        document.getElementById('allocateBtn').addEventListener('click', function () {
+            // Get selected class IDs
+            const selectedClassIds = Array.from(document.querySelectorAll('#classList input[type="checkbox"]:checked')).map(cb => cb.value);
+
+            if (selectedClassIds.length === 0) {
+                // If no class selected, clear all allocations
+                clearAllAllocations();
+                renderExamHalls();
+                return;
+            }
+
+            // Gather all students from selected classes
+            let selectedStudents = [];
+            selectedClassIds.forEach(classId => {
+                const cls = classesData[classId];
+                if (cls && cls.students.length > 0) {
+                    selectedStudents = selectedStudents.concat(cls.students);
+                }
+            });
+
+            // Check if there are exam halls created
+            if (examHalls.length === 0) {
+                alert('Please create at least one exam hall before allocating seats.');
+                return;
+            }
+
+            // Calculate total available seats
+            const totalSeats = examHalls.reduce((sum, hall) => sum + hall.seats.length, 0);
+            const totalStudents = selectedStudents.length;
+
+            if (totalStudents > totalSeats) {
+                alert(`Not enough seats. Total Seats: ${totalSeats}, Total Students: ${totalStudents}`);
+                return;
+            }
+
+            // Clear previous allocations
+            clearAllAllocations();
+
+            // Allocate seats
+            allocateSeats(selectedStudents, examHalls);
+            renderExamHalls();
+        });
+
+        // Clear All Allocations
+        function clearAllAllocations() {
+            examHalls.forEach(hall => {
+                hall.seats.forEach(seat => {
+                    seat.allocated = false;
+                    seat.student = null;
+                });
+            });
+        }
+
+        // Allocate Seats Function
+        function allocateSeats(students, examHalls) {
+            const totalSeats = examHalls.reduce((sum, hall) => sum + hall.seats.length, 0);
+            const totalStudents = students.length;
+
+            let studentIndex = 0;
+
+            // Calculate number of seats per hall based on proportion
+            const seatsPerHall = examHalls.map(hall => hall.seats.length);
+            const proportion = seatsPerHall.map(seats => seats / totalSeats);
+
+            // Allocate students proportionally
+            examHalls.forEach((hall, index) => {
+                const hallSeatCount = Math.floor(proportion[index] * totalStudents);
+                let allocatedSeats = 0;
+
+                for (let seat of hall.seats) {
+                    if (allocatedSeats >= hallSeatCount || studentIndex >= totalStudents) break;
+                    if (!seat.allocated) {
+                        seat.allocated = true;
+                        seat.student = students[studentIndex];
+                        allocatedSeats++;
+                        studentIndex++;
+                    }
+                }
+            });
+
+            // Allocate remaining students if any
+            if (studentIndex < totalStudents) {
+                examHalls.forEach(hall => {
+                    for (let seat of hall.seats) {
+                        if (studentIndex >= totalStudents) break;
+                        if (!seat.allocated) {
+                            seat.allocated = true;
+                            seat.student = students[studentIndex];
+                            studentIndex++;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize Drag-and-Drop
+        function initializeDragAndDrop() {
+            const seats = document.querySelectorAll('.seat.allocated');
+
+            seats.forEach(seat => {
+                seat.setAttribute('draggable', 'true');
+
+                // Drag Start
+                seat.addEventListener('dragstart', function (e) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        seatId: seat.getAttribute('data-seat-id'),
+                        examHallId: seat.getAttribute('data-exam-hall-id')
+                    }));
+                    setTimeout(() => {
+                        seat.classList.add('dragging');
+                    }, 0);
+                });
+
+                // Drag End
+                seat.addEventListener('dragend', function () {
+                    seat.classList.remove('dragging');
+                });
+            });
+
+            const allSeats = document.querySelectorAll('.seat');
+
+            allSeats.forEach(targetSeat => {
+                // Prevent default to allow drop
+                targetSeat.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                });
+
+                // Highlight on hover
+                targetSeat.addEventListener('dragenter', function (e) {
+                    e.preventDefault();
+                    targetSeat.classList.add('hovered');
+                });
+
+                targetSeat.addEventListener('dragleave', function () {
+                    targetSeat.classList.remove('hovered');
+                });
+
+                // Handle Drop
+                targetSeat.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    targetSeat.classList.remove('hovered');
+
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (!data) return;
+                    const draggedData = JSON.parse(data);
+
+                    const draggedSeatId = parseInt(draggedData.seatId);
+                    const draggedHallId = parseInt(draggedData.examHallId);
+
+                    const targetSeatId = parseInt(targetSeat.getAttribute('data-seat-id'));
+                    const targetHallId = parseInt(targetSeat.getAttribute('data-exam-hall-id'));
+
+                    if (draggedSeatId === targetSeatId && draggedHallId === targetHallId) {
+                        return; // Dropped on the same seat
+                    }
+
+                    // Find the dragged and target seats
+                    const draggedHall = examHalls.find(hall => hall.id === draggedHallId);
+                    const targetHall = examHalls.find(hall => hall.id === targetHallId);
+
+                    if (!draggedHall || !targetHall) return;
+
+                    const draggedSeat = draggedHall.seats.find(seat => seat.id === draggedSeatId);
+                    const targetSeatObj = targetHall.seats.find(seat => seat.id === targetSeatId);
+
+                    if (!draggedSeat || !targetSeatObj) return;
+
+                    // Swap allocations
+                    if (draggedSeat.allocated && targetSeatObj.allocated) {
+                        const tempStudent = draggedSeat.student;
+                        draggedSeat.student = targetSeatObj.student;
+                        targetSeatObj.student = tempStudent;
+                    } else if (draggedSeat.allocated && !targetSeatObj.allocated) {
+                        targetSeatObj.allocated = true;
+                        targetSeatObj.student = draggedSeat.student;
+
+                        draggedSeat.allocated = false;
+                        draggedSeat.student = null;
+                    } else if (!draggedSeat.allocated && targetSeatObj.allocated) {
+                        draggedSeat.allocated = true;
+                        draggedSeat.student = targetSeatObj.student;
+
+                        targetSeatObj.allocated = false;
+                        targetSeatObj.student = null;
+                    }
+
+                    renderExamHalls();
+                });
+            });
+        }
+
+        // Save Allocations
+        document.getElementById('saveAllocationsBtn').addEventListener('click', function () {
+            // Prepare data to send
+            const dataToSave = examHalls.map(hall => ({
+                examHallId: hall.id,
+                examHallName: hall.name,
+                seats: hall.seats.map(seat => ({
+                    seatId: seat.id,
+                    seatNumber: seat.seatNumber,
+                    allocated: seat.allocated,
+                    student: seat.student ? { id: seat.student.id, name: seat.student.name } : null
+                }))
+            }));
+
+            // Simulate AJAX POST request
+            saveAllocations(dataToSave)
+                .then(response => {
+                    if (response.success) {
+                        alert('Allocations saved successfully!');
+                    } else {
+                        alert('Error saving allocations: ' + response.message);
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while saving allocations.');
+                    console.error(error);
+                });
+        });
+
+        // Simulated AJAX Save Allocations Function
+        function saveAllocations(data) {
+            return new Promise((resolve, reject) => {
+                // Simulate server processing time
+                setTimeout(() => {
+                    console.log('Allocations Data:', data);
+                    // Here you would typically send the data to the server using fetch or XMLHttpRequest
+                    // For simulation, we'll assume it's always successful
+                    resolve({ success: true });
+                }, 1000);
+            });
+        }
+
+        // Reallocate Seats When Class Selection Changes and Allocate is Clicked Again
+        // This is already handled in the 'Allocate' button logic by clearing previous allocations
+    </script>
+
+
+
+

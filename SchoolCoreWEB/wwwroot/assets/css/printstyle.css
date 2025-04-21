@@ -1,0 +1,129 @@
+﻿.header, .header-space {
+    height: 150px;
+}
+.headerafour, .header-spaceafour {
+    height: 100px;
+}
+.footer, .footer-space {
+    height: 20px;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+}
+.headerafour {
+    position: fixed;
+    top: 0;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;    
+}
+/*#pageFooter:after {
+    counter-increment: page;
+    content: counter(page);
+}*/
+
+@media print {  
+   
+    div.bgdiv {
+        /* background-color: #bdbdbd !important;*/
+        -webkit-print-color-adjust: exact
+    }
+    td.bgdiv {
+        /* background-color: #bdbdbd !important;*/
+        -webkit-print-color-adjust: exact
+    }    
+   
+   
+   /* html, body {       
+        height: 99%;
+        page-break-after: avoid;
+        page-break-before: avoid;
+    }*/
+
+    html, body {
+       /* border: 1px solid white;*/
+        height: auto;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
+    }
+
+    .print-display-none,
+    .print-display-none * {
+        display: none !important;
+    }
+
+    /*.print-visibility-hide,
+    .print-visibility-hide * {
+        visibility: hidden !important;
+    }
+
+    .printme,
+    .printme * {
+        visibility: visible !important;
+    }
+
+    .printme {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }*/
+
+}
+/*.print:last-child {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 0px;
+}*/
+
+.print {
+    page-break-after: avoid;
+}
+/*@page {
+    margin: 2mm
+}*/
+.print:last-child {
+        page-break-after: auto;
+    }
+
+.upload-btn-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+   /* background-color:white;*/
+}
+
+.btnfile {
+    border: 2px solid gray;
+    color: gray;
+    background-color: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.upload-btn-wrapper input[type=file] {
+    /* font-size: 100px;*/
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+}
+.table tbody tr.highlight td {
+    background-color: #ddd;
+}
+
+.highlight {
+    background-color: #40CADA;
+}
+.pull-left {
+    float: left !important;
+}
+
+.pull-right {
+    float: right !important;
+}

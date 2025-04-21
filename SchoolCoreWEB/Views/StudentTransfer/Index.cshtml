@@ -1,0 +1,630 @@
+﻿@using SchoolCoreWEB.Models
+@model StudentTransferVM
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+   <div class="row">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("StudentTransfer")</div>
+                @Html.HiddenFor(m => m.SessionYearId, new { @id = "hfsessionyearid" })
+                <div class="ribbon-content">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="card ribbon-box">
+                                <div class="card-body">
+                                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("From")</div>
+                                    <div class="ribbon-content">
+                                        <div class="row">
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                                    @Html.DropDownListFor(model => model.FromBranchSheet, Model.FromBranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfrombranch", @required = "required", onChange = "selectedFromBranchIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                                                    @Html.DropDownListFor(model => model.FromClassSheet, Model.FromClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfromclass", @required = "required", onChange = "selectedFromClassIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Section")</label>
+                                                    @Html.DropDownListFor(model => model.FromSectionSheet, Model.FromSectionSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfromsection", @required = "required", onChange = "selectedFromSectionIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3 position-relative">
+                                                <button type="button" class="btn btn-primary position-absolute top-50 start-0 translate-middle-y" onclick="searchStudents()" id="btnsearch" disabled="disabled"><span>@_localization.Getkey("Search")</span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card ribbon-box">
+                                <div class="card-body">
+                                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("To")</div>
+                                    <div class="ribbon-content">
+                                        <div class="row">
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                                    @Html.DropDownListFor(model => model.ToBranchSheet, Model.ToBranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltobranch", @required = "required", onChange = "selectedToBranchIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                                                    @Html.DropDownListFor(model => model.ToClassSheet, Model.ToClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltoclass", @required = "required", onChange = "selectedToClassIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Section")</label>
+                                                    @Html.DropDownListFor(model => model.ToSectionSheet, Model.ToSectionSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltosection", @required = "required", onChange = "selectedToSectionIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3 position-relative">
+                                                <button type="button" class="btn btn-primary  position-absolute top-50 start-0 translate-middle-y" onclick="submitStudentTransfer()" id="btnsubmit" disabled="disabled">
+                                                    <span>@_localization.Getkey("Submit")</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                    <div class="row">
+                        <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblstudent">
+                            <thead>
+                                <tr>
+                                    <th style="display:none;">StudentId</th>
+                                    <th>
+                                        <div class="form-check form-check-inline">
+                                            <input type="checkbox" class="form-check-input" id="chkstudent">
+                                            <label class="form-check-label" for="chkchkstudent">@_localization.Getkey("SelectAll")</label>
+                                        </div>
+                                    </th>
+                                    <th>@_localization.Getkey("RollNo")</th>
+                                    <th>@_localization.Getkey("Name")</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+   </div>
+    <div class="row">
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("StudentPromotion")</div>
+               
+                <div class="ribbon-content">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="card ribbon-box">
+                                <div class="card-body">
+                                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("From")</div>
+                                    <div class="ribbon-content">
+                                        <div class="row">
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                                    @Html.DropDownListFor(model => model.FromBranchSheet, Model.FromBranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfrombranch", @required = "required", onChange = "selectedFromBranchIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                                                    @Html.DropDownListFor(model => model.FromClassSheet, Model.FromClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfromclass", @required = "required", onChange = "selectedFromClassIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Section")</label>
+                                                    @Html.DropDownListFor(model => model.FromSectionSheet, Model.FromSectionSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddlfromsection", @required = "required", onChange = "selectedFromSectionIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3 position-relative">
+                                                <button type="button" class="btn btn-primary position-absolute top-50 start-0 translate-middle-y" onclick="searchStudents()" id="btnsearch" disabled="disabled"><span>@_localization.Getkey("Search")</span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card ribbon-box">
+                                <div class="card-body">
+                                    <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("To")</div>
+                                    <div class="ribbon-content">
+                                        <div class="row">
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="branch" class="form-label">@_localization.Getkey("Branch")</label>
+                                                    @Html.DropDownListFor(model => model.ToBranchSheet, Model.ToBranchSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltobranch", @required = "required", onChange = "selectedToBranchIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Class")</label>
+                                                    @Html.DropDownListFor(model => model.ToClassSheet, Model.ToClassSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltoclass", @required = "required", onChange = "selectedToClassIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="form-group required mb-3">
+                                                    <label for="class" class="form-label">@_localization.Getkey("Section")</label>
+                                                    @Html.DropDownListFor(model => model.ToSectionSheet, Model.ToSectionSheet, @_localization.Getkey("PleaseSelect"), new { @class = "form-select form-select-sm", @id = "ddltosection", @required = "required", onChange = "selectedToSectionIndexChanged()" })
+                                                </div>
+                                            </div>
+                                            <div class="col-3 position-relative">
+                                                <button type="button" class="btn btn-primary  position-absolute top-50 start-0 translate-middle-y" onclick="submitStudentTransfer()" id="btnsubmit" disabled="disabled">
+                                                    <span>@_localization.Getkey("Submit")</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                    <div class="row">
+                        <table class="table table-hover table-sm table-bordered table-centered mb-0" id="tblstudent">
+                            <thead>
+                                <tr>
+                                    <th style="display:none;">StudentId</th>
+                                    <th>
+                                        <div class="form-check form-check-inline">
+                                            <input type="checkbox" class="form-check-input" id="chkstudent">
+                                            <label class="form-check-label" for="chkchkstudent">@_localization.Getkey("SelectAll")</label>
+                                        </div>
+                                    </th>
+                                    <th>@_localization.Getkey("RollNo")</th>
+                                    <th>@_localization.Getkey("Name")</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+
+    <div class="three-quarters-loadermodel" id="loaderDiv" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+
+
+<script src="~/assets/vendor/jquery/jquery.min.js"></script>
+<script type="text/javascript">
+
+    $('#chkstudent').change(function () {
+        $('#tblstudent tbody tr td input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+    });
+
+    $(document).ready(function () {
+        // $("#loaderDiv").show("slow", function () {
+        //     getBranches();
+        //     var resObj = setResourceObj();
+        //     getResourceObj(JSON.stringify(resObj));
+        // })
+    });
+    function chkSearchFields() {
+        var isvalid = true;
+
+        if ($("#ddlfrombranch").val() == "" || $("#ddlfrombranch").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlfromclass").val() == "" || $("#ddlfromclass").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlfromsection").val() == "" || $("#ddlfromsection").val() == "-1") {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function chkSubmitFields() {
+        var isvalid = true;
+
+        if ($("#ddltobranch").val() == "" || $("#ddltobranch").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddltoclass").val() == "" || $("#ddltoclass").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlfromclass").val() == "" || $("#ddlfromclass").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlfromclass").val() != "" &&  $("#ddltoclass").val() != "") {
+            if ($("#ddlfromclass").val() != $("#ddltoclass").val()) {
+                isvalid = false;
+            }           
+        }       
+        if ($("#ddltosection").val() == "" || $("#ddltosection").val() == "-1") {
+            isvalid = false;
+        }
+        if ($("#ddlfromsection").val() != "" && $("#ddltosection").val() != "") {
+            if ($("#ddlfromsection").val() == $("#ddltosection").val()) {
+                isvalid = false;
+            }
+        }
+        var lstStudent = getStudentArray();
+        var found2 = lstStudent.some(el => el.IsSelected == true);
+        if (!found2) {
+            isvalid = false;
+        }
+        return isvalid;
+    }
+    function validatesearch() {
+        if (chkSearchFields()) {
+            $('#btnsearch').prop('disabled', false);
+        }
+        else {
+            $('#btnsearch').prop('disabled', true);
+        }
+    }
+    function validatesubmit() {
+        if (chkSubmitFields()) {
+            $('#btnsubmit').prop('disabled', false);
+        }
+        else {
+            $('#btnsubmit').prop('disabled', true);
+        }
+    }
+    function selectedFromBranchIndexChanged() {
+        $('#ddlfromclass')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+        $("#loaderDiv").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetClassByBranch", "StudentTransfer")',
+                data: { BranchId: $('#ddlfrombranch').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    var lstdata = response;
+                    var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                    for (var i = 0; i < lstdata.length; i++) {
+                        s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                    }
+                    //$('.selectfromCat').selectpicker('destroy')
+                    $("#ddlfromclass").html(s);
+                    $("#loaderDiv").hide();
+                    // $('.selectfromCat').selectpicker({
+                    //     liveSearch: true,
+                    //     showSubtext: true
+                    // });
+
+                }
+            });
+        })
+        validatesearch();
+    }
+    function selectedFromClassIndexChanged() {
+        $('#ddlfromsection')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+        $("#loaderDiv").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetSectionByClass", "StudentTransfer")',
+                data: { BranchId: $('#ddlfrombranch').val(), ClassId: $('#ddlfromclass').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    var lstdata = response;
+                    var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                    for (var i = 0; i < lstdata.length; i++) {
+                        s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                    }
+                    //  $('.selectfromSubCat').selectpicker('destroy')
+                    $("#ddlfromsection").html(s);
+                    // $('.selectfromSubCat').selectpicker({
+                    //     liveSearch: true,
+                    //     showSubtext: true
+                    // });
+                    $("#loaderDiv").hide();
+
+                }
+            });
+        })
+        validatesearch();
+    }
+    function selectedFromSectionIndexChanged() {
+        validatesearch();
+    }
+
+
+    function selectedToBranchIndexChanged() {
+        $('#ddltoclass')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+        $("#loaderDiv").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetClassByBranch", "StudentTransfer")',
+                data: { BranchId: $('#ddltobranch').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    var lstdata = response;
+                    var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                    for (var i = 0; i < lstdata.length; i++) {
+                        s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                    }
+                    // $('.selecttoCat').selectpicker('destroy')
+                    $("#ddltoclass").html(s);
+                    // $('.selecttoCat').selectpicker({
+                    //     liveSearch: true,
+                    //     showSubtext: true
+                    // });
+                    $("#loaderDiv").hide();
+
+                }
+            });
+        })
+        validatesubmit();
+    }
+    function selectedToClassIndexChanged() {
+        $('#ddltosection')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option value="-1">@_localization.Getkey("PleaseSelect")</option>')
+            .val('-1');
+
+        $("#loaderDiv").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetSectionByClass", "StudentTransfer")',
+                data: { BranchId: $('#ddltobranch').val(), ClassId: $('#ddltoclass').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    var lstdata = response;
+                    var s = '<option value="-1">@_localization.Getkey("PleaseSelect")</option>';
+                    for (var i = 0; i < lstdata.length; i++) {
+                        s += '<option value="' + lstdata[i].value + '">' + lstdata[i].text + '</option>';
+                    }
+                    // $('.selecttoSubCat').selectpicker('destroy')
+                    $("#ddltosection").html(s);
+                    // $('.selecttoSubCat').selectpicker({
+                    //     liveSearch: true,
+                    //     showSubtext: true
+                    // });
+                    $("#loaderDiv").hide();
+                }
+            });
+        })
+        validatesubmit();
+    }
+    function selectedToSectionIndexChanged() {
+        validatesubmit();
+    }
+    function searchStudents() {
+        $("#loaderDiv").show("slow", function () {
+            $.ajax({
+                type: "post",
+                url: '@Url.Action("GetStudents", "StudentTransfer")',
+                data: { SectionId: $('#ddlfromsection').val() },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var lstdata = JSON.parse(response);
+                        $("#studentbody").empty();
+                        for (var j = 0; j < lstdata.length; j++) {
+                            insertintotbl(lstdata[j]);
+                        }
+                        // var studData = [];
+                        // $.each(JSON.parse(response), function (key, value) {
+                        //     var chk = '<input type="checkbox" class="form-check-input">'
+                        //     studData.push([value.studentId, chk, value.registerNo, value.studentName])
+                        // })
+                        // const myTable = $("#tblstudent").DataTable({
+                        //     stateSave: true,
+                        //     "bDestroy": true,
+                        //     data: studData,                           
+                           
+                        //     order: [[0, "desc"]],
+                        //     "aoColumnDefs": [{
+                        //         "bVisible": false, "aTargets": [0]
+                        //     }],                           
+                        //     dom: 'lBfrtip',
+                        //     buttons: [
+                        //         {
+                        //             extend: 'csvHtml5',
+                        //             text: '<i class="ri-file-excel-line"></i>',
+                        //             titleAttr: 'csv',
+                        //             filename: `@_localization.Getkey("Students")`,
+                        //             className: 'btn btn-outline-light btn-sm',
+                        //             exportOptions: {
+                        //                 columns: [2, 3]
+                        //             }
+                        //         }
+                        //     ]
+                        // })
+                        // var allPages = myTable.cells().nodes();
+
+                        // $('#selectAll').click(function () {
+                        //     if ($(this).hasClass('allChecked')) {
+                        //         $(allPages).find('input[type="checkbox"]').prop('checked', false);
+                        //     } else {
+                        //         $(allPages).find('input[type="checkbox"]').prop('checked', true);
+                        //     }
+                        //     $(this).toggleClass('allChecked');
+                            
+                        // })
+                       
+                        $("#loaderDiv").hide();
+                    }
+                    else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                   
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            });
+        })
+    }
+    function insertintotbl(data) {
+        
+        var tblbdy = document.getElementById("studentbody");
+        var rowIndex = tblbdy.rows.length;
+        var newRow = tblbdy.insertRow(rowIndex);
+
+        cell1 = newRow.insertCell(0);
+        cell1.innerHTML = data.studentId;
+        cell1.style.display = "none";
+
+        var chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "form-check-input";
+        chk.checked = data.isSelected;
+        chk.onclick = (function () { return function () { validatesubmit(); } })();
+
+        cell2 = newRow.insertCell(1);
+        cell2.appendChild(chk);
+
+        var sp = document.createElement("span");
+        sp.innerHTML = data.rollNo;
+
+        cell3 = newRow.insertCell(2);
+        cell3.appendChild(sp);
+
+        var sp2 = document.createElement("span");
+        sp2.innerHTML = data.studentName;
+
+        cell4 = newRow.insertCell(3);
+        cell4.appendChild(sp2);
+
+    }
+    function getStudentArray() {
+        var chkClsArray = [];
+        // var tbldata = $("#tblstudent").DataTable();
+        // jQuery(tbldata.rows().nodes()).each(function (item) {
+        //     var tr = $(this);
+        //     var objRow = tbldata.row(tr).find('input[type="checkbox"]');
+        //     var objRowData = tbldata.row(tr).data();
+        //    // var chkval = objRow[1].is(':checked');
+        //     console.log(tr, objRow, objRowData);
+        //     //var ischecked = $(this).is(':checked');
+        // })
+
+        $("#tblstudent tbody tr").each(function () {
+            var tr = $(this);
+            var paramcls = {};
+            var FirstCol = tr.find("td").eq(0).html();
+            var SecondCol = tr.find("input").eq(0).is(':checked');          
+            paramcls.StudentId = parseInt(FirstCol);
+            paramcls.IsSelected = SecondCol;              
+            chkClsArray.push(paramcls);
+        });
+        return chkClsArray;
+    }
+    function setStudentTransfer() { 
+        var lsttransfer = [];
+        var lststudent = getStudentArray();
+        var lstselected = lststudent.filter(function (element) { return element.IsSelected == true; })
+        for (var j = 0; j < lstselected.length; j++) {
+
+            var objtransfer = {};
+            objtransfer.SessionYearId = $("#hfsessionyearid").val();
+            objtransfer.StudentId = lstselected[j].StudentId;
+            objtransfer.FromBranchId = $("#ddlfrombranch").val();
+            objtransfer.FromClassId = $("#ddlfromclass").val();
+            objtransfer.FromSectionId = $("#ddlfromsection").val();
+
+            objtransfer.ToBranchId = $("#ddltobranch").val();
+            objtransfer.ToClassId = $("#ddltoclass").val();
+            objtransfer.ToSectionId = $("#ddltosection").val();
+            objtransfer.RollNo = '1';
+            objtransfer.TransferType = '2';
+            
+            lsttransfer.push(objtransfer);
+        }
+        return lsttransfer;
+    }
+    function submitStudentTransfer() {
+        var lststud = setStudentTransfer();
+        var jdata = JSON.stringify(lststud);
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Save", "StudentTransfer")',
+            dataType: "JSON",
+            data: { model: jdata },
+            success: function (response) {
+                if (response != null) {
+                    $("#studentbody").empty();
+                    toastr.success(`@_localization.Getkey("Saved")`);                   
+
+                } else {
+                    toastr.error(`@_localization.Getkey("Error")`);
+                }
+            },
+            error: function (response) {
+                toastr.error(`@_localization.Getkey("Error")`);
+
+            }
+        })
+    }
+
+
+</script>
+
+

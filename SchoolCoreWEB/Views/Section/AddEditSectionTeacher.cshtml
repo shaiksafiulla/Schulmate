@@ -1,0 +1,203 @@
+﻿@model SchoolCoreWEB.Models.SectionVM
+@using Localization.Services
+@inject LanguageService _localization
+
+
+
+<form id="sectionTeacherForm" class="forms-sample">
+    @Html.HiddenFor(m => m.SectionId, new { @id = "hfsectionid" })
+    @Html.HiddenFor(m => m.SectionTeacherIds, new { @id = "hfsectionteacherids" })
+    @Html.HiddenFor(m => m.LstSectionSubjectTeacher, new { @id = "hflstsectionsubjectteacher" })
+    <div class="row">
+
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("ClassTeacher")</div>
+                <div class="ribbon-content">    
+                    
+                    <div class="form-group required mb-3">
+                        <label for="class" class="form-label">@_localization.Getkey("ClassTeacher")</label>
+                        @Html.ListBoxFor(model => model.SectionTeacherIds, Model.SectionTeacherSheet, new { @class = "myclass", @id = "ddlsectionteacher", @style = "width:100%", @multiple = "multiple" })
+                    </div>                    
+                 
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="card ribbon-box">
+            <div class="card-body">
+                <div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("SubjectTeacher")</div>
+                <div class="ribbon-content">
+                    <table class="table table-sm table-bordered table-centered mb-0" id="tblcastsubjectteacher">
+                        <thead>
+                            <tr>
+                                <th style="display:none">ClassSubjectId</th>
+                                <th>@_localization.Getkey("Subject")</th>
+                                <th>@_localization.Getkey("Teacher")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < @Model.LstSectionSubjectTeacher.Count(); i++)
+                            { 
+                                @* var forecolor = @Model.LstSectionSubjectTeacher[i].SubjectColor == "#FFFFFF" ? "#000000" : "#FFFFFF";             *@         
+                                <tr>
+                                    <td style="display:none">@Html.DisplayFor(m => @Model.LstSectionSubjectTeacher[i].ClassSubjectId)</td>
+                                    <td>
+                                        @Model.LstSectionSubjectTeacher[i].SubjectName                                                                 
+                                    </td>
+                                    <td>
+                                        @Html.ListBoxFor(m => @Model.LstSectionSubjectTeacher[i].SectionSubjectTeacherIds, @Model.LstSectionSubjectTeacher[i].SectionSubjectTeacherSheet, new
+                                            {
+                                                @class = "myclass",
+                                                @style = "width:100%", @multiple = "multiple" })
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary mr-2" onclick="submitClassTeacher()">@_localization.Getkey("Update")</button>
+
+        </div>
+    </div>
+    <div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+        <div class="loader">
+            <div class="loader-inner line-scale">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+   
+    $(document).ready(function () {       
+       
+        var allElements = document.querySelectorAll('.myclass');
+        allElements.forEach(function (element) {
+            $(element).select2({
+                dropdownParent: $('#myModalBodyDiv1'),
+                placeholder: "select teacher",
+                tags: true
+            });
+            var jsmodel = @Html.Raw(Json.Serialize(Model));
+            if (jsmodel != null && jsmodel.sectionTeacherIds.length > 0) {
+                var dbElements = document.querySelectorAll('.select2-selection__choice');
+                dbElements.forEach(function (dbElement) {
+                    dbElement.style.backgroundColor = '#32a852';// '#0d6efd';
+                });
+            }
+            $(element).on('select2:select', function (e) {
+                var selectElements = document.querySelectorAll('.select2-selection__choice');
+                selectElements.forEach(function (selectElement) {
+                    selectElement.style.backgroundColor = '#32a852';// '#0d6efd';
+                });
+            });
+            $(element).on('select2:unselect', function (e) {
+                var unselectElements = document.querySelectorAll('.select2-selection__choice');
+                unselectElements.forEach(function (unselectElement) {
+                    unselectElement.style.backgroundColor = '#32a852';// '#0d6efd';
+                });
+            });
+        });
+        
+        
+       
+        // $('#ddlsectionteacher').select2({
+        //      dropdownParent: $('#myModalBodyDiv1'),
+        //         placeholder: "select sections"
+        //     });
+
+        // $('#ddlsectionteacher').on('select2:select', function (e) {
+        //     var selectElements = document.querySelectorAll('.select2-selection__choice');
+        //              selectElements.forEach(function(selectElement) {
+        //             selectElement.style.backgroundColor = '#0d6efd';
+        //     });
+
+        // });
+        // $('#ddlsectionteacher').on('select2:unselect', function (e) {
+        //         var unselectElements = document.querySelectorAll('.select2-selection__choice');
+        //         unselectElements.forEach(function (unselectElement) {
+        //             unselectElement.style.backgroundColor = '#0d6efd';
+        //         });
+        // });
+
+    });
+    function getSectionSubjectTeachers() {
+        var chkClsArray = [];
+        $("#tblcastsubjectteacher tbody tr").each(function () {
+            var tr = $(this);
+
+            var paramcls = {};
+
+            var FirstCol = tr.find("td").eq(0).html();    
+            
+            var element = tr.find("select").eq(0);
+            var selectedIds = element.val();
+            var serializedids = JSON.stringify(selectedIds);
+           
+
+            paramcls.ClassSubjectId = FirstCol;
+            paramcls.SectionSubjectTeacherIds = element.val();
+            chkClsArray.push(paramcls);
+
+        });
+        return chkClsArray;
+    }
+    function submitClassTeacher() {
+
+        $("#loaderDiv1").show("slow", function () {
+            var selectedSectionIds = $('#ddlsectionteacher').val();
+            var serializedArray = JSON.stringify(selectedSectionIds);
+           // $("#hfsectionteacherids").val(serializedArray);
+            // var jsmodel = @Html.Raw(Json.Serialize(Model));
+            // console.log(jsmodel);
+
+            var obj = {};
+            obj.SectionId = $('#hfsectionid').val();
+            obj.SectionTeacherIds = $('#ddlsectionteacher').val();
+            obj.SectionTeacherSheet = [];
+
+            var lstsubjectTeacher = getSectionSubjectTeachers();
+            obj.LstSectionSubjectTeacher = lstsubjectTeacher;
+          //  console.log(obj);
+             var jdata = JSON.stringify(obj);
+
+           
+            $.ajax({
+                type: 'POST',
+                async: false,
+                url: '@Url.Action("UpdateSectionTeacher", "Section")',
+                data: { model : jdata },
+                dataType: 'json',
+                traditional: true,
+                success: function (response) {
+                    if (response != null) {
+                        var serviceresult = JSON.parse(response);
+                        actionAfterResponse('SectionGrid', serviceresult.recordId, serviceresult.statusId, '5');
+                    } else {
+                        toastr.error(`@_localization.Getkey("Error")`);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(`@_localization.Getkey("Error")`);
+
+                }
+            })
+        })
+
+    }
+</script>

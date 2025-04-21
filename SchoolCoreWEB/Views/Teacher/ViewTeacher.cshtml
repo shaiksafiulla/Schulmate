@@ -1,0 +1,1148 @@
+﻿@model SchoolCoreWEB.Models.PersonnelDetail
+@using Localization.Services
+@inject LanguageService _localization
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+	string strtoken = @HttpContextAccessor.HttpContext.Session.GetString("strtoken");
+	string userParamkey = @HttpContextAccessor.HttpContext.Session.GetString("UserParam");
+
+}
+
+<div class="container-fluid">
+	@Html.HiddenFor(m => m.Id, new { @id = "hfteacherdetailid" })
+	@Html.HiddenFor(m => m.SessionYearId, new { @id = "hfteachersessionyearid" })
+	<div class="row">
+		<div class="list-group list-group-horizontal">
+			<a href="#" class="list-group-item list-group-item-action active" onclick="getTeacherAttachments()"><i class="ri-pencil-line"></i> @_localization.Getkey("Profile")</a>
+			<a href="#" class="list-group-item list-group-item-action" onclick="getTeacherAttendanceById()"><i class="ri-pencil-line"></i> @_localization.Getkey("Attendence")</a>
+			<a href="#" class="list-group-item list-group-item-action" onclick="getTeacherTimeTableById()"><i class="ri-pencil-line"></i> @_localization.Getkey("ClassTimeTable")</a>
+			<a href="#" class="list-group-item list-group-item-action" onclick="getTeacherExamDutyById()"><i class="ri-pencil-line"></i> @_localization.Getkey("ExamInvigilation")</a>
+			<a href="#" class="list-group-item list-group-item-action" onclick="getTeacherLeaveRequestById()"><i class="ri-pencil-line"></i> @_localization.Getkey("LeaveRequests")</a>
+
+		</div>
+	</div>
+	<div class="row" id="divteacherprofileinfo">
+		<div class="card">
+			<div class="card-body">
+				<div class="row">
+					@if (Model.ReportSettings.AFourHeaderType == "1")
+					{
+						<img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+					}
+					else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+					{
+						var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+						<div style="height:@percent"></div>
+					}
+				</div>
+				<hr />
+				<div class="row">
+					<div class="col-6">
+						<div class="card ribbon-box">
+							<div class="card-body">
+								<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("TeacherInfo")</div>
+								<div class="ribbon-content">
+									<div class="row">
+										<img src="@(Model.FilePath)" style="margin-left: auto;margin-right: auto;display: block;" class="rounded-circle avatar-lg img-thumbnail" alt="profile-image">
+									</div>
+									<br />
+									<div class="row">
+										<div class="col-6">
+											<table class="table table-sm table-bordered dt-responsive nowrap w-100">
+												<tbody>
+													<tr>
+														<td><label>@_localization.Getkey("Name"):</label></td>
+														<td> @Html.DisplayFor(model => model.FullName)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("Age"):</label></td>
+														<td> @Html.DisplayFor(model => model.Age)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("Gender"):</label></td>
+														<td> @Html.DisplayFor(model => model.GenderName)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("FatherName"):</label></td>
+														<td> @Html.DisplayFor(model => model.FatherName)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("MotherName"):</label></td>
+														<td> @Html.DisplayFor(model => model.MotherName)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("MobileNumber"):</label></td>
+														<td> @Html.DisplayFor(model => model.DefaultMobileNo)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("AlternateNo"):</label></td>
+														<td> @Html.DisplayFor(model => model.AlternateMobileNo)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("CurrentAddress"):</label></td>
+														<td> @Html.DisplayFor(model => model.CurrentAddress)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("PermanentAddress"):</label></td>
+														<td> @Html.DisplayFor(model => model.PermanentAddress)</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+										<div class="col-6">
+											<table class="table table-sm table-bordered dt-responsive nowrap w-100">
+												<tbody>
+													<tr>
+														<td><label>@_localization.Getkey("Branch"):</label></td>
+														<td> @Html.DisplayFor(model => model.BranchName)</td>
+													</tr>
+													@*<tr>
+                                                        <td><label>@_localization.Getkey("Class"):</label></td>
+                                                        <td> @Html.DisplayFor(model => model.ClassName)</td>
+                                                        </tr>
+                                                        <tr>
+                                                        <td><label>@_localization.Getkey("Section"):</label></td>
+                                                        <td> @Html.DisplayFor(model => model.SectionName)</td>
+                                                        </tr>*@
+													<tr>
+														<td><label>@_localization.Getkey("AdmissionDate"):</label></td>
+														<td> @Html.DisplayFor(model => model.AdmissionDate)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("AdmissionNo"):</label></td>
+														<td> @Html.DisplayFor(model => model.AdmissionNo)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("EmployeeNo"):</label></td>
+														<td> @Html.DisplayFor(model => model.EmployeeNo)</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("ClassSubjects"):</label></td>
+														<td>
+															@{
+																string subjName = "";
+																string subspans = "";
+
+																if (Model.ClassSubjectTeacherCount > 0)
+																{
+																	if (Model.ClassSubjectTeacherCount == 1)
+																	{
+																		subspans = $"<span class=\"badge bg-info\">{Model.TeacherSubjectName}</span>";
+																	}
+																	else if (Model.ClassSubjectTeacherCount > 1)
+																	{
+																		var clssubArray = Model.TeacherSubjectName.Split(',');
+																		foreach (var subject in clssubArray)
+																		{
+																			subspans += $"<span class=\"badge bg-info\">{subject}</span><br/>";
+																		}
+																	}
+																	subjName = $"<div>{subspans}</div>";
+																}
+																<div>@Html.Raw(subjName)</div>
+
+															}
+
+														</td>
+													</tr>
+													<tr>
+														<td><label>@_localization.Getkey("Status"):</label></td>
+														<td>
+															@if (Model.ActiveStatus == "1")
+															{
+																<span class="badge bg-success"> @_localization.Getkey("Active") </span>
+															}
+															else
+															{
+																<span class="badge bg-danger"> @_localization.Getkey("InActive") </span>
+															}
+														</td>
+													</tr>
+												</tbody>
+											</table>
+
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+					<div class="col-6">
+						<div class="card ribbon-box">
+							<div class="card-body">
+								<div class="ribbon ribbon-info float-start"><i class="mdi mdi-access-point me-1"></i> @_localization.Getkey("AttachmentInfo")</div>
+
+								<div class="ribbon-content">
+									<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="TeacherAttachmentGrid">
+										<thead>
+											<tr>
+												<th style="display:none;">Id</th>
+												<th>@_localization.Getkey("Name")</th>
+												<th>@_localization.Getkey("FileTypeName")</th>
+												<th>@_localization.Getkey("FileName")</th>
+												<th>@_localization.Getkey("Download")</th>
+											</tr>
+										</thead>
+										<tbody>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+
+
+			</div>
+		</div>
+	</div>
+	<div class="row" id="divteacherattendenceinfo">
+		<div class="card">
+			<div class="card-body">
+				<div class="row">
+					@if (Model.ReportSettings.AFourHeaderType == "1")
+					{
+						<img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+					}
+					else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+					{
+						var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+						<div style="height:@percent"></div>
+					}
+				</div>
+				<hr />
+				<div class="row">
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100">
+						<tbody>
+							<tr>
+								<td><label>@_localization.Getkey("Name"):</label></td>
+								<td> @Html.DisplayFor(model => model.FullName)</td>
+								<td><label>@_localization.Getkey("Age"):</label></td>
+								<td> @Html.DisplayFor(model => model.Age)</td>
+								<td><label>@_localization.Getkey("Gender"):</label></td>
+								<td> @Html.DisplayFor(model => model.GenderName)</td>
+								<td><label>@_localization.Getkey("MobileNumber"):</label></td>
+								<td> @Html.DisplayFor(model => model.DefaultMobileNo)</td>
+							</tr>
+							<tr>
+								<td><label>@_localization.Getkey("Branch"):</label></td>
+								<td> @Html.DisplayFor(model => model.BranchName)</td>
+								@* <td><label>@_localization.Getkey("Class"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.ClassName)</td>
+                                    <td><label>@_localization.Getkey("Section"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.SectionName)</td>*@
+								<td><label>@_localization.Getkey("EmployeeNo"):</label></td>
+								<td> @Html.DisplayFor(model => model.EmployeeNo)</td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+				<div class="row">
+					<div style="text-align:center">
+						<h4 class="header-title">@_localization.Getkey("AttendanceInfo")</h4>
+					</div>
+					<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblpersonattendence">
+						<thead>
+							<tr>
+								<th style="text-align:center">@_localization.Getkey("Name")</th>
+								<th style="text-align:center">@_localization.Getkey("Jan")</th>
+								<th style="text-align:center">@_localization.Getkey("Feb")</th>
+								<th style="text-align:center">@_localization.Getkey("Mar")</th>
+								<th style="text-align:center">@_localization.Getkey("Apr")</th>
+								<th style="text-align:center">@_localization.Getkey("May")</th>
+								<th style="text-align:center">@_localization.Getkey("Jun")</th>
+
+								<th style="text-align:center">@_localization.Getkey("Jul")</th>
+								<th style="text-align:center">@_localization.Getkey("Aug")</th>
+								<th style="text-align:center">@_localization.Getkey("Sep")</th>
+								<th style="text-align:center">@_localization.Getkey("Oct")</th>
+								<th style="text-align:center">@_localization.Getkey("Nov")</th>
+								<th style="text-align:center">@_localization.Getkey("Dec")</th>
+								<th style="text-align:center">@_localization.Getkey("Total")</th>
+							</tr>
+						</thead>
+					</table>
+					@*  <div class="exam-halls-container" id="heatmapMonthsContainer">
+                    </div> *@
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row" id="divteachertimetableinfo">
+		<div class="card">
+			<div class="card-body">
+				<div class="row">
+					@if (Model.ReportSettings.AFourHeaderType == "1")
+					{
+						<img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+					}
+					else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+					{
+						var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+						<div style="height:@percent"></div>
+					}
+				</div>
+				<hr />
+				<div class="row">
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100">
+						<tbody>
+							<tr>
+								<td><label>@_localization.Getkey("Name"):</label></td>
+								<td> @Html.DisplayFor(model => model.FullName)</td>
+								<td><label>@_localization.Getkey("Age"):</label></td>
+								<td> @Html.DisplayFor(model => model.Age)</td>
+								<td><label>@_localization.Getkey("Gender"):</label></td>
+								<td> @Html.DisplayFor(model => model.GenderName)</td>
+								<td><label>@_localization.Getkey("MobileNumber"):</label></td>
+								<td> @Html.DisplayFor(model => model.DefaultMobileNo)</td>
+							</tr>
+							<tr>
+								<td><label>@_localization.Getkey("Branch"):</label></td>
+								<td> @Html.DisplayFor(model => model.BranchName)</td>
+								@*<td><label>@_localization.Getkey("Class"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.ClassName)</td>
+                                    <td><label>@_localization.Getkey("Section"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.SectionName)</td>*@
+								<td><label>@_localization.Getkey("EmployeeNo"):</label></td>
+								<td> @Html.DisplayFor(model => model.EmployeeNo)</td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+				<div class="row">
+					<div style="text-align:center">
+						<h4 class="header-title">@_localization.Getkey("ClassTimeTable")</h4>
+					</div>
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="tblteacherdetailtimetable">
+						<thead id="timetable-header">
+							<!-- Header will be populated via AJAX -->
+						</thead>
+						<tbody id="timetable-body">
+							<!-- Body will be populated via AJAX -->
+						</tbody>
+
+					</table>
+				</div>
+
+			</div>
+		</div>
+	</div>
+	<div class="row" id="divteacherexamdutyinfo">
+		<div class="card">
+			<div class="card-body">
+				<div class="row">
+					@if (Model.ReportSettings.AFourHeaderType == "1")
+					{
+						<img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+					}
+					else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+					{
+						var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+						<div style="height:@percent"></div>
+					}
+				</div>
+				<hr />
+				<div class="row">
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100">
+						<tbody>
+							<tr>
+								<td><label>@_localization.Getkey("Name"):</label></td>
+								<td> @Html.DisplayFor(model => model.FullName)</td>
+								<td><label>@_localization.Getkey("Age"):</label></td>
+								<td> @Html.DisplayFor(model => model.Age)</td>
+								<td><label>@_localization.Getkey("Gender"):</label></td>
+								<td> @Html.DisplayFor(model => model.GenderName)</td>
+								<td><label>@_localization.Getkey("MobileNumber"):</label></td>
+								<td> @Html.DisplayFor(model => model.DefaultMobileNo)</td>
+							</tr>
+							<tr>
+								<td><label>@_localization.Getkey("Branch"):</label></td>
+								<td> @Html.DisplayFor(model => model.BranchName)</td>
+								@*<td><label>@_localization.Getkey("Class"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.ClassName)</td>
+                                    <td><label>@_localization.Getkey("Section"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.SectionName)</td>*@
+								<td><label>@_localization.Getkey("EmployeeNo"):</label></td>
+								<td> @Html.DisplayFor(model => model.EmployeeNo)</td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+				<div class="row">
+					<div style="text-align:center">
+						<h4 class="header-title">@_localization.Getkey("Examinations")</h4>
+					</div>
+					<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblschedulegrid">
+						<thead>
+							<tr>
+								<th>@_localization.Getkey("Title")</th>
+								<th>@_localization.Getkey("Type")</th>
+								<th>@_localization.Getkey("StartDate")</th>
+								<th>@_localization.Getkey("EndDate")</th>
+								<th>@_localization.Getkey("Progress")</th>
+								<th>@_localization.Getkey("Status")</th>
+								<th>@_localization.Getkey("Details")</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				<div class="row">
+					<div id="divexamduty">
+						<div class="card">
+							<div class="card-body">
+								<div class="d-flex justify-content-between align-items-center mb-2">
+									<h4 class="header-title">@_localization.Getkey("ExamDuty")</h4>
+								</div>
+								<table class="table table-sm table-bordered table-centered mb-0" style="width:100%" id="tblexamduty">
+									<thead>
+									</thead>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+	<div class="row" id="divteacherleaverequestinfo">
+		<div class="card">
+			<div class="card-body">
+				<div class="row">
+					@if (Model.ReportSettings.AFourHeaderType == "1")
+					{
+						<img src="@(Model.ReportSettings.AFourHeaderPhotoPath)" class="img-fluid" alt="header image" style="padding:0" />
+					}
+					else if (@Model.ReportSettings.AFourHeaderSpace > 0)
+					{
+						var percent = @Model.ReportSettings.AFourHeaderSpace + "px";
+						<div style="height:@percent"></div>
+					}
+				</div>
+				<hr />
+				<div class="row">
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100">
+						<tbody>
+							<tr>
+								<td><label>@_localization.Getkey("Name"):</label></td>
+								<td> @Html.DisplayFor(model => model.FullName)</td>
+								<td><label>@_localization.Getkey("Age"):</label></td>
+								<td> @Html.DisplayFor(model => model.Age)</td>
+								<td><label>@_localization.Getkey("Gender"):</label></td>
+								<td> @Html.DisplayFor(model => model.GenderName)</td>
+								<td><label>@_localization.Getkey("MobileNumber"):</label></td>
+								<td> @Html.DisplayFor(model => model.DefaultMobileNo)</td>
+							</tr>
+							<tr>
+								<td><label>@_localization.Getkey("Branch"):</label></td>
+								<td> @Html.DisplayFor(model => model.BranchName)</td>
+								@*<td><label>@_localization.Getkey("Class"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.ClassName)</td>
+                                    <td><label>@_localization.Getkey("Section"):</label></td>
+                                    <td> @Html.DisplayFor(model => model.SectionName)</td>*@
+								<td><label>@_localization.Getkey("EmployeeNo"):</label></td>
+								<td> @Html.DisplayFor(model => model.EmployeeNo)</td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+				<div class="row">
+					<div style="text-align:center">
+						<h4 class="header-title">@_localization.Getkey("LeaveRequests")</h4>
+					</div>
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="tblTeacherLeaveRequest">
+						<thead>
+							<tr>
+								<th style="display:none;">Id</th>
+								<th>@_localization.Getkey("FromDate")</th>
+								<th>@_localization.Getkey("ToDate")</th>
+								<th>@_localization.Getkey("Reason")</th>
+								<th>@_localization.Getkey("NoOfDays")</th>
+								<th>@_localization.Getkey("RequestDate")</th>
+								<th>@_localization.Getkey("Status")</th>
+
+							</tr>
+						</thead>
+					</table>
+				</div>
+
+				<div class="row">
+					<div style="text-align:center">
+						<h4 class="header-title">@_localization.Getkey("LeaveReport")</h4>
+					</div>
+					<table class="table table-sm table-bordered dt-responsive nowrap w-100" id="tblTeacherLeaveReport">						
+					</table>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+
+	<div class="modal-footer">
+		<button type="button" class="btn btn-info" onclick="onTeacherDetailPrint()">
+			<i class="ri-printer-line"></i> @_localization.Getkey("Print")
+		</button>
+
+	</div>
+	<div class="three-quarters-loadermodel" id="loaderDiv1" style="display:none">
+		<div class="loader">
+			<div class="loader-inner line-scale">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+
+		</div>
+	</div>
+</div>
+<script>
+	 var teacherprinttype= '1';
+	$(document).ready(function () {
+		$('#a4headdiv').show();
+		$('#a4footdiv').show();
+
+		 $("#divteacherprofileinfo").show();
+		$("#divteacherattendenceinfo").hide();
+		$("#divteachertimetableinfo").hide();
+		$("#divteacherexamdutyinfo").hide();
+		$("#divteacherleaverequestinfo").hide();
+
+	  $('.list-group-item').click(function () {
+			$('.list-group-item').removeClass('active');
+			$(this).addClass('active');
+		});
+		getTeacherAttachments();
+	});
+	function getTeacherAttachments() {
+		onTeacherDetailHideAndShow('1');
+		 $("#loaderDiv1").show();
+		$.ajax({
+			type: 'GET',
+			async: false,
+			url: '@Url.Action("GetAll", "Attachment")?type= 3 &referid=' + $("#hfteacherdetailid").val(),
+			Accept: 'application/json, text/javascript',
+			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+			success: function (response) {
+				if (response != null) {
+					var attachData = [];
+					$.each(JSON.parse(response), function (key, value) {
+						var btndownload = "";
+						if (value.fileName != "" && value.fileName != null) {
+							btndownload = '<a href="#" onclick="ondownloadAttach(' + value.id + ')"><i class="ri-download-2-line"></i>&nbsp;</a>'
+						}
+
+						attachData.push([value.id, value.name, value.fileTypeName, value.fileName, btndownload])
+					})
+
+					$("#TeacherAttachmentGrid").DataTable({
+						"bDestroy": true,
+						data: attachData,
+						order: [[0, "desc"]],
+							 "searching": false,
+				  "bLengthChange": false,
+				  paging: false,
+				  "info": false,
+						"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+						dom: 'lBfrtip',
+						buttons: [
+							{
+								extend: 'csvHtml5',
+								text: '<i class="ri-file-excel-line"></i>',
+								titleAttr: 'csv',
+								filename: `@_localization.Getkey("Attachments")`,
+								className: 'btn btn-outline-light btn-sm',
+								exportOptions: {
+									columns: [1, 2, 3]
+								}
+							}
+						]
+					})
+					$("#loaderDiv1").hide();
+
+				} else {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			},
+			error: function (response) {
+				toastr.error(`@_localization.Getkey("Error")`);
+
+			}
+		})
+	}
+	function getTeacherAttendanceById(){
+		 onTeacherDetailHideAndShow('2');
+		 $("#loaderDiv1").show();
+		let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/Attendence/AttendenceMetric/`+ $("#hfteacherdetailid").val() +`,`+ 3 +``;
+		getOperation(url,`@strtoken`,`@Html.Raw(@userParamkey)`)
+						.then(response => {
+								fillAttendence(response);
+								$("#loaderDiv1").hide();
+						})
+						.catch(error => {
+							console.log(error);
+							 toastr.error(`@_localization.Getkey("Error")`);
+						});
+		//   $.ajax({
+		//     type: 'POST',
+		//     async: false,
+		//     url: '@Url.Action("GetAttendenceByPersonnelId", "Attendence")',
+		//     data: {PersonnelId : $("#hfteacherdetailid").val(), PersonnelType : 3, SessionYearId : $("#hfteachersessionyearid").val() },
+		//               dataType: 'json',
+		//           traditional: true,
+		//     success: function (response) {
+		//         if (response != null) {
+		//              $('#heatmapMonthsContainer').empty();
+		//                 renderHeatMapMonths(response);
+		//             $("#loaderDiv1").hide();
+
+		//         } else {
+		//             toastr.error(`@_localization.Getkey("Error")`);
+		//         }
+		//     },
+		//     error: function (response) {
+		//         toastr.error(`@_localization.Getkey("Error")`);
+
+		//     }
+		// })
+	}
+	   function fillAttendence(data){
+		var attData=[];
+		$.each(data,function(key,value){
+		   attData.push([value.metric,value.jan,value.feb,value.mar,value.apr, value.may, value.jun, value.jul, value.aug, value.sep, value.oct, value.nov, value.dec, value.total])
+		})
+		$("#tblpersonattendence").DataTable({
+			"bDestroy": true,
+			data : attData,
+			"aoColumnDefs": [{ "className": 'dt-center', "aTargets": '_all' }],
+			"searching": false,
+			"bLengthChange": false,
+			paging: false,
+			"info": false,
+			"ordering": false,
+		   // "drawCallback": function(settings) {
+		   //  // Get the last row of the table
+		   //      var lastRow = table.row(':last').node();
+
+		   //      // Apply bold to all cells in the last row
+		   //      $(lastRow).find('td').each(function(index) {
+		   //          if (index !== 0) {  // Skip the first cell
+		   //              $(this).css('font-weight', 'bold');  // Apply bold to all cells except the first
+		   //              $(this).append(' (Last row)');  // Append text to the cell
+		   //          }
+		   //      });
+		   //  }
+		})
+	}
+	function getTeacherTimeTableById() {
+		onTeacherDetailHideAndShow('3');
+		 $("#loaderDiv1").show();
+		$.ajax({
+			type: 'GET',
+			async: false,
+			url: '@Url.Action("GetTeacherDetailTimeTable", "Teacher")?teacherId=' + $("#hfteacherdetailid").val(),
+			Accept: 'application/json, text/javascript',
+			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+			success: function (response) {				
+				if (response != null) {
+					var result =JSON.parse(response);
+					 //$('#tblteacherdetailtimetable').empty();
+					 // Populate header
+						$('#timetable-header').empty();
+						if(result.castTimetable.periods !=null && result.castTimetable.periods.length > 0){
+							var headerRow = '<tr><th>Day</th>';
+							result.castTimetable.periods.forEach(function (period) {
+								headerRow += '<th>' + period.startTime.substring(0, 5) + ' - ' + period.endTime.substring(0, 5) + '</th>';
+							});
+							headerRow += '</tr>';
+							$('#timetable-header').append(headerRow);
+						}
+
+						 // Populate body
+						 $('#timetable-body').empty();
+						 if(result.castTimetable.weekdays !=null && result.castTimetable.weekdays.length > 0)
+						 {
+							 for (var i = 0; i < result.castTimetable.weekdays.length; i++){
+								 var day = result.castTimetable.weekdays[i];
+								  var row = '<tr><td>' + day.name + '</td>';
+								  for (var j = 0; j < day.periodSlots.length; j++){
+									  var slot = day.periodSlots[j];
+											if (slot.period.isBreak) {
+												// Only render the cell for the first weekday to apply rowspan
+												if (i == 0)
+												{
+													 row += '<td class="lunch" rowspan="' + result.castTimetable.weekdays.length + '">' + slot.period.description + '</td>';
+												}
+											}
+											else {
+													row += '<td class="drop" data-day="' + day.name +
+										'" data-starttime="' + slot.period.startTime +
+										'" data-endtime="' + slot.period.endTime + '">' +
+													   slot.subject + '</td>';
+
+												}
+								  }
+								row += '</tr>';
+								 $('#timetable-body').append(row);
+							 }
+						 }
+
+					getTeacherTimeTableFromDB();
+
+				} else {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			},
+			error: function (response) {
+				toastr.error(`@_localization.Getkey("Error")`);
+
+			}
+		})
+	}
+	 function getTeacherTimeTableFromDB() {
+			 $.ajax({
+				 type: 'GET',
+				 async: false,
+				 url: '@Url.Action("GetTeacherTimeTableFromDB", "Teacher")?teacherId=' + $('#hfteacherdetailid').val() +'&sessionyearId='+ $('#hfteachersessionyearid').val(),
+				 Accept: 'application/json, text/javascript',
+				 contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+				 success: function (response) {
+					 if (response != null) {
+
+							   //  $('#tblteacherdetailtimetable .drop').html('');
+
+								 $.each(JSON.parse(response), function (key, value) {
+									 var strday = getDayOfWeekString(value.dayOfWeek);
+
+									 var displayText =value.classSectionName + ' - ' +value.subjectActivityName;
+
+									let cell = $('td[data-day="' + strday + '"][data-starttime="' + value.fromTime + '"][data-endtime="' + value.toTime + '"]');
+
+									 // Fill the cell with the subject if it exists
+									 if (cell.length) {
+										 cell.html('<div class="item assigned" style="background-color: '+value.subjectActivityColor+';">'+displayText+'</div>');
+									 }
+								 });
+
+						 $("#loaderDiv1").hide();
+					 } else {
+						 toastr.error(`@_localization.Getkey("Error")`);
+					 }
+				 },
+				 error: function (response) {
+					 toastr.error(`@_localization.Getkey("Error")`);
+
+				 }
+			 })
+		 }
+	function createHeatMapElement(seat) {
+				const seatDiv = document.createElement('div');
+				seatDiv.classList.add('seat');
+				if (seat.status == "1") {
+					seatDiv.classList.add('present');
+				}
+				else if (seat.status == "2") {
+					seatDiv.classList.add('leave');
+				}
+				  else if (seat.status == "0") {
+					seatDiv.classList.add('absent');
+				}
+
+				const studentNameDiv = document.createElement('div');
+					studentNameDiv.classList.add('attendence-date');
+					studentNameDiv.textContent = seat.attendenceDate;
+					seatDiv.appendChild(studentNameDiv);
+
+
+				return seatDiv;
+	 }
+
+	 function renderHeatMapMonths(months) {
+		 const container = document.getElementById('heatmapMonthsContainer');
+		 container.innerHTML = ''; // Clear existing heatmaps
+
+		 months.forEach(hall => {
+			 const hallDiv = document.createElement('div');
+			 hallDiv.classList.add('exam-hall');
+
+			 // Hall Header
+			 const hallHeader = document.createElement('h5');
+			 hallHeader.textContent = hall.yearId + ' ' + hall.monthName;
+			 hallDiv.appendChild(hallHeader);
+
+
+
+			 // Seats Container
+			 const seatsContainer = document.createElement('div');
+			 seatsContainer.classList.add('seats-container');
+			 seatsContainer.style.gridTemplateColumns = `repeat(${7}, 30px)`;
+
+			 hall.lstHeatMapPersonnelAttendence.forEach(seat => {
+				 const seatElement = createHeatMapElement(seat);
+				 seatsContainer.appendChild(seatElement);
+			 });
+
+			 hallDiv.appendChild(seatsContainer);
+			 container.appendChild(hallDiv);
+
+
+		 });
+	 }
+
+	 function getTeacherExamDutyById() {
+		 onTeacherDetailHideAndShow('4');
+		$("#loaderDiv1").show();
+		$.ajax({
+			type: 'post',
+			async: false,
+			url: '@Url.Action("GetTeacherSchedules", "Teacher")?Id=' + $("#hfteacherdetailid").val(),
+			Accept: 'application/json, text/javascript',
+			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+			// data: myformdata,
+			success: function (response) {
+				if (response != null) {
+
+					var scheduleData = [];
+
+					$.each(response, function (key, value) {
+
+						var pr = Math.floor((value.statusId / 6) * 100);
+						var per = pr.toString();
+						var compl = "";
+						if (value.statusId == 1) {
+							compl = 'progress-lg bg-info';
+						}
+						if (value.statusId == 6) {
+							compl = 'progress-lg bg-success';
+						}
+						else if (value.statusId > 1 && value.statusId < 6) {
+							compl = 'progress-lg bg-warning';
+						}
+						var prog = '<div class="progress progress-sm"> ' +
+							'<div class="progress-bar ' + compl + '" role="progressbar" id="divprogress" style="width:' + per + '%" aria-valuenow=' + per + ' aria-valuemin="0" aria-valuemax="100"></div>' +
+							//<div class="progress-bar progress-lg bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+							'</div>'
+
+						var btndetail = "";
+						btndetail = '<a class="dropdown-item" href="#" onclick="GetPivotScheduleByTeacher(' + value.id + ',' + $("#hfteacherdetailid").val() + ')"><i class="ri-eye-line"></i>&nbsp; @_localization.Getkey("Details")</a>'
+
+						scheduleData.push([value.title, value.examTypeName, value.strStartDate, value.strEndDate, prog, value.statusName, btndetail])
+					})
+
+					$("#tblschedulegrid").DataTable({
+						"bDestroy": true,
+						data: scheduleData,
+						"searching": false,
+						"bLengthChange": false,
+						paging: false,
+						"info": false,
+						"ordering": false
+
+					})
+					$("#loaderDiv1").hide();
+					$("#divexamduty").hide();
+
+
+				} else {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			},
+			error: function (response) {
+				toastr.error(`@_localization.Getkey("Error")`);
+			}
+		})
+
+	}
+
+	function GetPivotScheduleByTeacher(schid, teaid) {
+		$("#loaderDiv1").show();
+
+		$.ajax({
+			type: 'post',
+			async: false,
+			url: '@Url.Action("GetPivotScheduleByTeacher", "Teacher")',
+			data: { scheduleId: schid, teacherId: teaid },
+			dataType: 'json',
+			traditional: true,
+			// data: myformdata,
+			success: function (response) {
+				if (response != null) {
+					$("#divexamduty").show();
+					var resArray = [];
+					var jsonData = JSON.parse(response.strResult);
+					if (jsonData.length > 0) {
+						resArray.push(jsonData);
+						//for (i = 0; i < jsonData.length; i++) {
+						//    resArray.push(jsonData[i]);
+						//}
+						onLoadPivotData(resArray);
+					}
+
+					else {
+						$("#loaderDiv1").hide();
+					}
+
+
+				} else {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			},
+			error: function (response) {
+				toastr.error(`@_localization.Getkey("Error")`);
+			}
+		})
+	}
+
+	function onLoadPivotData(data) {
+
+		var excolumns = [];
+		var rowData = data[0];
+		if (rowData.length > 0) {
+			Object.keys(rowData[0]).forEach(function (key, index) {
+				if (key == 'ScheduleId') {
+					//excolumns.push({
+					//    data: key,
+					//    title: key
+					//});
+				}
+				else if (key == 'ExamHallName' || key == 'StrExamDate') {
+					excolumns.push({
+						data: key,
+						title: key
+					});
+				}
+				else {
+					excolumns.push({
+						data: key,
+						title: key,
+						render: function (data, type, row) {
+							if (row[key] != null && row[key] != "" && row[key] != 0) {
+								return '<span class="badge bg-success">'+row[key]+'</span>';
+							}
+							return '';
+
+						}
+					});
+
+
+				}
+
+			})
+			$("#tblexamduty").DataTable({
+				"bDestroy": true,
+				data: data[0],
+				// "aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+				columns: excolumns,
+				"searching": false,
+				"bLengthChange": false,
+				paging: false,
+				"info": false,
+				"ordering": false
+
+				//dom: 'Bfrtip'
+			})
+			$("#loaderDiv1").hide();
+		}
+	}
+	function getTeacherLeaveRequestById(){
+		 onTeacherDetailHideAndShow('5');
+		 $("#loaderDiv1").show();
+		$.ajax({
+			type: 'GET',
+			async: false,
+			url: '@Url.Action("GetLeaveRequestByPersonnelId", "LeaveRequest")?personnelId=' + $("#hfteacherdetailid").val()+'&personnelType= 3',
+			Accept: 'application/json, text/javascript',
+			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+			success: function (response) {
+
+				if (response != null) {
+				   if(response.length > 0){
+						var leaveRequestData = [];
+					$.each(response, function (key, value) {
+
+						var statusName = "";
+						if (value.statusId == 1) {
+							statusName = `<span class="badge bg-warning">@_localization.Getkey("UnderProcess")</span>`
+							// statusName = `<span class="badge" style="background-color:#FFC0CB;">@_localization.Getkey("UnderProcess")</span>`
+						}
+						if (value.statusId == 2) {
+							statusName = `<span class="badge bg-danger">@_localization.Getkey("Rejected")</span>`
+						}
+						if (value.statusId == 3) {
+							statusName = `<span class="badge bg-success">@_localization.Getkey("Approved")</span>`
+						}
+						leaveRequestData.push([value.id, value.strFromDate, value.strToDate, value.reason, value.dayCount, value.strCreatedDate, statusName])
+					})
+
+					$("#tblTeacherLeaveRequest").DataTable({
+						"bDestroy": true,
+						data: leaveRequestData,
+						order: [[0, "desc"]],
+						"aoColumnDefs": [{ "bVisible": false, "aTargets": [0] }],
+						dom: 'lBfrtip',
+						  "searching": false,
+				"bLengthChange": false,
+				paging: false,
+				"info": false,
+
+						buttons: [
+							{
+								extend: 'csvHtml5',
+								text: '<i class="ri-file-excel-line"></i>',
+								titleAttr: 'csv',
+								filename: `@_localization.Getkey("LeaveRequests")`,
+								className: 'btn btn-outline-light btn-sm',
+								exportOptions: {
+									columns: [1, 2, 3, 4,5,6]
+								}
+							}
+						]
+					})
+				   }
+
+					//$("#loaderDiv1").hide();
+					getSPTeacherLeaveReport();
+
+				} else {
+					toastr.error(`@_localization.Getkey("Error")`);
+				}
+			},
+			error: function (response) {
+				toastr.error(`@_localization.Getkey("Error")`);
+
+			}
+		})
+	}
+	 function getSPTeacherLeaveReport(){
+		   
+			 let url = '@Configuration["WebApi:ClientBaseUrl"]' + `/api/LeaveRequest/LeaveReport/`+ $("#hfteacherdetailid").val() +``;
+		  getOperation(url,`@strtoken`,`@Html.Raw(@userParamkey)`)
+						  .then(response => {
+								  fillTeacherReport(JSON.parse(response.result));
+						  })
+						  .catch(error => {
+							   toastr.error(`@_localization.Getkey("Error")`);
+						  });
+	}
+
+	function fillTeacherReport(data){
+			  var columns=[];
+
+
+						   Object.keys(data[0]).forEach( function (key, index){
+
+							   columns.push({data: key,
+											   title: key,
+											  render: function (data, type, row) {
+												   if(row[key] == null){
+													  return '';
+												  }
+												  else{
+													  return ' <label class="form-label">'+row[key]+'</label> ';
+
+												  }
+											   }
+										   });
+
+					   })
+					 
+
+						  $("#tblTeacherLeaveReport").DataTable({
+							  "bDestroy": true,
+								data : data,
+							  columns: columns,
+								columnDefs: [{
+		"defaultContent": "-",
+		"targets": "_all"
+	  }],
+							  order: [[0, "asc"]],
+							   dom: 'lBfrtip',
+							  buttons: [
+								  {
+									  extend: 'csvHtml5',
+									  text: '<i class="ri-file-excel-line"></i>',
+									  titleAttr: 'csv',
+									  filename: `@_localization.Getkey("LeaveReport")`,
+									  className: 'btn btn-outline-light btn-sm',
+									  exportOptions: {
+										  columns: [0,1, 2, 3, 4, 5, 6,7,8,9,10,11] // Adjust if you want to export all columns or just specific ones
+									  }
+								  }
+							  ],
+							   "searching": false,
+				"bLengthChange": false,
+				paging: false,
+				"info": false,
+						  });
+
+						  $("#loaderDiv1").hide();
+	  }
+	 function onTeacherDetailPrint(){
+		 if(teacherprinttype=='1'){
+			 printDiv('divteacherprofileinfo');
+		 }
+		 else if(teacherprinttype=='2'){
+			 printDiv('divteacherattendenceinfo');
+		 }
+		 else if(teacherprinttype=='3'){
+			 printDiv('divteachertimetableinfo');
+		 }
+		 else if(teacherprinttype=='4'){
+			 printDiv('divteacherexamdutyinfo');
+		 }
+		   else if(teacherprinttype=='5'){
+			 printDiv('divteacherleaverequestinfo');
+		 }
+	 }
+	 function onTeacherDetailHideAndShow(type){
+		 if(type=='1'){
+			 teacherprinttype='1';
+			 $("#divteacherattendenceinfo").hide();
+			 $("#divteachertimetableinfo").hide();
+			$("#divteacherexamdutyinfo").hide();
+			$("#divteacherleaverequestinfo").hide();
+			$("#divteacherprofileinfo").show();
+		 }
+		  else if(type=='2'){
+			  teacherprinttype='2';
+			  $("#divteacherprofileinfo").hide();
+			   $("#divteachertimetableinfo").hide();
+				$("#divteacherexamdutyinfo").hide();
+				 $("#divteacherleaverequestinfo").hide();
+				$("#divteacherattendenceinfo").show();
+		 }
+		  else if(type=='3'){
+			  teacherprinttype='3';
+			  $("#divteacherprofileinfo").hide();
+			  $("#divteacherattendenceinfo").hide();
+			$("#divteacherexamdutyinfo").hide();
+			 $("#divteacherleaverequestinfo").hide();
+			$("#divteachertimetableinfo").show();
+		 }
+		 else if(type=='4'){
+			  teacherprinttype='4';
+			  $("#divteacherprofileinfo").hide();
+			   $("#divteacherattendenceinfo").hide();
+				$("#divteachertimetableinfo").hide();
+				 $("#divteacherleaverequestinfo").hide();
+				$("#divteacherexamdutyinfo").show();
+		 }
+		  else if(type=='5'){
+			  teacherprinttype='5';
+			  $("#divteacherprofileinfo").hide();
+			   $("#divteacherattendenceinfo").hide();
+				$("#divteachertimetableinfo").hide();
+				 $("#divteacherexamdutyinfo").hide();
+				$("#divteacherleaverequestinfo").show();
+		 }
+	 }
+</script>
