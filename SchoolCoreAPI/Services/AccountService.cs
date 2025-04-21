@@ -39,7 +39,7 @@ namespace SchoolCoreAPI.Services
             {
                 ExpenseCategorySheet = sheet
             };
-
+            //test
             if (Id > 0)
             {
                 var cat = await _context.Expense.AsNoTracking().SingleOrDefaultAsync(x => x.Id == Id && x.IsActive == ((int)ActiveState.Active).ToString());
